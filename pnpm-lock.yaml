@@ -307,6 +307,10 @@ importers:
         version: 4.1.11(@types/node@24.19.1)(vite@8.3.3(@types/node@24.19.1)(esbuild@0.28.1))
 
   packages/design-tokens:
+    dependencies:
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
     devDependencies:
       '@types/node':
         specifier: 'catalog:'

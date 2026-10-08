@@ -1,0 +1,12 @@
+body {
+  margin: 0;
+  background: var(--mn-color-surface);
+  color: var(--mn-color-on-surface);
+  font-family: system-ui, sans-serif;
+  font-size: var(--mn-font-body-size);
+  line-height: var(--mn-font-body-line-height);
+}
+
+main {
+  padding: var(--mn-space-lg);
+}
