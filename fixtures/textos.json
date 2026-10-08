@@ -1,0 +1,27 @@
+{
+  "descripcion": "Normalización de texto. search_key: búsqueda del catálogo (SDD 03 §7, 04 §2). raw_text_norm: líneas de ticket para alias (SDD 09 §5.1).",
+  "search_key": [
+    { "entrada": "Leche Lala Entera", "esperado": "leche lala entera" },
+    { "entrada": "Jabón Zote Rosa", "esperado": "jabon zote rosa" },
+    { "entrada": "Coca-Cola 600ml", "esperado": "coca cola 600ml" },
+    { "entrada": "Café Legal 1.5 kg", "esperado": "cafe legal 1 5 kg" },
+    { "entrada": "  Papel   Higiénico Pétalo ", "esperado": "papel higienico petalo" },
+    { "entrada": "Ñoquis La Moderna", "esperado": "noquis la moderna" },
+    { "entrada": "", "esperado": "" }
+  ],
+  "raw_text_norm": [
+    { "entrada": "LCH LALA ENT 1L", "esperado": "LCH LALA ENT 1L" },
+    { "entrada": "7501020515343 LCH LALA ENT 1L", "esperado": "LCH LALA ENT 1L" },
+    { "entrada": "2 X LCH LALA ENT 1L", "esperado": "LCH LALA ENT 1L" },
+    { "entrada": "LCH LALA ENT 1L    28.50", "esperado": "LCH LALA ENT 1L" },
+    { "entrada": "Jabón Zote Rosa 400g", "esperado": "JABON ZOTE ROSA 400G" },
+    { "entrada": "PAPEL HIG. PETALO 12R", "esperado": "PAPEL HIG PETALO 12R" },
+    { "entrada": "ACEITE 1-2-3 1.5L", "esperado": "ACEITE 1 2 3 1.5L" },
+    { "entrada": "DET. ARIEL 3KG 2X1", "esperado": "DET ARIEL 3KG 2X1" },
+    { "entrada": "COCA-COLA 600ML $18.00", "esperado": "COCA COLA 600ML" },
+    { "entrada": "JITOMATE SALADET 0.845 KG @ 32.90", "esperado": "JITOMATE SALADET" },
+    { "entrada": "DESC 15% SHAMPOO H&S", "esperado": "DESC 15% SHAMPOO H S" },
+    { "entrada": "  queso  oaxaca  ", "esperado": "QUESO OAXACA" },
+    { "entrada": "2 @ PAN BIMBO BLANCO 14.25 28.50", "esperado": "PAN BIMBO BLANCO" }
+  ]
+}

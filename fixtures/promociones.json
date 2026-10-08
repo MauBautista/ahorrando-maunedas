@@ -1,0 +1,33 @@
+{
+  "descripcion": "Promociones (SDD 09 §6). descuentos: descuento de línea en centavos, redondeo half-up. deteccion: tipo y params a partir del texto del ticket.",
+  "descuentos": [
+    { "nombre": "2x1 con 2 piezas", "type": "nxm", "params": { "n": 2, "m": 1 }, "unit_price_cents": 8900, "quantity": 2, "esperado": 8900 },
+    { "nombre": "2x1 con 3 piezas", "type": "nxm", "params": { "n": 2, "m": 1 }, "unit_price_cents": 8900, "quantity": 3, "esperado": 8900 },
+    { "nombre": "3x2 con 3 piezas", "type": "nxm", "params": { "n": 3, "m": 2 }, "unit_price_cents": 2500, "quantity": 3, "esperado": 2500 },
+    { "nombre": "3x2 con 6 piezas", "type": "nxm", "params": { "n": 3, "m": 2 }, "unit_price_cents": 2500, "quantity": 6, "esperado": 5000 },
+    { "nombre": "Segunda al 50 % con 2", "type": "nth_unit_discount", "params": { "nth": 2, "percent": 50 }, "unit_price_cents": 4000, "quantity": 2, "esperado": 2000 },
+    { "nombre": "Segunda al 50 % con 3", "type": "nth_unit_discount", "params": { "nth": 2, "percent": 50 }, "unit_price_cents": 4000, "quantity": 3, "esperado": 2000 },
+    { "nombre": "15 %", "type": "percent", "params": { "percent": 15 }, "unit_price_cents": 12000, "quantity": 1, "esperado": 1800 },
+    { "nombre": "10 % con redondeo", "type": "percent", "params": { "percent": 10 }, "unit_price_cents": 999, "quantity": 3, "esperado": 300 },
+    { "nombre": "15 % a granel", "type": "percent", "params": { "percent": 15 }, "unit_price_cents": 3290, "quantity": 0.845, "esperado": 417 },
+    { "nombre": "Rebaja de 35.00 a 29.90", "type": "price_cut", "params": { "from_cents": 3500, "to_cents": 2990 }, "unit_price_cents": 3500, "quantity": 2, "esperado": 1020 },
+    { "nombre": "Precio de socio", "type": "member_price", "params": { "member_cents": 2700 }, "unit_price_cents": 2990, "quantity": 1, "esperado": 290 },
+    { "nombre": "Cupón por monto", "type": "coupon", "params": { "amount_cents": 5000 }, "unit_price_cents": 30000, "quantity": 1, "esperado": 5000 },
+    { "nombre": "Cupón por porcentaje", "type": "coupon", "params": { "percent": 20 }, "unit_price_cents": 10000, "quantity": 1, "esperado": 2000 },
+    { "nombre": "MSI no descuenta", "type": "msi", "params": { "months": 12 }, "unit_price_cents": 899900, "quantity": 1, "esperado": 0 },
+    { "nombre": "Otra con monto", "type": "other", "params": { "amount_cents": 1500 }, "unit_price_cents": 5000, "quantity": 1, "esperado": 1500 }
+  ],
+  "deteccion": [
+    { "texto": "2X1", "type": "nxm", "params": { "n": 2, "m": 1 } },
+    { "texto": "PROMO 3 X 2", "type": "nxm", "params": { "n": 3, "m": 2 } },
+    { "texto": "2DA AL 50%", "type": "nth_unit_discount", "params": { "nth": 2, "percent": 50 } },
+    { "texto": "Segunda pieza al 30 %", "type": "nth_unit_discount", "params": { "nth": 2, "percent": 30 } },
+    { "texto": "PRECIO SOCIO", "type": "member_price", "params": {} },
+    { "texto": "CUPON DESCUENTO", "type": "coupon", "params": {} },
+    { "texto": "12 MSI", "type": "msi", "params": { "months": 12 } },
+    { "texto": "DESC 15%", "type": "percent", "params": { "percent": 15 } },
+    { "texto": "AHORRO", "type": "price_cut", "params": {} },
+    { "texto": "Rebaja", "type": "price_cut", "params": {} },
+    { "texto": "OFERTA ESPECIAL", "type": "other", "params": { "text": "OFERTA ESPECIAL" } }
+  ]
+}

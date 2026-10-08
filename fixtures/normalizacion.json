@@ -1,0 +1,57 @@
+{
+  "descripcion": "Vectores de prueba de normalización de precio. Deben pasar en TS (packages/shared), Kotlin (core/pricing) y Python (agent). cents_per_base = paid_cents / (quantity * unit_amount * pack_count); display_cents = round(cents_per_base * base_por_unidad_display).",
+  "base_por_unidad_display": { "kg": 1000, "100g": 100, "L": 1000, "100ml": 100, "pz": 1 },
+  "casos": [
+    {
+      "nombre": "Leche 1 L",
+      "variante": { "measure": "volume", "unit_amount": 1000, "pack_count": 1 },
+      "paid_cents": 2850, "quantity": 1,
+      "esperado": { "cents_per_base": 2.85, "display": { "L": 2850, "100ml": 285 } }
+    },
+    {
+      "nombre": "Leche paquete 6 x 1 L",
+      "variante": { "measure": "volume", "unit_amount": 1000, "pack_count": 6 },
+      "paid_cents": 15900, "quantity": 1,
+      "esperado": { "cents_per_base": 2.65, "display": { "L": 2650, "100ml": 265 } }
+    },
+    {
+      "nombre": "Jitomate a granel 0.845 kg",
+      "variante": { "measure": "mass", "unit_amount": 1000, "pack_count": 1, "sold_by_weight": true },
+      "paid_cents": 2780, "quantity": 0.845,
+      "esperado": { "cents_per_base": 3.289940828402367, "display": { "kg": 3290, "100g": 329 } }
+    },
+    {
+      "nombre": "Detergente 3 L en 2x1 (precio efectivo)",
+      "variante": { "measure": "volume", "unit_amount": 3000, "pack_count": 1 },
+      "paid_cents": 8900, "quantity": 2,
+      "esperado": { "cents_per_base": 1.4833333333333334, "display": { "L": 1483 } }
+    },
+    {
+      "nombre": "Huevo 30 piezas",
+      "variante": { "measure": "count", "unit_amount": 30, "pack_count": 1 },
+      "paid_cents": 7490, "quantity": 1,
+      "esperado": { "cents_per_base": 249.66666666666666, "display": { "pz": 250 } }
+    },
+    {
+      "nombre": "Papel higiénico 4 paquetes de 12 rollos",
+      "variante": { "measure": "count", "unit_amount": 12, "pack_count": 4 },
+      "paid_cents": 32900, "quantity": 1,
+      "esperado": { "cents_per_base": 685.4166666666666, "display": { "pz": 685 } }
+    }
+  ],
+  "errores": [
+    {
+      "nombre": "Unidad de despliegue incompatible con la medida",
+      "variante": { "measure": "volume", "unit_amount": 1000, "pack_count": 1 },
+      "paid_cents": 2850, "quantity": 1, "display_unit": "kg",
+      "esperado": "error"
+    },
+    {
+      "nombre": "Cantidad cero",
+      "variante": { "measure": "mass", "unit_amount": 1000, "pack_count": 1 },
+      "paid_cents": 1000, "quantity": 0,
+      "esperado": "error"
+    }
+  ],
+  "tolerancia_cents_per_base": 1e-9
+}

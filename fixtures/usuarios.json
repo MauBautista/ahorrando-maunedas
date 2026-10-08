@@ -1,0 +1,17 @@
+{
+  "descripcion": "Usuarios y correo sintético (SDD 02 §3). esperado = correo, o \"error\" si el usuario no es válido. Dominio de prueba: maunedas.local.",
+  "dominio": "maunedas.local",
+  "casos": [
+    { "entrada": "Mau", "esperado": "mau@maunedas.local" },
+    { "entrada": "PEPE", "esperado": "pepe@maunedas.local" },
+    { "entrada": "  mama.garcia ", "esperado": "mama.garcia@maunedas.local" },
+    { "entrada": "hermano_2", "esperado": "hermano_2@maunedas.local" },
+    { "entrada": "abc", "esperado": "abc@maunedas.local" },
+    { "entrada": "ab", "esperado": "error" },
+    { "entrada": "-abc", "esperado": "error" },
+    { "entrada": "abc-", "esperado": "error" },
+    { "entrada": "Papá", "esperado": "error" },
+    { "entrada": "mau bautista", "esperado": "error" },
+    { "entrada": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa", "esperado": "error" }
+  ]
+}

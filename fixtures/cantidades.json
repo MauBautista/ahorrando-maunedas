@@ -1,0 +1,20 @@
+{
+  "descripcion": "Interpretación del contenido de catálogos abiertos (SDD 10 §2.2). esperado null = no se pudo interpretar. etiqueta = suggestVariantLabel.",
+  "casos": [
+    { "entrada": "1 l", "esperado": { "measure": "volume", "unit_amount": 1000, "pack_count": 1 }, "etiqueta": "1 L" },
+    { "entrada": "946 ml", "esperado": { "measure": "volume", "unit_amount": 946, "pack_count": 1 }, "etiqueta": "946 ml" },
+    { "entrada": "6 x 1 l", "esperado": { "measure": "volume", "unit_amount": 1000, "pack_count": 6 }, "etiqueta": "6 × 1 L" },
+    { "entrada": "12 x 355 ml", "esperado": { "measure": "volume", "unit_amount": 355, "pack_count": 12 }, "etiqueta": "12 × 355 ml" },
+    { "entrada": "355 ml x 12", "esperado": { "measure": "volume", "unit_amount": 355, "pack_count": 12 }, "etiqueta": "12 × 355 ml" },
+    { "entrada": "1,5 L", "esperado": { "measure": "volume", "unit_amount": 1500, "pack_count": 1 }, "etiqueta": "1.5 L" },
+    { "entrada": "500 g", "esperado": { "measure": "mass", "unit_amount": 500, "pack_count": 1 }, "etiqueta": "500 g" },
+    { "entrada": "900g", "esperado": { "measure": "mass", "unit_amount": 900, "pack_count": 1 }, "etiqueta": "900 g" },
+    { "entrada": "1 kg", "esperado": { "measure": "mass", "unit_amount": 1000, "pack_count": 1 }, "etiqueta": "1 kg" },
+    { "entrada": "30 piezas", "esperado": { "measure": "count", "unit_amount": 30, "pack_count": 1 }, "etiqueta": "30 pz" },
+    { "entrada": "4 rollos", "esperado": { "measure": "count", "unit_amount": 4, "pack_count": 1 }, "etiqueta": "4 pz" },
+    { "entrada": "Net Wt 16 oz (453 g)", "esperado": { "measure": "mass", "unit_amount": 453, "pack_count": 1 }, "etiqueta": "453 g" },
+    { "entrada": "16 oz", "esperado": { "measure": "mass", "unit_amount": 454, "pack_count": 1 }, "etiqueta": "454 g" },
+    { "entrada": "", "esperado": null },
+    { "entrada": "grande", "esperado": null }
+  ]
+}
