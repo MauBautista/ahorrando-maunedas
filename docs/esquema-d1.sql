@@ -40,14 +40,14 @@ CREATE TABLE sync_meta (
   value INTEGER NOT NULL
 );
 INSERT INTO sync_meta (key, value) VALUES ('version', 0);
-INSERT INTO sync_meta (key, value) VALUES ('schema_version', 1);      -- ver SDD 04 §4.8
+INSERT INTO sync_meta (key, value) VALUES ('schema_version', 1);      -- ver SDD 04 §5
 
 -- ---------------------------------------------------------------------
 -- Usuarios, identidades y dispositivos
 -- Auth con Firebase: usuario + contraseña (correo sintético
 -- <usuario>@<SYNTHETIC_EMAIL_DOMAIN>) o cuenta de Google. Ver SDD 02.
 -- ---------------------------------------------------------------------
--- DOWN (al cliente solo viajan id, username, display_name, role, active)
+-- DOWN (al cliente solo viajan id, username, display_name, role, active, updated_at, version)
 CREATE TABLE users (
   id            TEXT PRIMARY KEY,
   username      TEXT NOT NULL UNIQUE COLLATE NOCASE,     -- [a-z0-9._-]{3,32}
@@ -520,7 +520,11 @@ CREATE TABLE token_cache (
 -- ---------------------------------------------------------------------
 -- Vista unificada de puntos de precio (compras + anaquel + web)
 -- cents_per_base: centavos por g / ml / pz (REAL, sin redondear).
--- Room define una @DatabaseView equivalente para funcionar offline.
+-- Room define una @DatabaseView equivalente para funcionar offline; por eso
+-- no se usan funciones de ventana (Android API 26 trae SQLite 3.18).
+-- Compras: el descuento de ticket (purchases.discount_cents) se prorratea
+-- en proporción al final_cents de cada línea viva de la compra (RF-COM-05):
+--   pagado_línea = final_cents × (1 − discount_cents / Σ final_cents)
 -- ---------------------------------------------------------------------
 CREATE VIEW v_price_points AS
 SELECT
@@ -532,12 +536,18 @@ SELECT
   NULL                                                  AS listing_id,
   p.purchased_at                                        AS observed_at,
   pi.unit_price_cents                                   AS list_unit_cents,
-  CAST(ROUND(pi.final_cents / pi.quantity) AS INTEGER)  AS effective_unit_cents,
-  pi.final_cents * 1.0 / (pi.quantity * v.unit_amount * v.pack_count) AS cents_per_base,
-  (pi.discount_cents > 0)                               AS has_promo
+  CAST(ROUND(pi.final_cents * (1.0 - p.discount_cents * 1.0 / t.lines_final_cents) / pi.quantity) AS INTEGER)
+                                                        AS effective_unit_cents,
+  pi.final_cents * (1.0 - p.discount_cents * 1.0 / t.lines_final_cents)
+    / (pi.quantity * v.unit_amount * v.pack_count)      AS cents_per_base,
+  (pi.discount_cents > 0 OR p.discount_cents > 0)       AS has_promo
 FROM purchase_items pi
 JOIN purchases p ON p.id = pi.purchase_id
 JOIN variants  v ON v.id = pi.variant_id
+JOIN (SELECT purchase_id, SUM(final_cents) AS lines_final_cents
+      FROM purchase_items
+      WHERE deleted_at IS NULL
+      GROUP BY purchase_id) t ON t.purchase_id = pi.purchase_id
 WHERE pi.deleted_at IS NULL AND p.deleted_at IS NULL AND p.status = 'confirmed'
 UNION ALL
 SELECT

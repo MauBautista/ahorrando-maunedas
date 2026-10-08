@@ -84,7 +84,7 @@ Reintentos: un reintento ante `RetryableAiError`, timeout o `InvalidAiOutput`. E
 - Mes = mes calendario en hora del centro de México (UTC−6 fijo, sin horario de verano).
 - Antes de llamar: `gastado + estimado > tope` → `402 E-AI_BUDGET_EXCEEDED`. Estimado = `AI_RECEIPT_EST_COST_USD`.
 - Después de llamar (éxito o error de salida): registrar `ai_usage` con el costo reportado; si no viene, el estimado.
-- Al cruzar `AI_SOFT_LIMIT_PCT`: aviso al admin una vez por mes (marca `ai_soft:<YYYY-MM>` en `token_cache`).
+- Al cruzar `AI_SOFT_LIMIT_PCT`: aviso al admin una vez por mes (marca `ai_soft:<YYYY-MM>` en `token_cache`). En la Etapa 1 el aviso es un banner en W-13 y en `GET /v1/admin/ai-budget` (`soft_limit_reached`); el push llega con FCM en T-213.
 - Red de seguridad: límite mensual de 6 USD configurado en la propia key de OpenRouter.
 
 ```ts
@@ -291,7 +291,7 @@ En orden:
 
 ### 5.3 Sugerencias (líneas sin coincidencia exacta)
 
-1. Expandir abreviaturas con el diccionario compartido (`packages/shared/src/receipts/abbreviations.ts`), p. ej. `LCH→LECHE`, `ENT→ENTERA`, `DESC→DESCREMADA`, `DET→DETERGENTE`, `JAB→JABON`, `PAP→PAPEL`, `HIG→HIGIENICO`, `ACON→ACONDICIONADOR`, `REF→REFRESCO`, `GALL→GALLETAS`, `YOG→YOGURT`, `QSO→QUESO`, `JAM→JAMON`, `PECH→PECHUGA`, `ACEIT→ACEITE`, `AZUC→AZUCAR`, `SUAV→SUAVIZANTE`, `DESOD→DESODORANTE`. Se amplía con el uso.
+1. Expandir abreviaturas con el diccionario compartido (`packages/shared/src/receipts/abbreviations.ts`), p. ej. `LCH→LECHE`, `ENT→ENTERA`, `DESC→DESCREMADA`, `DET→DETERGENTE`, `JAB→JABON`, `PAP→PAPEL`, `HIG→HIGIENICO`, `ACON→ACONDICIONADOR`, `REF→REFRESCO`, `GALL→GALLETAS`, `YOG→YOGURT`, `QSO→QUESO`, `JAM→JAMON`, `PECH→PECHUGA`, `ACEIT→ACEITE`, `AZUC→AZUCAR`, `SUAV→SUAVIZANTE`, `DESOD→DESODORANTE`. Se amplía con el uso. `DESC` no se expande si el siguiente token empieza con dígito o `%` ("DESC 15%" es un descuento, no "descremada").
 2. Tokens = palabras de ≥ 2 caracteres en minúsculas (misma normalización que `searchKey`).
 3. Candidatos por SQL: productos cuyo `search_key` contiene alguno de los 2 tokens más largos (`LIKE '%tok%'`), máximo 50.
 4. Para cada variante candidata, `score = (Σ peso de tokens de la línea encontrados en "producto marca etiqueta_variante") / (número de tokens de la línea)`, con peso 1.0 si el token coincide completo y 0.7 si es prefijo (≥ 3 letras) de un token del candidato. Bono +0.15 si el contenido de la línea (p. ej. `1L`, `900G`) coincide con el de la variante.

@@ -156,7 +156,7 @@ Auth: `Authorization: Bearer <AGENT_TOKEN>`. El Worker calcula `sha256(token)` y
     "has_more": false
   },
   "store_defaults": { "<store_id>": 480 },
-  "check_now": ["0192…"],                    // check_requested_at > last_checked_at
+  "check_now": ["0192…"],                    // check_requested_at > COALESCE(last_checked_at, 0)
   "image_jobs_queued": 0,
   "config": { "min_spacing_s": { "amazon_mx": 45, "walmart_mx": 30, "sams_mx": 30, "costco_mx": 30, "default": 20 } }
 }

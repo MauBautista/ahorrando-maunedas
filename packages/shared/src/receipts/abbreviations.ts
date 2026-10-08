@@ -20,11 +20,16 @@ export const RECEIPT_ABBREVIATIONS: Readonly<Record<string, string>> = {
   DESOD: 'DESODORANTE',
 };
 
-/** Expands whole-word abbreviations in normalized receipt text: "LCH LALA ENT 1L" → "LECHE LALA ENTERA 1L". */
+/**
+ * Expands whole-word abbreviations in normalized receipt text: "LCH LALA ENT 1L" → "LECHE LALA ENTERA 1L".
+ * "DESC" followed by a number or % is a discount ("DESC 15%"), not "descremada", and is kept.
+ */
 export function expandAbbreviations(norm: string): string {
-  return norm
-    .split(' ')
-    .filter((token) => token !== '')
-    .map((token) => RECEIPT_ABBREVIATIONS[token] ?? token)
+  const tokens = norm.split(' ').filter((token) => token !== '');
+  return tokens
+    .map((token, i) => {
+      if (token === 'DESC' && /^[\d%]/.test(tokens[i + 1] ?? '')) return token;
+      return RECEIPT_ABBREVIATIONS[token] ?? token;
+    })
     .join(' ');
 }

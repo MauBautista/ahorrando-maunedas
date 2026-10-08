@@ -127,9 +127,10 @@ Un push con conflictos **no es error**: responde 200 y aplica el resto.
 2. **Clasificar**: tabla desconocida o `mode='down'` → conflicto `UNKNOWN_TABLE`.
 3. **Sanear cada fila**: quedarse con `writable`; forzar `updated_by = user.id`; `updated_at = min(updated_at, now + 5 min)`; aplicar `derive`.
 4. **Validar** con el Zod de la tabla → `VALIDATION` (con `details.issues`).
-5. **Leer existentes**: por tabla, un `SELECT … WHERE pk IN (…)` con los ids del lote.
+5. **Leer existentes**: por tabla, un `SELECT … WHERE pk IN (SELECT value FROM json_each(?1))` con los ids del lote como un solo parámetro JSON (D1 admite 100 parámetros por consulta y, en Free, 50 consultas por invocación: ver spike D).
 6. **Reglas con existente**, en este orden:
-   - `STALE`: existe y `existing.updated_at >= incoming.updated_at` → no se escribe; `server_row = existing`.
+   - **Reintento idéntico**: existe, `existing.updated_at == incoming.updated_at` y `existing.updated_by == user.id` → se cuenta como aplicado, sin conflicto (la respuesta anterior se perdió después del commit).
+   - `STALE`: existe y `existing.updated_at > incoming.updated_at`, o es igual pero de otro autor → no se escribe; `server_row = existing`.
    - `IMMUTABLE_ROW`: `appendOnly` y cambia algo distinto de `deleted_at`.
    - `FORBIDDEN`: tombstone nuevo en tabla `adminDelete` por un miembro; `alert_rules` ajena; `price_observations` con `source != 'shelf'` o que modifica una fila `web`; rendition con `tier` no permitido.
 7. **Únicos**: para tablas con `uniqueLive`, consultar filas vivas con esos valores y otro `id` → `BARCODE_TAKEN` (`details.variant_id`) o `ALIAS_TAKEN` (`server_row` = alias existente).
@@ -232,7 +233,7 @@ Un dispositivo nuevo hace pull desde `[0, ""]` en todas las tablas hasta `has_mo
 |---|---|
 | Espejo de cada tabla `sync` y `down` | Mismos nombres de tabla y columna que D1 |
 | `outbox(seq PK, table_name, row_id, enqueued_at)` único `(table_name, row_id)` | Filas con cambios por subir |
-| `pending_uploads(id PK, image_id, name, local_path, content_type, attempts, last_error, created_at)` único `(image_id, name)` | Binarios por subir |
+| `pending_uploads(id PK, kind, image_id, name, local_path, source_url, content_type, attempts, last_error, created_at)` único `(image_id, name)` | Binarios por subir (`kind='blob'`) o importaciones de catálogo abierto pendientes (`kind='import'`, con `source_url`, 10 §2.3) |
 | `sync_cursors(table_name PK, version, last_id)` | Cursor de pull |
 | `sync_issues(id PK, table_name, row_id, reason, details_json, created_at, resolved_at)` | Conflictos que requieren acción o aviso |
 

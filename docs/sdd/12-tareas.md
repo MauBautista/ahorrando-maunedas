@@ -37,13 +37,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-003 · Recursos de Cloudflare
 - **Docs:** 03 §2
 - **Depende de:** T-001
-- **Hacer:** D1 `maunedas` y `maunedas-dev`; R2 `maunedas-images` (privado); Workers `maunedas` y `maunedas-dev` en `workers.dev`; secretos `IMAGE_URL_SECRET`, `AGENT_TOKEN_SHA256`.
+- **Hacer:** D1 `maunedas` y `maunedas-dev`; R2 `maunedas-images` y `maunedas-images-dev` (privados); Workers `maunedas` y `maunedas-dev` en `workers.dev`; secretos `IMAGE_URL_SECRET`, `AGENT_TOKEN_SHA256` por entorno; `env.dev` con sus propios `vars`, D1 y R2 (03 §2).
 - **Hecho cuando:** `wrangler deploy --env dev` publica un Worker que responde en `https://maunedas-dev.<subdominio>.workers.dev`.
 
 ### [ ] T-004 · Firebase
 - **Docs:** 02 §2
 - **Depende de:** T-003 (para conocer el dominio)
-- **Hecho cuando:** Email/Password y Google habilitados; dominios autorizados y URI de redirección `/__/auth/handler` configurados; SHA-1/256 de debug registrados; secreto `GOOGLE_SERVICE_ACCOUNT` cargado en el Worker de dev.
+- **Hacer:** dos proyectos (dev y prod, decisión T25), 02 §2.
+- **Hecho cuando:** en cada proyecto: Email/Password y Google habilitados (sin bloquear el registro); dominio autorizado y URI de redirección `/__/auth/handler` del host de su Worker; apps Android (`.dev` en dev) con SHA-1/256 de debug; secreto `GOOGLE_SERVICE_ACCOUNT` del proyecto de dev cargado en `maunedas-dev`.
 
 ### [ ] T-005 · OpenRouter
 - **Docs:** 09 §2
@@ -70,12 +71,12 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-012 · Spike C: extracción de tickets
 - **Docs:** 09 §9 · **Depende de:** T-003, T-005 · **Decide:** D2 y `AI_RECEIPT_MODEL`
 ### [ ] T-013 · Spike D: CPU del Worker
-- **Docs:** 11 §7 · **Depende de:** T-021, T-022, T-031 (versiones mínimas) · **Decide:** D3
+- **Docs:** 11 §7 · **Depende de:** T-021, T-022, T-031 (versiones mínimas) · **Decide:** D3 · **Nota:** se ejecuta en la Etapa 1, justo después de T-031
 ### [ ] T-014 · Spike E: correo sintético
 - **Docs:** 02 §3, 11 §7 · **Depende de:** T-004 · **Decide:** D9
 ### [ ] T-015 · Cerrar decisiones
 - **Depende de:** T-010 a T-014
-- **Hecho cuando:** D2, D3, D5 y D9 están en "Decisiones tomadas" de `ESTADO.md` con resultados de los spikes.
+- **Hecho cuando:** D2, D5 y D9 están en "Decisiones tomadas" de `ESTADO.md` con resultados de los spikes. D3 se cierra en T-013.
 
 ---
 
@@ -109,7 +110,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-026 · Esquema D1 y datos semilla
 - **Docs:** `esquema-d1.sql` · **Depende de:** T-020
-- **Hacer:** Drizzle schema fiel al SQL; migración `0001_init.sql`; script de semillas (tiendas de `PLAN.md`, categorías propuestas, `stores.adapter` para Amazon, Costco, Walmart y Sam's).
+- **Hacer:** migración `0001_init.sql` escrita a mano a partir de `esquema-d1.sql` (si drizzle-kit no la reproduce fielmente: `COLLATE NOCASE`, índices parciales, `CHECK`, vista); Drizzle schema para consultas tipadas, con un test que compare contra `PRAGMA table_info`; script de semillas (tiendas de `PLAN.md`, categorías propuestas, `stores.adapter` para Amazon, Costco, Walmart y Sam's).
 - **Hecho cuando:** `wrangler d1 migrations apply` funciona local y en dev; `sync_meta` con `version` y `schema_version`.
 
 ### [ ] T-027 · Dispositivos
@@ -134,7 +135,8 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-034 · Historial y comparador
 - **Docs:** 03 §7, `ARQUITECTURA.md` §3.3 · **Depende de:** T-033
-- **Hecho cuando:** `variants/:id/history` y `products/:id/compare` devuelven valores que coinciden con `fixtures/normalizacion.json`; "mejor precio" según 03 §3.
+- **Hacer:** `prorateTicketDiscount` en `packages/shared` con su sección de fixture (prorrateo del descuento de ticket, `esquema-d1.sql` → `v_price_points`).
+- **Hecho cuando:** `variants/:id/history` y `products/:id/compare` devuelven valores que coinciden con `fixtures/normalizacion.json` y con el prorrateo; "mejor precio" según 03 §3.
 
 ### [ ] T-035 · Compras (consulta)
 - **Docs:** 03 §7 · **Depende de:** T-031
@@ -154,7 +156,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-039 · Gateway de IA y presupuesto
 - **Docs:** 09 §1–2 · **Depende de:** T-020, T-026
-- **Hecho cuando:** `monthWindow` probado en el cambio de mes; `assertBudget` y registro de `ai_usage`; `GET /v1/admin/ai-budget`; aviso al 80 % una vez por mes (con envío simulado).
+- **Hecho cuando:** `monthWindow` probado en el cambio de mes; `assertBudget` y registro de `ai_usage`; `GET /v1/admin/ai-budget` con `soft_limit_reached`; marca del 80 % una vez por mes (el push al admin llega con T-213).
 
 ### [ ] T-040 · Extracción de tickets
 - **Docs:** 09 §3–7 · **Depende de:** T-037, T-039, T-012
@@ -170,7 +172,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-100 · Proyecto y módulos
 - **Docs:** 05 §1–2 · **Depende de:** T-001, T-004
-- **Hecho cuando:** módulos creados con dependencias permitidas, catálogo de versiones, Hilt, sabores `dev`/`prod` con `API_BASE_URL` y `GOOGLE_WEB_CLIENT_ID`, build en CI.
+- **Hecho cuando:** módulos creados con dependencias permitidas, catálogo de versiones, Hilt, sabores `dev`/`prod` con `API_BASE_URL`, `GOOGLE_WEB_CLIENT_ID` y `SYNTHETIC_EMAIL_DOMAIN`, `google-services.json` por sabor (escrito en CI desde `GOOGLE_SERVICES_JSON_DEV`), build en CI.
 
 ### [ ] T-101 · `core:model` y `core:pricing`
 - **Docs:** 05 §6 · **Depende de:** T-100, T-006
@@ -288,13 +290,15 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Docs:** 07 §6 · **Depende de:** T-201
 - **Hecho cuando:** compresión por cambio, idempotencia por `checked_at`, fallas consecutivas, transición a `blocked`.
 ### [ ] T-212 · Motor de alertas
-- **Docs:** 08 §2–5 · **Depende de:** T-211
+- **Docs:** 08 §2–5, 03 §11 · **Depende de:** T-211
+- **Hacer:** incluye `GET /v1/alerts/events`.
 - **Hecho cuando:** tabla de 08 §8 (casos 1–11) pasa.
 ### [ ] T-213 · Entrega FCM y avisos de sistema
 - **Docs:** 08 §6 · **Depende de:** T-212, T-022, T-027
 - **Hecho cuando:** caso 12 de 08 §8 pasa; avisos de sistema al admin.
 ### [ ] T-214 · Watchdog del agente
-- **Docs:** 08 §5, 07 §5.1 · **Depende de:** T-213
+- **Docs:** 08 §5, 07 §5.1, 03 §12 · **Depende de:** T-213
+- **Hacer:** incluye `GET /v1/admin/agent`.
 ### [ ] T-220 · Android: agregar URL y listings (S-20, S-21)
 - **Depende de:** T-210, T-126 · **Hecho cuando:** compartir desde la app de Amazon crea el listing.
 ### [ ] T-221 · Android: reglas, historial de alertas, FCM y deep link (S-22, S-23)

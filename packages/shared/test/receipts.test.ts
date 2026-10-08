@@ -16,6 +16,11 @@ describe('expandAbbreviations', () => {
     expect(expandAbbreviations('LCH LALA ENT 1L')).toBe('LECHE LALA ENTERA 1L');
     expect(expandAbbreviations('LCHX ENTRADA')).toBe('LCHX ENTRADA');
   });
+
+  it('keeps DESC when it announces a discount', () => {
+    expect(expandAbbreviations('DESC 15% SHAMPOO H S')).toBe('DESC 15% SHAMPOO H S');
+    expect(expandAbbreviations('LCH DESC LALA 1L')).toBe('LECHE DESCREMADA LALA 1L');
+  });
 });
 
 describe('matchStoreName', () => {
