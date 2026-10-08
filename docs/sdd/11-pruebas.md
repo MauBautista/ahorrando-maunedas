@@ -7,7 +7,7 @@ Requisito: RNF-10. Cada tarea de `12-tareas.md` indica qué pruebas debe dejar f
 | Nivel | Herramienta | Qué cubre |
 |---|---|---|
 | Reglas compartidas | Vitest (TS), JUnit (Kotlin), pytest (Python) contra `fixtures/` | Normalización, promociones, textos, cantidades, usuarios |
-| Worker | Vitest + `@cloudflare/vitest-pool-workers` (D1 y R2 locales con las migraciones reales) | Sync, auth, alertas, ingesta, presupuesto de IA, imágenes |
+| Worker | Vitest 4 + `@cloudflare/vitest-plugin` (antes `vitest-pool-workers`, ya deprecado): `cloudflareTest()` en `vitest.config.ts`, `env`/`exports` de `cloudflare:workers`, D1 y R2 locales con las migraciones reales vía `readD1Migrations`/`applyD1Migrations` | Sync, auth, alertas, ingesta, presupuesto de IA, imágenes |
 | Android | JUnit + Turbine; Robolectric para Room; MockWebServer; Compose UI tests | Repositorios, `SyncWorker`, `PullApplier`, editor de compra |
 | Web | Vitest + Testing Library | Formularios y pantallas con lógica |
 | Agente | pytest con HTML guardado | Adapters, scheduler, dinero, JSON-LD |
@@ -74,46 +74,15 @@ Adicionales del Worker:
 
 ## 4. Integración continua
 
-```yaml
-# .github/workflows/ci.yml
-name: ci
-on: [push, pull_request]
+Fuente de verdad: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml). Corre en cada `push` y `pull_request`, cancela corridas viejas de la misma rama y tiene permisos de solo lectura.
 
-jobs:
-  ts:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: pnpm/action-setup@v4
-      - uses: actions/setup-node@v4
-        with: { node-version: 22, cache: pnpm }
-      - run: pnpm install --frozen-lockfile
-      - run: pnpm -r lint
-      - run: pnpm -r test
-      - run: pnpm --filter web build
+| Job | Pasos |
+|---|---|
+| `ts` | `pnpm/action-setup` (versión de `packageManager`) → `setup-node` con `.nvmrc` → `pnpm install --frozen-lockfile` → `pnpm format:check` → `pnpm lint` → `pnpm typecheck` → `pnpm tokens && git diff --exit-code` (tokens generados al día) → `pnpm --filter web build` (antes de los tests: cuando el Worker sirva `apps/web/dist`, sus tests lo necesitan) → `pnpm test` |
+| `android` | `setup-java` (Temurin 17) → `gradle/actions/setup-gradle` (valida el wrapper) → `./gradlew testDevDebugUnitTest lintDevDebug`. Desde T-100 escribe `app/src/dev/google-services.json` desde el secreto `GOOGLE_SERVICES_JSON_DEV` mediante una variable de entorno (no con `echo '${{ … }}'`) |
+| `agent` | `astral-sh/setup-uv` (fijada por SHA: ya no publica etiquetas de versión mayor) → `uv sync --frozen` → `ruff check` → `ruff format --check` → `pytest` |
 
-  android:
-    runs-on: ubuntu-latest
-    defaults: { run: { working-directory: apps/android } }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-java@v4
-        with: { distribution: temurin, java-version: 17 }
-      - uses: gradle/actions/setup-gradle@v4
-      - name: google-services.json de dev
-        run: echo '${{ secrets.GOOGLE_SERVICES_JSON_DEV }}' > app/src/dev/google-services.json
-      - run: ./gradlew testDevDebugUnitTest lintDevDebug
-
-  agent:
-    runs-on: ubuntu-latest
-    defaults: { run: { working-directory: agent } }
-    steps:
-      - uses: actions/checkout@v4
-      - uses: astral-sh/setup-uv@v5
-      - run: uv sync --frozen
-      - run: uv run ruff check .
-      - run: uv run pytest
-```
+Versiones de acciones (2026-10): `actions/checkout@v7`, `actions/setup-node@v7`, `pnpm/action-setup@v6`, `actions/setup-java@v6`, `gradle/actions/setup-gradle@v6`, `astral-sh/setup-uv` v10.2.0 por SHA.
 
 Despliegue: manual en E1 (`pnpm --filter api deploy`). Automatizar solo cuando el flujo esté estable.
 

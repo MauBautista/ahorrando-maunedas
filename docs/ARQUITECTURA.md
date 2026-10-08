@@ -99,7 +99,7 @@ El producto elige su unidad de despliegue (`kg`, `100g`, `L`, `100ml`, `pz`). So
 | Detergente 3 L, 2x1 | volume, 3000, ×1 | 2 × $89 − $89 = $89 | 8900 / 6000 = 1.48 ¢/ml | **$14.83 / L** (efectivo) |
 
 ```ts
-// packages/shared/src/units.ts
+// packages/shared/src/pricing/units.ts
 export type Measure = 'mass' | 'volume' | 'count';
 export type DisplayUnit = 'kg' | '100g' | 'L' | '100ml' | 'pz';
 

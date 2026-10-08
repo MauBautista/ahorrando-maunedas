@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
-**Última actualización:** 2026-09-30
-**Etapa actual:** 0 — Fundaciones. Diseño y SDD completos, sin código.
+**Última actualización:** 2026-10-08
+**Etapa actual:** 0 — Fundaciones. Hito 1 (monorepo, CI, reglas compartidas, tokens) completo; faltan recursos en la nube y spikes.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -9,14 +9,17 @@
 - `docs/ARQUITECTURA.md` y `docs/esquema-d1.sql` v0 (validado en SQLite: vista de precios, LWW, cursores, índices únicos parciales).
 - `fixtures/` con vectores de normalización, promociones, textos (búsqueda y tickets), cantidades de catálogo y usuarios; todos verificados contra implementaciones de referencia.
 - **SDD v1** en `docs/sdd/` con requisitos, contratos, diseño por módulo, pruebas y tareas `T-xxx`.
+- **Hito 1 (2026-10-08):** repositorio público https://github.com/MauBautista/ahorrando-maunedas (T-001); CI con jobs `ts`, `android` y `agent` en cada push y PR (T-002); `packages/shared` con las reglas compartidas pasando los 6 fixtures, 113 pruebas (T-006); tokens de diseño que generan `tokens.css` y `Tokens.kt`, con prueba de contraste AA (T-007).
+- Entorno verificado: la máquina de desarrollo es el servidor casero; workerd (`wrangler dev` y tests del Worker) corre bien en su CPU.
 
 ## En curso
-- Nada.
+- Mauricio: consolas de Cloudflare, Firebase (dos proyectos) y OpenRouter (T-003 a T-005), con la guía de la sesión del 2026-10-08.
+- PR de revisión `docs(sdd): v1.1` con los hallazgos de la revisión crítica del SDD que no tocaban el Hito 1.
 
 ## Siguiente
-1. Crear el repositorio y hacer el primer commit con los documentos (T-001).
-2. Crear recursos de Cloudflare, Firebase y OpenRouter (T-003 a T-005).
-3. Ejecutar spikes A–E (T-010 a T-014) y registrar resultados abajo.
+1. Hito 2: T-003 (wrangler.jsonc con IDs y deploy de `maunedas-dev`), T-005, spikes A (rembg) y B (scraping) en este servidor.
+2. Hito 3: T-004, spike E (correo sintético; primero de los que dependen de Firebase) y spike C (tickets).
+3. Spike D (T-013) justo después de T-031; ahí se cierra D3.
 
 ## Decisiones tomadas
 
@@ -46,6 +49,15 @@
 | T22 | **Por defecto (antes D7):** permisos admin/miembro según ARQUITECTURA §11 | Validar con la familia en uso real |
 | T23 | Respaldo semanal = volcado comprimido del espejo SQLite local (sin wrangler en el agente) | Menos dependencias en el contenedor |
 | T24 | Android `minSdk 26`; UI con tamaños táctiles ≥ 48 dp y soporte de fuente grande | Teléfonos de toda la familia |
+| T25 | **Dos proyectos de Firebase** (dev y prod) | Desactivar, borrar o compensar cuentas en dev nunca toca las cuentas de la familia |
+| T26 | Repositorio **público** `MauBautista/ahorrando-maunedas`; una rama y un PR por tarea, fusión con squash cuando CI pasa | Decisión de Mauricio; minutos de Actions sin límite; nada secreto en el repo (gitleaks antes del primer push) |
+| T27 | Toolchain fijado: Node 24 LTS; pnpm 12 con catálogo, versiones exactas y `minimumReleaseAge` de 1 día; **TypeScript 6.0.3** (typescript-eslint aún no admite 7); **Vitest 4.1.11** (el plugin de Workers exige ^4.1); Gradle 9.8.1, AGP 9.4.1 con Kotlin integrado (KGP 2.4.20), compile/targetSdk 37 | Versiones verificadas el 2026-10-08 y compatibles entre sí |
+| T28 | Tests del Worker con `@cloudflare/vitest-plugin` (`vitest-pool-workers` está deprecado) | Nombre nuevo del paquete oficial |
+| T29 | Paquetes `api`, `web`, `@maunedas/shared`, `@maunedas/design-tokens`; `shared` se consume como TS fuente sin build | Los filtros de `CLAUDE.md` funcionan omitiendo el scope; un paso de build menos |
+| T30 | Namespaces UUIDv5 fijos (04 §2.1) y `fixtures/ids.json` | Que TS y Kotlin generen el mismo id para alias y etiquetas |
+| T31 | `roundHalfUp(x) = floor(x + 0.5)` en TS y Kotlin; descuentos de promoción acotados a `[0, bruto]`; `detectPromotion` devuelve `null` con texto vacío | Paridad exacta entre lenguajes; contrato completo |
+| T32 | `Tokens.kt` solo con primitivos hasta T-106; paleta inicial verde con fuentes de precio verde azulado (pagado), ámbar (anaquel) y azul (web) | Sin depender de Compose todavía; colores distinguibles para daltonismo, cambiables en `tokens.json` |
+| T33 | Bucket R2 `maunedas-images-dev` aparte; en Firebase **no** se desactiva el registro de usuarios | Pruebas de dev fuera de los respaldos de prod; bloquear el registro rompe el primer login con Google (el Worker ya rechaza cuentas no vinculadas) |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -68,6 +80,9 @@
 | Licencia de imágenes de Open Food Facts | Guardar licencia, atribución y URL de origen por imagen |
 | Límite de 10 ms de CPU del plan Free | Lotes pequeños, trabajo diferido con `waitUntil`, imágenes por URL; plan Paid como salida |
 | Olvido de contraseña sin correo real | Restablecimiento por el admin desde la web |
+| CPU del servidor (A8-7410, Puma+) **sin AVX2/FMA**: binarios compilados para x86-64-v3 fallarían | workerd verificado el 2026-10-08 (funciona); onnxruntime se prueba en el spike A; si algo falla localmente, CI corre en runners con AVX2 |
+| RAM del servidor (6.7 GB) compartida con Home Assistant y otros contenedores; también es la máquina de desarrollo | Gradle con `-Xmx2g`; no correr Gradle y spikes a la vez; contenedores de spike con `--memory` y `--cpus`; no se toca el compose existente |
+| D1 Free: 50 consultas por invocación y 100 parámetros por consulta; no está claro si cada sentencia de un batch cuenta | El spike D mide batches de 102 y 150 sentencias; salidas: push ≤ 45 filas o plan Paid (D3) |
 
 ## Resultados de spikes
 _Pendiente._
@@ -75,3 +90,4 @@ _Pendiente._
 ## Bitácora
 - **2026-09-30** — Requisitos cerrados. Implementación cambia a Cloudflare como núcleo. Documentos base v0, esquema validado y fixtures de normalización creados.
 - **2026-09-30** — Auth dual (usuario/contraseña + Google), dominio `workers.dev`, CP 72750. SDD v1 escrito.
+- **2026-10-08** — Revisión crítica del SDD (41 hallazgos), diagnóstico del entorno y hoja de ruta. Hito 1 completo: repo público, CI, `packages/shared` (113 pruebas sobre los fixtures) y tokens de diseño. Decisiones T25–T33.
