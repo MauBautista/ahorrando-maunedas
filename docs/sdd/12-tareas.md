@@ -22,16 +22,17 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ## Etapa 0 · Fundaciones
 
-### [ ] T-001 · Monorepo y documentos
+### [x] T-001 · Monorepo y documentos
 - **Docs:** `CLAUDE.md` (estructura)
 - **Depende de:** —
 - **Hacer:** repositorio con `apps/api`, `apps/web`, `apps/android`, `packages/shared`, `packages/design-tokens`, `agent/`, `fixtures/`, `docs/`; `pnpm-workspace.yaml`; `.editorconfig`; `.gitignore` (incluye `agent/.env`, `*.jks`, `google-services.json` de prod, `.dev.vars`); commit de todos los documentos.
 - **Hecho cuando:** `pnpm install` funciona en la raíz; el repositorio está en GitHub.
 
-### [ ] T-002 · Integración continua
+### [x] T-002 · Integración continua
 - **Docs:** 11 §4
 - **Depende de:** T-001
 - **Hecho cuando:** el workflow corre en cada push y pasa con proyectos vacíos (un test trivial por componente).
+- **Nota:** el job de Android no aplica el plugin `google-services` hasta T-100 (el `google-services.json` depende de T-004).
 
 ### [ ] T-003 · Recursos de Cloudflare
 - **Docs:** 03 §2
@@ -46,15 +47,17 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-005 · OpenRouter
 - **Docs:** 09 §2
+- **Depende de:** T-003
 - **Hecho cuando:** key exclusiva con límite mensual de 6 USD; secreto `OPENROUTER_API_KEY` en el Worker de dev.
 
-### [ ] T-006 · `packages/shared` base
+### [x] T-006 · `packages/shared` base
 - **Docs:** 04 §2, 09 §5–6, 10 §2.2, 02 §3, `ARQUITECTURA.md` §3.1
 - **Depende de:** T-001
 - **Hacer:** `pricing/units.ts`, `pricing/promotions.ts` (fórmulas y detección), `text/searchKey.ts`, `receipts/normalize.ts`, `receipts/abbreviations.ts`, `receipts/stores.ts`, `catalog/quantity.ts` (+ `suggestVariantLabel`), `auth/username.ts`, `util/uuid.ts` (v7 y v5 con namespaces fijos).
 - **Hecho cuando:** Vitest pasa **todos** los fixtures de `fixtures/`.
 
-### [ ] T-007 · Tokens de diseño
+### [x] T-007 · Tokens de diseño
+- **Depende de:** T-001
 - **Hacer:** `packages/design-tokens/tokens.json` (colores con modo claro/oscuro, tipografía, espaciado, radios, colores por fuente de precio: pagado, anaquel, web) + script que genera `apps/web/src/styles/tokens.css` y `core/designsystem/.../Tokens.kt`.
 - **Hecho cuando:** el script corre en CI y ambos archivos generados están versionados.
 
@@ -65,12 +68,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-011 · Spike B: scraping de tiendas prioritarias
 - **Docs:** 11 §7, 07 §9 · **Decide:** métodos por tienda, `mem_limit` · **Deja:** fixtures HTML en `agent/tests/fixtures/html/`
 ### [ ] T-012 · Spike C: extracción de tickets
-- **Docs:** 09 §9 · **Decide:** D2 y `AI_RECEIPT_MODEL`
+- **Docs:** 09 §9 · **Depende de:** T-003, T-005 · **Decide:** D2 y `AI_RECEIPT_MODEL`
 ### [ ] T-013 · Spike D: CPU del Worker
 - **Docs:** 11 §7 · **Depende de:** T-021, T-022, T-031 (versiones mínimas) · **Decide:** D3
 ### [ ] T-014 · Spike E: correo sintético
 - **Docs:** 02 §3, 11 §7 · **Depende de:** T-004 · **Decide:** D9
 ### [ ] T-015 · Cerrar decisiones
+- **Depende de:** T-010 a T-014
 - **Hecho cuando:** D2, D3, D5 y D9 están en "Decisiones tomadas" de `ESTADO.md` con resultados de los spikes.
 
 ---
@@ -193,13 +197,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** tema claro/oscuro desde tokens; `MoneyField`, `QuantityField`, `StorePicker`, `VariantSearchField`, `PriceText` (con precio por unidad) con previews y prueba de fuente al 200 %.
 
 ### [ ] T-110 · Login y sesión
-- **Docs:** 02 §6 · **Depende de:** T-103, T-021
+- **Docs:** 02 §6 · **Depende de:** T-103, T-021, T-027
 - **Hecho cuando:** usuario/contraseña y Google funcionan contra dev; mensajes de 02 §8; sesión offline; cierre de sesión con advertencia de pendientes.
 
 ### [ ] T-111 · Inicio (S-02)
 - **Depende de:** T-110, T-104
 ### [ ] T-112 · Catálogo (S-07)
-- **Depende de:** T-104, T-106 · **Hecho cuando:** búsqueda local sin acentos, filtros por categoría (con subcategorías) y etiqueta, mejor precio por unidad por tarjeta.
+- **Depende de:** T-104, T-106, T-101 · **Hecho cuando:** búsqueda local sin acentos, filtros por categoría (con subcategorías) y etiqueta, mejor precio por unidad por tarjeta.
 ### [ ] T-113 · Editor de producto y variante (S-09, S-10)
 - **Depende de:** T-112 · **Hecho cuando:** asistente de contenido guarda unidades base correctas; códigos múltiples; borrado solo para admin.
 ### [ ] T-114 · Ficha: presentaciones y comparador (S-08)
@@ -216,14 +220,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-120 · Lista de compras (S-03)
 - **Depende de:** T-104
 ### [ ] T-121 · Editor de compra y de línea (S-04, S-05)
-- **Docs:** 05 §5, 09 §6.1 · **Depende de:** T-120, T-112
+- **Docs:** 05 §5, 09 §6.1 · **Depende de:** T-120, T-112, T-101
 - **Hecho cuando:** promociones calculadas según fixtures, a granel, descuentos de ticket, validación del total, borrado en cascada (04 §6.2), autoguardado.
 ### [ ] T-122 · Escaneo continuo en compra
 - **Depende de:** T-121, T-116
 ### [ ] T-123 · Foto de ticket (escáner de documentos)
 - **Depende de:** T-121, T-105
 ### [ ] T-124 · Revisión de ticket (S-06)
-- **Docs:** 09 §7 · **Depende de:** T-123, T-040
+- **Docs:** 09 §7 · **Depende de:** T-123, T-040, T-101
 - **Hecho cuando:** estados de línea, aceptar sugerencia, crear producto desde una línea, confirmar crea compra + alias + códigos; segunda compra se vincula sola.
 ### [ ] T-125 · Precio de anaquel (S-13)
 - **Depende de:** T-121
@@ -235,7 +239,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ## Etapa 1 · Web
 
 ### [ ] T-160 · Esqueleto web
-- **Docs:** 06 §1–4, 06 §6–7, 02 §7 · **Depende de:** T-020, T-025, T-007
+- **Docs:** 06 §1–4, 06 §6–7, 02 §7 · **Depende de:** T-020, T-025, T-007, T-004, T-021
 - **Hecho cuando:** login con ambos métodos (incluido Safari de iPhone vía proxy), layout responsive, cliente HTTP, despliegue junto con el Worker.
 ### [ ] T-161 · Catálogo y ficha web (W-07 a W-09)
 - **Depende de:** T-160, T-033, T-034
@@ -244,7 +248,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-163 · Tickets web (W-06)
 - **Depende de:** T-162, T-040, T-037
 ### [ ] T-164 · Precio de anaquel y escaneo web (W-10)
-- **Depende de:** T-161
+- **Depende de:** T-161, T-036
 ### [ ] T-165 · Administración web (W-11 a W-13)
 - **Depende de:** T-160, T-023, T-038, T-039
 ### [ ] T-166 · Cuenta (W-14)
@@ -261,7 +265,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ## Etapa 2 · Agente y tracking
 
 ### [ ] T-200 · Proyecto del agente
-- **Docs:** 07 §2–4, 07 §12–13 · **Depende de:** T-011
+- **Docs:** 07 §2–4, 07 §12–13 · **Depende de:** T-011, T-201 (el healthcheck necesita `/work`)
 - **Hecho cuando:** contenedor corre en el servidor, SQLite local creada, logs JSON, healthcheck.
 ### [ ] T-201 · `/agent/v1` auth y `/work`
 - **Docs:** 07 §5.1 · **Depende de:** T-026
@@ -303,7 +307,8 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ## Etapa 2 · Respaldos y cierre
 
 ### [ ] T-230 · Respaldos
-- **Docs:** 07 §5.4, 07 §10 · **Depende de:** T-200, T-032
+- **Docs:** 07 §5.4, 07 §10 · **Depende de:** T-200, T-201, T-032
+- **Hacer:** incluye la ruta `POST /agent/v1/backup/pull` en el Worker.
 ### [ ] T-231 · Prueba de restauración
 - **Hecho cuando:** procedimiento y resultado en `ESTADO.md` (RF-BAK-04).
 ### [ ] T-290 · Cierre de la Etapa 2

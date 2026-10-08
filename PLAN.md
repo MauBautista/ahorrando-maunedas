@@ -10,8 +10,8 @@ Convención: `[ ]` pendiente · `[~]` en curso · `[x]` hecho.
 
 Objetivo: esqueleto desplegable y decisiones abiertas resueltas con datos antes de escribir funcionalidad.
 
-- [ ] Monorepo, CI, recursos de Cloudflare, Firebase y OpenRouter — T-001 a T-005
-- [ ] `packages/shared` pasando todos los fixtures; tokens de diseño — T-006, T-007
+- [~] Monorepo, CI, recursos de Cloudflare, Firebase y OpenRouter — T-001 a T-005 (T-001 y T-002 hechas)
+- [x] `packages/shared` pasando todos los fixtures; tokens de diseño — T-006, T-007
 - [ ] Spikes A (rembg), B (scraping), C (tickets), D (CPU), E (correo sintético) — T-010 a T-014
 - [ ] Decisiones D2, D3, D5, D9 cerradas — T-015
 
@@ -27,6 +27,7 @@ Objetivo: los cuatro usuarios registran compras reales, offline en Android, con 
 - [ ] Sync push/pull — T-030 a T-032
 - [ ] Consulta, historial, comparador, compras, códigos, imágenes, fusión — T-033 a T-038
 - [ ] IA: gateway, presupuesto y extracción de tickets — T-039, T-040
+- [ ] Cron de mantenimiento — T-041
 - [ ] Android base (módulos, pricing, Room, red, sync, subidas, diseño) — T-100 a T-106
 - [ ] Android funcional: login, inicio, catálogo, fichas, escáner, fotos, compras, tickets, anaquel, ajustes — T-110 a T-126
 - [ ] Web: base, catálogo, compras, tickets, anaquel, admin, cuenta — T-160 a T-166

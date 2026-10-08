@@ -40,19 +40,26 @@ ahorrando-maunedas/
 Se crean en la Etapa 0. Mantener esta lista al día.
 
 ```bash
+nvm use && corepack enable pnpm             # Node 24 (.nvmrc) y pnpm de packageManager
 pnpm install
+pnpm lint                                   # ESLint en todo el monorepo (raíz)
+pnpm format:check                           # Prettier (no toca docs/ ni fixtures/)
+pnpm typecheck                              # tsc en cada paquete (api corre `wrangler types` antes)
+pnpm test                                   # Vitest en cada paquete
+pnpm tokens                                 # regenera tokens.css y Tokens.kt desde tokens.json
 pnpm --filter api dev                       # Worker local con D1/R2 locales (secretos en apps/api/.dev.vars)
-pnpm --filter api test                      # Vitest con @cloudflare/vitest-pool-workers
-pnpm --filter api db:generate               # drizzle-kit → migrations/
-pnpm --filter api db:migrate:local          # wrangler d1 migrations apply maunedas --local
-pnpm --filter api deploy:dev                # web + Worker "maunedas-dev"
-pnpm --filter api deploy                    # web + Worker "maunedas" (producción)
+pnpm --filter api test                      # Vitest dentro de workerd con @cloudflare/vitest-plugin
+pnpm --filter api db:generate               # drizzle-kit → migrations/ (se crea en T-026)
+pnpm --filter api db:migrate:local          # wrangler d1 migrations apply maunedas --local (T-026)
+pnpm --filter api deploy:dev                # Worker "maunedas-dev" (la web se suma en T-020)
+pnpm --filter api deploy                    # Worker "maunedas" (producción; la web se suma en T-020)
 pnpm --filter web dev                       # proxy de /v1 y /__ al Worker local
+pnpm --filter web build
 pnpm --filter shared test                   # fixtures
 
-cd apps/android && ./gradlew testDevDebugUnitTest
-cd agent && uv run pytest
-docker compose up -d maunedas-agent         # en el servidor casero
+cd apps/android && ./gradlew testDevDebugUnitTest lintDevDebug
+cd agent && uv sync && uv run ruff check . && uv run pytest
+docker compose up -d maunedas-agent         # en el servidor casero (Etapa 2)
 ```
 
 ## Reglas no negociables
