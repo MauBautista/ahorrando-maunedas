@@ -2,5 +2,20 @@
   "name": "api",
   "version": "0.0.0",
   "private": true,
-  "type": "module"
+  "type": "module",
+  "scripts": {
+    "dev": "wrangler dev",
+    "cf-typegen": "wrangler types",
+    "typecheck": "wrangler types && tsc -p tsconfig.json && tsc -p test/tsconfig.json",
+    "test": "vitest run",
+    "deploy:dev": "wrangler deploy --env dev",
+    "deploy": "wrangler deploy"
+  },
+  "devDependencies": {
+    "@cloudflare/vitest-plugin": "catalog:",
+    "@types/node": "catalog:",
+    "typescript": "catalog:",
+    "vitest": "catalog:",
+    "wrangler": "catalog:"
+  }
 }

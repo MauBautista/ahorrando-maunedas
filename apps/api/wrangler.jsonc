@@ -1,0 +1,13 @@
+// Minimal Worker until T-003 (resource ids) and T-020 (full config, see SDD 03 §2).
+{
+  "$schema": "./node_modules/wrangler/config-schema.json",
+  "name": "maunedas",
+  "main": "src/index.ts",
+  "compatibility_date": "2026-09-30",
+  "compatibility_flags": ["nodejs_compat"],
+  "workers_dev": true,
+  "observability": { "enabled": true },
+  "env": {
+    "dev": { "name": "maunedas-dev" },
+  },
+}
