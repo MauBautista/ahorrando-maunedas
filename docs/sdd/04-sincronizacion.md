@@ -74,6 +74,24 @@ export const TABLES = {
 
 Cada tabla tiene además un esquema Zod de fila (`packages/shared/src/sync/rows.ts`) con tipos, enums, longitudes máximas (`name` ≤ 200, `notes` ≤ 2000, `raw_text` ≤ 300) y las reglas de la columna "Reglas especiales".
 
+### 2.1 Identificadores y claves deterministas
+
+Dos dispositivos sin red deben generar el mismo id para la misma relación. Implementación en `packages/shared/src/util/uuid.ts` y `core:model` (Kotlin); vectores en `fixtures/ids.json`.
+
+| Tabla | `id` | Nombre (UTF-8) |
+|---|---|---|
+| `product_tags` | `uuidv5(nombre, NS_PRODUCT_TAGS)` | `product_id + ':' + tag_id` |
+| `receipt_aliases` | `uuidv5(nombre, NS_RECEIPT_ALIASES)` | `store_id + ':' + raw_text_norm` |
+
+Namespaces fijos (no cambian nunca; cambiarlos cambiaría todos los ids):
+
+| Constante | Valor |
+|---|---|
+| `NS_PRODUCT_TAGS` | `2bbba539-5872-4d57-8ff4-222c52764194` |
+| `NS_RECEIPT_ALIASES` | `1258c7ae-83bc-44c3-be9d-5e4ce482dbb8` |
+
+`products.search_key = searchKey(name + ' ' + (brand ?? ''))`, donde `searchKey`: descomponer (NFKD), quitar marcas diacríticas, pasar a minúsculas, reemplazar cada tramo de caracteres fuera de `a-z0-9` por un espacio y recortar. Casos en `fixtures/textos.json` (`search_key`).
+
 ## 3. Push
 
 ### 3.1 Contrato

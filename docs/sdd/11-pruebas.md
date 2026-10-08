@@ -25,6 +25,9 @@ Servicios externos (Firebase, Google OAuth, FCM, OpenRouter, Open Food Facts, ti
 | `fixtures/textos.json` | `search_key` y `raw_text_norm` | shared, Android |
 | `fixtures/cantidades.json` | `parseQuantity` y etiqueta sugerida | shared, Android |
 | `fixtures/usuarios.json` | Usuario → correo sintético | shared, Android |
+| `fixtures/ids.json` | Namespaces y vectores UUIDv5 (`product_tags`, `receipt_aliases`, 04 §2.1) | shared, Android |
+
+En TS, `packages/shared/test/coverage.test.ts` falla si un archivo de `fixtures/` no tiene suite. Cada suite valida la forma del fixture con Zod antes de usarlo.
 
 Regla: si una implementación no pasa un fixture, se corrige la implementación. Un fixture solo cambia cuando cambia la regla del SDD (y ambos en el mismo cambio).
 

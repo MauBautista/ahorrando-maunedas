@@ -30,7 +30,7 @@ Versiones en `gradle/libs.versions.toml`; ninguna versión escrita en los `build
 apps/android/
 ├── app/                       Application, MainActivity, NavHost, deep links, DI raíz
 ├── core/
-│   ├── model/                 Modelos de dominio puros, Usernames, Uuid7, Money
+│   ├── model/                 Modelos de dominio puros, Usernames, Uuids (v7 y v5, 04 §2.1), Money
 │   ├── pricing/               Units, Promotions, SearchKey, QuantityParser (fixtures compartidos)
 │   ├── database/              Room: entidades, DAOs, vistas, AppDatabase, migraciones
 │   ├── network/               Retrofit APIs, DTOs, AuthInterceptor, TokenAuthenticator, manejo de errores
@@ -224,6 +224,7 @@ Implementaciones Kotlin que pasan los fixtures de `fixtures/`:
 | `ReceiptText` | `textos.json` (`raw_text_norm`) | Normalización de líneas de ticket (alias) |
 | `QuantityParser` | `cantidades.json` | Interpretar "6 x 1 l" del catálogo abierto |
 | `Usernames` | `usuarios.json` | Correo sintético |
+| `Uuids` (`core:model`) | `ids.json` | UUIDv7 e ids deterministas de `product_tags` y `receipt_aliases` |
 
 ```kotlin
 object Promotions {
@@ -245,7 +246,7 @@ object Promotions {
 }
 ```
 
-Redondeo: *half-up* a centavo (igual que `Math.round` de JS para positivos).
+Redondeo: *half-up* a centavo con `roundHalfUp(x) = floor(x + 0.5)` (igual que `Math.round` de JS/Java). Nunca `kotlin.math.round` ni `roundToLong()` sobre `Double` sin revisar: `round` redondea a par y rompe la paridad con TS (09 §6.1). Las fórmulas exactas, el acotamiento a `[0, bruto]` y los nombres de función siguen `packages/shared/src/pricing/promotions.ts`.
 
 ## 7. Formato y accesibilidad
 

@@ -212,6 +212,9 @@ catalogs:
     typescript-eslint:
       specifier: 8.71.1
       version: 8.71.1
+    uuid:
+      specifier: 14.0.2
+      version: 14.0.2
     vite:
       specifier: 8.3.3
       version: 8.3.3
@@ -221,6 +224,9 @@ catalogs:
     wrangler:
       specifier: 4.148.0
       version: 4.148.0
+    zod:
+      specifier: 4.6.5
+      version: 4.6.5
 
 importers:
 
@@ -313,6 +319,13 @@ importers:
         version: 4.1.11(@types/node@24.19.1)(vite@8.3.3(@types/node@24.19.1)(esbuild@0.28.1))
 
   packages/shared:
+    dependencies:
+      uuid:
+        specifier: 'catalog:'
+        version: 14.0.2
+      zod:
+        specifier: 'catalog:'
+        version: 4.6.5
     devDependencies:
       '@types/node':
         specifier: 'catalog:'
@@ -1682,6 +1695,10 @@ packages:
   uri-js@4.4.1:
     resolution: {integrity: sha512-7rKUyy33Q1yc98pQ1DAmLtwX109F7TIfWlW1Ydo8Wl1ii1SeHieeh0HHfPeL2fMXK6z0s8ecKs9frCuLJvndBg==}
 
+  uuid@14.0.2:
+    resolution: {integrity: sha512-xZe/16rV4aa+HGSOCiY2YeLT1OybRLrrkL/Rqaq7p7GMVXjFh+6wN4oMYgjFmnSnhY8t6Xpdl2l9qmnHYuMHwQ==}
+    hasBin: true
+
   vite@8.3.3:
     resolution: {integrity: sha512-cTAldKPImjg6c+gk48U19POPn3GCBzZwpdsN8ZMEEcbpes+6/wvfqUd0C2y3qYY4wsj8PwgFwrZ/1jBPVttMSg==}
     engines: {node: ^20.19.0 || >=22.12.0}
@@ -3041,6 +3058,8 @@ snapshots:
   uri-js@4.4.1:
     dependencies:
       punycode: 2.3.1
+
+  uuid@14.0.2: {}
 
   vite@8.3.3(@types/node@24.19.1)(esbuild@0.28.1):
     dependencies:

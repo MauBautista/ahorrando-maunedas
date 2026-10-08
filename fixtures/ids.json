@@ -1,0 +1,19 @@
+{
+  "descripcion": "Identificadores deterministas (SDD 04 §2.1). UUIDv5 (RFC 9562) = SHA-1 del namespace + nombre en UTF-8. product_tags: nombre = product_id + ':' + tag_id. receipt_aliases: nombre = store_id + ':' + raw_text_norm. Vectores verificados con uuid.uuid5 de la biblioteca estándar de Python.",
+  "namespaces": {
+    "NS_PRODUCT_TAGS": "2bbba539-5872-4d57-8ff4-222c52764194",
+    "NS_RECEIPT_ALIASES": "1258c7ae-83bc-44c3-be9d-5e4ce482dbb8"
+  },
+  "uuidv5": [
+    { "nombre": "RFC: namespace DNS + www.example.com", "namespace": "6ba7b810-9dad-11d1-80b4-00c04fd430c8", "entrada": "www.example.com", "esperado": "2ed6657d-e927-568b-95e1-2665a8aea6a2" }
+  ],
+  "product_tag_id": [
+    { "nombre": "Etiqueta A", "product_id": "0192a5e0-7c3e-7b2a-9f1d-3c4b5a6d7e8f", "tag_id": "0192a5e1-1a2b-7c3d-8e4f-5a6b7c8d9e0f", "esperado": "f863b389-88f6-54af-ac0f-aac5246c60b3" },
+    { "nombre": "Etiqueta B del mismo producto", "product_id": "0192a5e0-7c3e-7b2a-9f1d-3c4b5a6d7e8f", "tag_id": "0192a5e3-4c5d-7e6f-a071-8b9c0d1e2f3a", "esperado": "28a2d86f-c5b7-5ec2-ba6e-ad4f4229e883" }
+  ],
+  "receipt_alias_id": [
+    { "nombre": "Alias simple", "store_id": "0192a5e2-2b3c-7d4e-9f50-6a7b8c9d0e1f", "raw_text_norm": "LCH LALA ENT 1L", "esperado": "dde68ea0-f7ae-590a-b3b3-0637ac52e345" },
+    { "nombre": "Alias con %", "store_id": "0192a5e2-2b3c-7d4e-9f50-6a7b8c9d0e1f", "raw_text_norm": "DESC 15% SHAMPOO H S", "esperado": "1f33ee36-740d-5c36-8223-a1f4e025f908" },
+    { "nombre": "Mismo texto en otra tienda", "store_id": "0192a5e4-5d6e-7f70-b182-9cadbecfd0e1", "raw_text_norm": "LCH LALA ENT 1L", "esperado": "10ba016c-013a-5876-838e-8cd957c54746" }
+  ]
+}
