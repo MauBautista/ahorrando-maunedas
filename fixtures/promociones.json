@@ -1,5 +1,5 @@
 {
-  "descripcion": "Promociones (SDD 09 §6). descuentos: descuento de línea en centavos, redondeo half-up. deteccion: tipo y params a partir del texto del ticket.",
+  "descripcion": "Promociones (SDD 09 §6). descuentos: descuento de línea en centavos, redondeo half-up. deteccion: tipo y params a partir del texto del ticket; type null = sin promoción (texto vacío).",
   "descuentos": [
     { "nombre": "2x1 con 2 piezas", "type": "nxm", "params": { "n": 2, "m": 1 }, "unit_price_cents": 8900, "quantity": 2, "esperado": 8900 },
     { "nombre": "2x1 con 3 piezas", "type": "nxm", "params": { "n": 2, "m": 1 }, "unit_price_cents": 8900, "quantity": 3, "esperado": 8900 },
@@ -28,6 +28,7 @@
     { "texto": "DESC 15%", "type": "percent", "params": { "percent": 15 } },
     { "texto": "AHORRO", "type": "price_cut", "params": {} },
     { "texto": "Rebaja", "type": "price_cut", "params": {} },
-    { "texto": "OFERTA ESPECIAL", "type": "other", "params": { "text": "OFERTA ESPECIAL" } }
+    { "texto": "OFERTA ESPECIAL", "type": "other", "params": { "text": "OFERTA ESPECIAL" } },
+    { "texto": "   ", "type": null, "params": null }
   ]
 }

@@ -316,11 +316,15 @@ En orden:
 | `msi` | `months` | 0 (`affects_price = 0`) |
 | `bundle` / `other` | `amount_cents` | el monto |
 
+Redondeo half-up: `roundHalfUp(x) = floor(x + 0.5)` en TS y Kotlin (igual a `Math.round` de JS/Java); nunca `kotlin.math.round`, que redondea a par. El descuento se acota a `[0, bruto]` con `bruto = roundHalfUp(cantidad × precio)`. Si falta un parámetro requerido del tipo, la función lanza error.
+
 Casos en `fixtures/promociones.json` (`descuentos`).
 
 ### 6.2 Detección desde texto del ticket
 
-`promo_guess` a partir de `promo_text` (o `raw_text` si no hay), en este orden; casos en `fixtures/promociones.json` (`deteccion`):
+`promo_guess` a partir de `promo_text` (o `raw_text` si no hay), en este orden; casos en `fixtures/promociones.json` (`deteccion`).
+
+Contrato: `detectPromotion(text) → { type, params } | null`. El texto se normaliza (sin acentos, mayúsculas, espacios colapsados). Texto vacío → `null`; texto sin patrón conocido → `other { text }` con el texto original recortado. La condición "descuento > 0" la aplica quien llama (`promo_guess` solo se calcula para líneas con descuento o `promo_text`).
 
 | Patrón (sobre texto normalizado) | Resultado |
 |---|---|
