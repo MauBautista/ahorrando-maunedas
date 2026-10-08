@@ -17,7 +17,7 @@ Requisitos: todos los `RF-*` con interfaz remota. Sync en detalle: [`04-sincroni
 | Trazabilidad | El Worker responde `X-Request-Id` (lo genera si no viene) y lo incluye en cada log |
 | Paginación | `?cursor=<opaco>&limit=<n>` → `next_cursor: string \| null` |
 | Validación | Zod (≥ 4.5) en `packages/shared/src/api/*.ts`, compartido por Worker y web; Android replica los DTOs con kotlinx.serialization |
-| Compatibilidad | Si `X-Client-Schema` < `MIN_CLIENT_SCHEMA` → `426 E-UPGRADE_REQUIRED` |
+| Compatibilidad | Si `X-Client-Schema` viene y es < `MIN_CLIENT_SCHEMA` → `426 E-UPGRADE_REQUIRED`. Si no viene (URL firmada en `<img>`, proveedor de IA descargando páginas, proxy de auth, agente) no se valida, salvo en `/v1/sync/*`, donde es obligatorio (`400 E-VALIDATION_ERROR`) |
 
 ### 1.1 Formato de error
 
@@ -77,7 +77,7 @@ apps/api/src/
 ├── ai/                      gateway, budget, providers/openrouter, prompts/ (ver 09)
 ├── receipts/                extract, match, normalize (ver 09)
 ├── images/                  blobs, signing, import (ver 10)
-├── catalog/                 off (Open Food Facts y hermanos), quantity (parser de contenido)
+├── catalog/                 off (Open Food Facts y hermanos); el parser de contenido vive en packages/shared
 ├── db/                      schema.ts (Drizzle), queries/
 ├── cron/                    watchdog, maintenance
 └── util/                    uuid, time, hash
@@ -148,10 +148,32 @@ export interface Env {
     "AI_SOFT_LIMIT_PCT": "80"
   },
   "env": {
-    "dev": { "name": "maunedas-dev", "d1_databases": [ { "binding": "DB", "database_name": "maunedas-dev", "database_id": "<id-dev>", "migrations_dir": "migrations" } ] }
+    // vars, d1_databases y r2_buckets NO se heredan de la raíz: el entorno dev los repite completos.
+    "dev": {
+      "name": "maunedas-dev",
+      "d1_databases": [ { "binding": "DB", "database_name": "maunedas-dev", "database_id": "<id-dev>", "migrations_dir": "migrations" } ],
+      "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "maunedas-images-dev" }],
+      "vars": {
+        "FIREBASE_PROJECT_ID": "<proyecto-dev>",
+        "SYNTHETIC_EMAIL_DOMAIN": "maunedas.local",
+        "PUBLIC_BASE_URL": "https://maunedas-dev.<subdominio>.workers.dev",
+        "MIN_CLIENT_SCHEMA": "1",
+        "OFF_USER_AGENT": "AhorrandoMaunedas/1.0 (uso personal)",
+        "AI_RECEIPT_PROVIDER": "openrouter",
+        "AI_RECEIPT_MODEL": "<se define en el spike C>",
+        "AI_RECEIPT_EST_COST_USD": "0.01",
+        "AI_IMAGE_EDIT_PROVIDER": "openrouter",
+        "AI_IMAGE_EDIT_MODEL": "<etapa 3>",
+        "AI_IMAGE_EDIT_EST_COST_USD": "0.04",
+        "AI_MONTHLY_BUDGET_USD": "6",
+        "AI_SOFT_LIMIT_PCT": "80"
+      }
+    }
   }
 }
 ```
+
+Recursos por entorno: D1 `maunedas` / `maunedas-dev`, R2 `maunedas-images` / `maunedas-images-dev` (las pruebas de dev nunca entran en los respaldos de prod) y un proyecto de Firebase por entorno (02 §2).
 
 Un solo Cron (cada hora, minuto 7) ejecuta el watchdog del agente y, a las 04:07 hora de México, el mantenimiento diario (limpieza de `token_cache`, `off_cache` vencido y `image_jobs` viejos).
 
@@ -184,7 +206,9 @@ interface BestPrice {
 }
 ```
 
-**Mejor precio** (usado en listas y comparador): para cada combinación (variante, tienda, fuente) se toma el punto más reciente de `v_price_points` de los últimos 90 días; el mejor es el de menor `cents_per_base`.
+**Mejor precio** (usado en listas y comparador): para cada combinación (variante, tienda) se toma el punto más reciente de `v_price_points` de los últimos 90 días, sin importar la fuente; el mejor es el de menor `cents_per_base`. Lista y comparador usan exactamente la misma regla.
+
+**Variantes con otra medida:** si la `measure` de una variante no corresponde al `display_unit` del producto (p. ej. una variante a granel en kg dentro de un producto por piezas), sus valores se expresan en la unidad por defecto de su medida (`kg`, `L` o `pz`) y no compiten por "mejor precio".
 
 ## 4. Rutas públicas
 
@@ -380,7 +404,7 @@ Respuesta, errores y algoritmo: `09-ia-y-tickets.md` §4.
 Resuelve enlaces cortos (`amzn.to`, `a.co`) siguiendo redirecciones con `redirect: 'manual'` (solo se leen los `Location`, sin descargar la página). No crea el listing: el cliente lo crea por sync.
 
 ### `POST /v1/listings/:id/check-now`
-`202`. Escribe `listing_state.check_requested_at = now`.
+`202`. Upsert de `listing_state` (la fila puede no existir aún) con `check_requested_at = now`, en un batch con nueva `version`.
 
 ### `GET /v1/listings?variant_id=`
 `200 { items: Array<ListingRow & { state: ListingStateRow | null }> }`
@@ -406,8 +430,9 @@ Resuelve enlaces cortos (`amzn.to`, `a.co`) siguiendo redirecciones con `redirec
 ### `PATCH /v1/admin/users/:id`
 ```ts
 { display_name?: string; role?: 'admin' | 'member'; active?: boolean; google_email?: string | null }
-// 200 { user } · 409 E-LAST_ADMIN si deja al sistema sin admin activo
+// 200 { user } · 409 E-LAST_ADMIN si deja al sistema sin admin activo · 409 E-GOOGLE_EMAIL_TAKEN
 ```
+Cambiar o quitar `google_email` borra las identidades `google.com` del usuario (02 §5.3).
 
 ### `POST /v1/admin/users/:id/password`
 `{ password: string }` → `204`
@@ -420,12 +445,13 @@ Resuelve enlaces cortos (`amzn.to`, `a.co`) siguiendo redirecciones con `redirec
 { moved: Record<string, number> }     // filas reasignadas por tabla
 ```
 - `variant`: reasigna `barcodes`, `purchase_items`, `price_observations`, `listings`, `alert_rules`, `receipt_aliases`, `images` (owner) al destino; tombstone del origen.
-- `product`: mueve las variantes del origen al producto destino; une etiquetas; tombstone del origen.
+- `product`: mueve las variantes del origen al producto destino; une etiquetas marcando como borradas las `product_tags` del origen y creando o reviviendo `uuidv5(destino:etiqueta)` (04 §2.1), para no dejar duplicados vivos; tombstone del origen.
 - Todas las filas tocadas reciben nueva `version` (un solo batch). `409 E-MERGE_INVALID` si son el mismo, si alguno está eliminado o si en `variant` las medidas difieren (`mass` vs `volume`).
 
 ### `GET /v1/admin/ai-budget`
 ```ts
 { month: string /* '2026-09' */; budget_usd: number; spent_usd: number; soft_limit_pct: number;
+  soft_limit_reached: boolean;     // banner en W-13 (09 §2)
   by_purpose: Record<'receipt' | 'image_edit' | 'other', number>; calls: number }
 ```
 

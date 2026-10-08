@@ -34,13 +34,21 @@ sequenceDiagram
 
 ## 2. Configuración de Firebase (T-004)
 
-1. Proyecto Firebase (plan gratuito). Apps registradas: Android (`com.maubautista.maunedas`) y Web.
+**Dos proyectos** (decisión T25): uno para dev (Worker `maunedas-dev`, sabor Android `dev`) y otro para prod. Así, desactivar, borrar o compensar cuentas en dev nunca toca las cuentas de la familia. Cada paso se hace en ambos, con su host:
+
+| | dev | prod |
+|---|---|---|
+| Host del Worker | `maunedas-dev.<subdominio>.workers.dev` | `maunedas.<subdominio>.workers.dev` |
+| App Android | `com.maubautista.maunedas.dev` | `com.maubautista.maunedas` |
+
+1. Proyecto Firebase (plan gratuito Spark, sin Analytics). Apps registradas: Android y Web.
 2. Authentication → Sign-in method: habilitar **Email/Password** (sin "link por correo") y **Google**.
-3. Si la consola lo ofrece, desactivar la creación de cuentas desde el cliente (User actions → sign-up). Aunque no se pueda, el Worker rechaza cuentas no vinculadas.
-4. Authorized domains: agregar `maunedas.<subdominio>.workers.dev` (y `localhost` para desarrollo, viene por defecto).
-5. Google Cloud Console → Credenciales → cliente OAuth "Web client (auto created by Google Service)": agregar a *Authorized redirect URIs* `https://maunedas.<subdominio>.workers.dev/__/auth/handler`.
-6. Android: registrar SHA-1 y SHA-256 del keystore de debug y del de release. Descargar `google-services.json`.
-7. Cuenta de servicio (la de Firebase Admin SDK): generar llave JSON → secreto del Worker `GOOGLE_SERVICE_ACCOUNT`. Se usa para FCM y para Identity Toolkit.
+3. **No** desactivar la creación de cuentas desde el cliente: esa opción (de Identity Platform) bloquea a todos los proveedores, incluido el primer login con Google, que crea la cuenta (`auth/admin-restricted-operation`). El Worker ya rechaza las cuentas no vinculadas (`USER_NOT_ALLOWED`). La protección contra enumeración de correos se deja activa (viene por defecto).
+4. Authorized domains: el host del Worker del proyecto (`localhost` viene por defecto; en prod puede quitarse).
+5. Google Cloud Console → Credenciales → cliente OAuth "Web client (auto created by Google Service)": agregar a *Authorized redirect URIs* `https://<host>/__/auth/handler` y a *Authorized JavaScript origins* `https://<host>` (en dev también `http://localhost:5173`). Pantalla de consentimiento → Branding: dominio autorizado `<subdominio>.workers.dev`; audiencia externa, "En producción" (con scopes básicos no se requiere verificación).
+6. Android: registrar SHA-1 y SHA-256 del keystore de debug (y del de release en prod). Descargar `google-services.json` a `app/src/dev/` o `app/src/prod/` (ambos fuera de git; el de dev también como secreto de CI `GOOGLE_SERVICES_JSON_DEV`).
+7. Cuenta de servicio (la de Firebase Admin SDK): generar llave JSON → secreto del Worker `GOOGLE_SERVICE_ACCOUNT` (`--env dev` en dev). Se usa para FCM y para Identity Toolkit. Verificar que "Identity Toolkit API" y "Firebase Cloud Messaging API (V1)" estén habilitadas.
+8. Recomendado: restringir la API key web a "Identity Toolkit API" y "Token Service API" con referrer `https://<host>/*`.
 
 ## 3. Usuarios y correo sintético
 
@@ -254,6 +262,8 @@ Alta de usuario (`POST /v1/admin/users`, contrato en `03-api.md`):
 
 Restablecer contraseña: buscar identidad `password` del usuario; si no existe, crearla (alta de cuenta con el correo sintético) y vincularla.
 
+Cambiar o quitar `google_email` (PATCH): validar `GOOGLE_EMAIL_TAKEN` y, en el mismo batch, borrar las filas `user_identities` con `provider='google.com'` del usuario (tabla SERVER: el borrado físico es válido). Si no, la cuenta de Google anterior conservaría el acceso porque se resuelve por `firebase_uid`. La cuenta nueva se vincula en su primer login.
+
 Desactivar: `users.active = 0` + `disableUser: true` en cada identidad. Reactivar: lo inverso.
 
 ### 5.4 Bootstrap del primer admin (T-024)
@@ -314,7 +324,7 @@ class AuthRepository @Inject constructor(
     private val devices: DeviceRegistrar,           // POST /v1/devices con token FCM
 ) {
     suspend fun signInWithPassword(username: String, password: String): LoginResult {
-        val email = runCatching { Usernames.syntheticEmail(username) }
+        val email = runCatching { Usernames.syntheticEmail(username, BuildConfig.SYNTHETIC_EMAIL_DOMAIN) }
             .getOrElse { return LoginResult.InvalidCredentials }
         return try {
             auth.signInWithEmailAndPassword(email, password).await()
@@ -420,6 +430,7 @@ export const loginWithGoogle = () => signInWithPopup(auth, new GoogleAuthProvide
 ```
 
 - Tras el login, `GET /v1/me`; en `403` se hace `signOut` y se muestra el mensaje.
+- Con la protección contra enumeración de correos activa, Firebase responde `auth/invalid-credential` tanto para usuario inexistente como para contraseña incorrecta: se muestra "Usuario o contraseña incorrectos."
 - Cliente HTTP: `await auth.currentUser?.getIdToken()` en cada request; en `401` fuerza `getIdToken(true)` y reintenta una vez.
 - Cambiar contraseña: `reauthenticateWithCredential` + `updatePassword`.
 

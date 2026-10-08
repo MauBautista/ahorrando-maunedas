@@ -133,7 +133,7 @@ export function displayCents(cpb: number, measure: Measure, unit: DisplayUnit): 
 - Una compra = un ticket completo (`purchases`) con líneas (`purchase_items`).
 - Cada línea guarda `unit_price_cents` (lista), `gross_cents`, `discount_cents` y `final_cents` (restricción `final = gross − discount`).
 - `promotions` describe **por qué** hubo descuento, de forma genérica (`type` + `params` JSON). Meses sin intereses se registra con `affects_price = 0`.
-- Descuentos a nivel ticket (cupón global) viven en la compra; para precio por unidad se prorratean proporcionalmente al `final_cents` de cada línea (cálculo, no se guarda).
+- Descuentos a nivel ticket (cupón global) viven en la compra; para precio por unidad se prorratean proporcionalmente al `final_cents` de cada línea viva de la compra (cálculo en `v_price_points`, no se guarda; función `prorateTicketDiscount` en `packages/shared` con su fixture en T-034).
 - Una línea puede quedar sin `variant_id` (ticket leído pero no vinculado); no entra en historiales hasta vincularse.
 
 ### 3.3 Tres fuentes de precio, una vista
@@ -232,7 +232,7 @@ ORDER BY version, id
 LIMIT ?3;
 ```
 
-`alert_rules` y `alert_events` se filtran por `user_id`; de `users` solo bajan `id, username, display_name, role, active`. Todo lo demás es compartido por el hogar.
+`alert_rules` y `alert_events` se filtran por `user_id`; de `users` solo bajan `id, username, display_name, role, active, updated_at, version`. Todo lo demás es compartido por el hogar.
 
 ### 4.4 Android: outbox y workers
 
@@ -258,7 +258,7 @@ class PurchaseRepository @Inject constructor(
             listOf(OutboxEntry(tableName = "purchases", rowId = purchase.id, enqueuedAt = now)) +
             items.map { OutboxEntry(tableName = "purchase_items", rowId = it.id, enqueuedAt = now) }
         )
-        sync.requestExpedited()     // OneTimeWorkRequest con NetworkType.CONNECTED
+        sync.requestSoon()          // OneTimeWorkRequest con NetworkType.CONNECTED (04 §6.6)
     }
 }
 ```
@@ -562,6 +562,8 @@ Prueba de restauración documentada en la etapa 2: crear un D1 nuevo, aplicar mi
 | D1: filas leídas | 5 M / día | Pulls con índice: miles |
 | D1: filas escritas | 100,000 / día | Cientos (compresión por cambio en observaciones web) |
 | D1: almacenamiento | 5 GB total | Decenas de MB por año |
+| D1: consultas por invocación | 50 (Paid: 1,000) | Push de 100 filas = un batch de ~102 sentencias; el spike D mide si cada sentencia cuenta |
+| D1: parámetros por consulta | 100 | Lecturas por lote con `json_each(?1)` |
 | R2 | 10 GB, egress gratis | Fotos WebP optimizadas: ~100 KB c/u |
 
 Si el límite de 10 ms de CPU provoca errores 1102 (sobre todo al decodificar imágenes de T3), el plan Workers Paid (5 USD/mes) sube el límite a 30 s por defecto. Decisión D3.

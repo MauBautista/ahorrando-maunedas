@@ -85,8 +85,9 @@ POST /v1/images/{imageId}/import
 ```
 
 - Hosts permitidos: `images.openfoodfacts.org`, `static.openfoodfacts.org`, `images.openbeautyfacts.org`, `images.openproductsfacts.org`.
+- Host fuera de la lista → `400 E-VALIDATION_ERROR` con `details.reason = 'HOST_NOT_ALLOWED'`.
 - Máximo 10 MB; debe ser `image/*`. Se guarda tal cual (sin recorte).
-- En Android, si no hay red en ese momento, se agrega a `pending_uploads` como tarea de importación.
+- En Android, si no hay red en ese momento, se agrega a `pending_uploads` con `kind='import'` y `source_url` (04 §6.1).
 
 ## 3. URLs firmadas
 
@@ -94,9 +95,12 @@ POST /v1/images/{imageId}/import
 // apps/api/src/images/signing.ts
 const WINDOW_MS = 6 * 3_600_000;
 
-/** Firma una ruta. exp se redondea a ventanas de 6 h para que la URL sea estable y cacheable. */
+/**
+ * Firma una ruta. Con TTL ≥ 24 h, exp se redondea a ventanas de 6 h para que la URL sea estable y cacheable;
+ * con TTL corto (10 min para IA) se usa el vencimiento exacto, para que no valga horas.
+ */
 export async function signPath(secret: string, path: string, ttlMs: number, now = Date.now()): Promise<string> {
-  const exp = Math.ceil((now + ttlMs) / WINDOW_MS) * WINDOW_MS;
+  const exp = ttlMs >= 24 * 3_600_000 ? Math.ceil((now + ttlMs) / WINDOW_MS) * WINDOW_MS : now + ttlMs;
   const sig = await hmacHex(secret, `${path}:${exp}`);
   return `${path}?exp=${exp}&sig=${sig}`;
 }
@@ -217,9 +221,9 @@ Canal de render: original → recorte y rotación → máscara (alfa) → fondo 
 | Caso | Tipo |
 |---|---|
 | `parseQuantity` y `suggestVariantLabel` con `fixtures/cantidades.json` (TS y Kotlin) | Unit |
-| `signPath` / `verifySigned`: vigente, vencida, firma alterada, ruta distinta | Unit |
+| `signPath` / `verifySigned`: vigente, vencida, firma alterada, ruta distinta; TTL de 10 min vence a los 10 min (sin ventana de 6 h) | Unit |
 | PUT: nombre inválido, tipo incorrecto, > 15 MB, fila inexistente, rendition con `tier='home'` desde cliente → rechazados | Worker |
 | Lookup: caché positiva y negativa, orden OFF → OBF → OPF, User-Agent enviado | Worker con `fetch` simulado |
-| Import: host no permitido → 400; OK → objeto en R2 | Worker |
+| Import: host no permitido → `400 VALIDATION_ERROR` (`HOST_NOT_ALLOWED`); OK → objeto en R2 | Worker |
 | `UploadWorker`: espera a que la fila salga del outbox; 409 reintenta; 201 limpia | Android |
 | Recorte T1 en 3 fotos reales (botella, caja, bolsa) con fondo de cocina | Manual |

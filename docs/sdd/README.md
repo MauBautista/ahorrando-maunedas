@@ -1,6 +1,6 @@
 # SDD — Ahorrando Maunedas
 
-**Documento de Diseño de Software · v1 · 2026-09-30**
+**Documento de Diseño de Software · v1.1 · 2026-10-08** (v1: 2026-09-30; cambios de v1.1 en la bitácora de `ESTADO.md`)
 
 Este SDD es la especificación para implementar. Cada requisito, contrato y tarea tiene un ID estable para que Claude Code (o cualquiera) pueda trabajar una tarea a la vez y verificarla contra sus criterios de aceptación.
 
@@ -48,7 +48,8 @@ Documentos relacionados: [`../ARQUITECTURA.md`](../ARQUITECTURA.md) (vista gener
 
 | Nombre | Valor | Dónde se usa |
 |---|---|---|
-| Base URL | `https://maunedas.<subdominio>.workers.dev` | Android (`BuildConfig.API_BASE_URL`), web (mismo origen) |
+| Base URL | `https://maunedas.<subdominio>.workers.dev` (dev: `maunedas-dev.<subdominio>.workers.dev`) | Android (`BuildConfig.API_BASE_URL` por sabor), web (mismo origen) |
+| Proyectos Firebase | Uno para dev y otro para prod (T25) | `FIREBASE_PROJECT_ID`, `VITE_FIREBASE_*`, `google-services.json` por sabor |
 | Zona horaria | `America/Mexico_City` (UTC−6, sin horario de verano) | Presentación, cortes de mes del presupuesto de IA |
 | Moneda | MXN | Todo |
 | Código postal de referencia | `72750` | Adapters de tracking |
@@ -57,6 +58,6 @@ Documentos relacionados: [`../ARQUITECTURA.md`](../ARQUITECTURA.md) (vista gener
 | Límite de push | 100 mutaciones / request | Sync |
 | Límite de pull | 500 filas por tabla / request | Sync |
 | Lote de resultados del agente | 20 / request | `/agent/v1/observations` |
-| `SYNTHETIC_EMAIL_DOMAIN` | `maunedas.local` (spike E) | Auth usuario/contraseña |
+| `SYNTHETIC_EMAIL_DOMAIN` | `maunedas.local` (spike E) | Auth usuario/contraseña: `vars` del Worker, `VITE_SYNTHETIC_EMAIL_DOMAIN`, `BuildConfig.SYNTHETIC_EMAIL_DOMAIN` |
 | `applicationId` | `com.maubautista.maunedas` | Android |
 | `minSdk` | 26 | Android |

@@ -74,7 +74,7 @@ docker compose up -d maunedas-agent         # en el servidor casero (Etapa 2)
 8. **IA** solo desde `apps/api/src/ai/`: elige proveedor y modelo por variable de entorno, verifica presupuesto antes de llamar y registra el costo en `ai_usage`. La key de OpenRouter no existe fuera del Worker.
 9. **Agente** solo habla con `/agent/v1/*` usando `AGENT_TOKEN`. Nunca abre puertos ni recibe conexiones.
 10. **Scraping**: respetar separación mínima por dominio, jitter y backoff. Sin rotación de proxies ni evasión de captchas. Si una tienda bloquea, se marca `blocked` y se avisa.
-11. **Secretos** solo en `wrangler secret` (`GOOGLE_SERVICE_ACCOUNT`, `OPENROUTER_API_KEY`, `AGENT_TOKEN_SHA256`, `IMAGE_URL_SECRET`, `BOOTSTRAP_TOKEN` temporal), `apps/api/.dev.vars` y `agent/.env` (ambos en `.gitignore`). Nunca en código, fixtures ni logs. El Worker jamás guarda ni registra contraseñas.
+11. **Secretos** solo en `wrangler secret` (`GOOGLE_SERVICE_ACCOUNT`, `OPENROUTER_API_KEY`, `AGENT_TOKEN_SHA256`, `IMAGE_URL_SECRET`, `BOOTSTRAP_TOKEN` temporal, `SPIKE_TOKEN` temporal solo en dev para los spikes C y D), `apps/api/.dev.vars` y `agent/.env` (ambos en `.gitignore`). Nunca en código, fixtures ni logs. El Worker jamás guarda ni registra contraseñas.
 12. **Android offline-first**: la UI lee solo de Room; solo los Workers de WorkManager tocan la red.
 13. **Límites del plan Free de Workers**: push ≤ 100 filas, resultados del agente ≤ 20 por request, trabajo posterior a la respuesta en `ctx.waitUntil`, imágenes a la IA por URL firmada (no base64).
 14. **Idioma**: UI y documentos en español de México; código, identificadores, commits y nombres de ramas en inglés.
