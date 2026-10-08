@@ -1,0 +1,11 @@
+# Design documents and shared test vectors are never reformatted.
+docs/
+fixtures/
+*.md
+pnpm-lock.yaml
+apps/android/
+agent/
+**/dist/
+**/.wrangler/
+apps/api/worker-configuration.d.ts
+apps/web/src/styles/tokens.css

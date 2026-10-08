@@ -1,0 +1,40 @@
+# Node / TypeScript
+node_modules/
+dist/
+coverage/
+*.tsbuildinfo
+.wrangler/
+apps/api/worker-configuration.d.ts
+
+# Secrets (CLAUDE.md rule 11)
+.dev.vars
+.dev.vars.*
+!.dev.vars.example
+.env
+.env.local
+.env.*.local
+agent/.env
+
+# Android
+apps/android/.gradle/
+apps/android/.kotlin/
+apps/android/build/
+apps/android/**/build/
+apps/android/local.properties
+apps/android/.idea/
+apps/android/app/src/*/google-services.json
+*.iml
+*.jks
+*.keystore
+
+# Python
+agent/.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
