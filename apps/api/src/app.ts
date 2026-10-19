@@ -5,6 +5,7 @@ import type { AppEnv } from './env';
 import { notFound, onError } from './errors';
 import { clientSchema } from './middleware/client-schema';
 import { requestId } from './middleware/request-id';
+import { barcodes } from './routes/barcodes';
 import { devices } from './routes/devices';
 import { health } from './routes/health';
 import { lookups } from './routes/lookups';
@@ -18,6 +19,8 @@ import { variants } from './routes/variants';
 export interface AppOptions {
   /** Keys that verify Firebase ID tokens; tests pass local keys. Default: Google's JWKS. */
   firebaseKeys?: JWTVerifyGetKey;
+  /** fetch for third-party APIs; tests pass a fake so nothing leaves the machine. */
+  fetch?: typeof fetch;
   /** Routes that only tests mount. */
   extraRoutes?: (app: Hono<AppEnv>) => void;
 }
@@ -26,9 +29,11 @@ export interface AppOptions {
 export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   const app = new Hono<AppEnv>();
   const firebaseKeys = options.firebaseKeys ?? googleSigningKeys;
+  const outboundFetch = options.fetch ?? ((input, init) => fetch(input, init));
   app.use('*', requestId);
   app.use('*', async (c, next) => {
     c.set('firebaseKeys', firebaseKeys);
+    c.set('outboundFetch', outboundFetch);
     await next();
   });
   app.onError(onError);
@@ -44,6 +49,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', variants);
   app.route('/', search);
   app.route('/', purchases);
+  app.route('/', barcodes);
   options.extraRoutes?.(app);
   return app;
 }

@@ -1,7 +1,7 @@
 import { env } from 'cloudflare:workers';
 import { tablesInOrder } from '@maunedas/shared/sync/registry';
 import { receiptAliasId, uuidv7 } from '@maunedas/shared/util/uuid';
-import { createApp } from '../../src/app';
+import { createApp, type AppOptions } from '../../src/app';
 import { clearUsers, createTestIssuer, insertUser, linkIdentity } from './firebase';
 
 type Row = Record<string, unknown>;
@@ -14,9 +14,9 @@ export const ADMIN_ID = '0192a5e9-0000-7000-8000-00000000a0a0';
 export const MEMBER_ID = '0192a5e9-0000-7000-8000-00000000b0b0';
 
 /** App with local test keys, an admin and a member, and their tokens. */
-export async function syncHarness() {
+export async function syncHarness(options: Omit<AppOptions, 'firebaseKeys'> = {}) {
   const issuer = await createTestIssuer(env.FIREBASE_PROJECT_ID);
-  const app = createApp({ firebaseKeys: issuer.keys });
+  const app = createApp({ ...options, firebaseKeys: issuer.keys });
   const tokens = {
     admin: await issuer.token({ sub: 'uid-admin' }),
     member: await issuer.token({ sub: 'uid-member' }),

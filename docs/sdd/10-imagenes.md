@@ -26,7 +26,7 @@ Claves R2 (inmutables): `images/{image_id}/original.{jpg|png|webp}` y `images/{i
 
 ### 2.1 Consulta (`GET /v1/barcodes/:code`)
 
-1. Normalizar a dígitos; aceptar 6–14 → si no, `400 E-INVALID_BARCODE`.
+1. Normalizar a dígitos (se quitan espacios y guiones; cualquier otro carácter lo invalida); aceptar 6–14 → si no, `400 E-INVALID_BARCODE`.
 2. Buscar en `barcodes` vivos → `match`.
 3. Si no hay `match`: `off_cache` (vigente si `found=1` y < 30 días, o `found=0` y < 7 días).
 4. Si no hay caché: consultar en orden **Open Food Facts → Open Beauty Facts → Open Products Facts** hasta encontrar:
@@ -36,6 +36,9 @@ Claves R2 (inmutables): `images/{image_id}/original.{jpg|png|webp}` y `images/{i
    User-Agent: <OFF_USER_AGENT>
    ```
 5. Guardar en `off_cache` el JSON recortado (o `found=0`).
+6. Cada catálogo responde *encontrado* (`200` con `status: 1`), *no encontrado* (`404` o `status: 0`) o *falla* (otro HTTP, red, JSON inválido o más de 5 s). Una falla no detiene la búsqueda en los siguientes. Si ninguno lo encontró y alguno falló, **no** se guarda `found=0`: se devuelve la caché positiva vencida si existe; si no, `502 E-UPSTREAM_ERROR` con `details.service = 'open_catalog'` (decisión T42).
+
+Implementación (T-036): `apps/api/src/catalog/off.ts` y `routes/barcodes.ts`; el `fetch` saliente se inyecta en `createApp` para probar sin red.
 
 Mapeo a `catalog`:
 
@@ -45,8 +48,8 @@ Mapeo a `catalog`:
 | `brand` | primer elemento de `brands` (separado por comas) |
 | `quantity_text` | `quantity` |
 | `parsed` | `parseQuantity(quantity)` (§2.2) |
-| `image_url` | `image_front_url` → `image_url` |
-| `license` / `attribution` | Imágenes CC BY-SA, atribución "Open Food Facts contributors" (o el proyecto correspondiente) |
+| `image_url` | `image_front_url` → `image_url` (solo `https://`) |
+| `license` / `attribution` | `CC BY-SA 3.0`, atribución "Open Food Facts contributors" (o el proyecto correspondiente) |
 | `source_url` | `https://world.openfoodfacts.org/product/{code}` (o equivalente) |
 
 ### 2.2 Interpretar el contenido (`parseQuantity`)

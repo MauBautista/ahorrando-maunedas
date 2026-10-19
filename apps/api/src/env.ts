@@ -35,6 +35,8 @@ export interface AppEnv {
     requestId: string;
     /** Keys that verify Firebase ID tokens: Google's JWKS in production, local test keys in tests. */
     firebaseKeys: JWTVerifyGetKey;
+    /** fetch for third-party APIs (Open Food Facts…); tests inject a fake. */
+    outboundFetch: typeof fetch;
     /** Set by `requireUser`. */
     user: UserRow;
   };

@@ -154,9 +154,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** lista paginada con filtros y detalle con líneas, promociones e imágenes de ticket.
 - **Resultado (2026-10-19):** `GET /v1/purchases` (filtros por fecha, tienda y estado; cursor opaco que desempata compras a la misma hora) y `GET /v1/purchases/:id` (líneas con producto y precio por unidad con el cupón prorrateado, también en borradores; promociones de la compra y de sus líneas vivas; páginas del ticket con URLs firmadas); 9 pruebas.
 
-### [ ] T-036 · Códigos de barras y catálogo abierto
+### [x] T-036 · Códigos de barras y catálogo abierto
 - **Docs:** 10 §2 · **Depende de:** T-031
 - **Hecho cuando:** casos de lookup de 10 §7 pasan.
+- **Resultado (2026-10-19):** `GET /v1/barcodes/:code` con coincidencia propia, caché positiva (30 días) y negativa (7 días), orden OFF → OBF → OPF, User-Agent, mapeo de 10 §2.1 y manejo de fallas sin caché negativa falsa (T42); 13 pruebas con `fetch` simulado. Forma de la respuesta verificada contra la API real de Open Food Facts.
 
 ### [ ] T-037 · Imágenes: subida, descarga, firma, importación
 - **Docs:** 10 §3–4, 10 §2.3 · **Depende de:** T-031

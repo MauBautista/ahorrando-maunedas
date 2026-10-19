@@ -383,7 +383,7 @@ Para el editor de compra y la revisión de tickets en web. `q` obligatorio; `lim
   };
 }
 ```
-Orden de consulta y caché: ver `10-imagenes.md` §2.
+Orden de consulta, caché y fallas de los catálogos: ver `10-imagenes.md` §2.1. `match` exige código, variante y producto vivos.
 
 ## 9. Imágenes
 
