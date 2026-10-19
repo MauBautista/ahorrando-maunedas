@@ -9,6 +9,7 @@ import { devices } from './routes/devices';
 import { health } from './routes/health';
 import { me } from './routes/me';
 import { sync } from './routes/sync';
+import { spikeD } from './spikes/d';
 
 export interface AppOptions {
   /** Keys that verify Firebase ID tokens; tests pass local keys. Default: Google's JWKS. */
@@ -34,6 +35,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', me);
   app.route('/', devices);
   app.route('/', sync);
+  app.route('/v1/__spike/d', spikeD); // TEMPORARY: spike D branch only
   options.extraRoutes?.(app);
   return app;
 }
