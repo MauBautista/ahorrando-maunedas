@@ -24,7 +24,7 @@ Objetivo: esqueleto desplegable y decisiones abiertas resueltas con datos antes 
 Objetivo: los cuatro usuarios registran compras reales, offline en Android, con historial y comparación por unidad; iPhone por web.
 
 - [~] Worker: base, auth (usuario/contraseña + Google), usuarios, bootstrap, proxy de auth, esquema y semillas — T-020 a T-027 (T-020, T-021, T-022, T-026 y T-027 hechas)
-- [~] Sync push/pull — T-030 a T-032 (T-030 y T-031 hechas)
+- [x] Sync push/pull — T-030 a T-032
 - [ ] Consulta, historial, comparador, compras, códigos, imágenes, fusión — T-033 a T-038
 - [ ] IA: gateway, presupuesto y extracción de tickets — T-039, T-040
 - [ ] Cron de mantenimiento — T-041

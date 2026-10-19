@@ -228,6 +228,8 @@ LIMIT ?4;
 
 Las filas eliminadas (`deleted_at` no nulo) **sí** viajan: así el cliente aplica el borrado.
 
+Implementación (`apps/api/src/sync/pull.ts`, T-032): las columnas son las del registro (de `users` nunca baja `google_email`); `schema_version` se lee en el mismo batch; `changes` respeta el orden de tablas (padres primero) y solo incluye tablas con filas; `cursors` trae el cursor de **toda** tabla consultada (el mismo si no hubo filas). Una tabla desconocida en `tables` o en `cursors` → `400 E-VALIDATION_ERROR`. Una fila editada entre páginas avanza a su nueva versión y llega después: nunca se pierde.
+
 ### 4.3 Primer sync y volumen
 
 Un dispositivo nuevo hace pull desde `[0, ""]` en todas las tablas hasta `has_more = false`. Con el volumen esperado (miles de filas) son pocas páginas.

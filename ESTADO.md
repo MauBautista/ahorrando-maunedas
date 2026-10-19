@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030, T-031 y spike B hechos; faltan Firebase, OpenRouter y los spikes A, C, D y E.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-032 y spike B hechos; faltan Firebase, OpenRouter y los spikes A, C, D y E.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -21,12 +21,13 @@
 - **T-027 (2026-10-19):** `POST`/`DELETE /v1/devices` con DTO Zod compartido; un token FCM repetido se limpia del otro dispositivo y un teléfono que cambia de manos pasa al nuevo usuario; 16 pruebas.
 - **T-030 (2026-10-19):** registro de tablas de sync (21 tablas) y esquemas Zod de fila en `packages/shared`, verificados contra el `PRAGMA` de D1 (incluido el orden padre→hijo por llaves foráneas).
 - **T-031 (2026-10-19):** `POST /v1/sync/push` (LWW por fila, reintento idéntico, clamp, conflictos `STALE`, `VALIDATION`, `BARCODE_TAKEN`, `ALIAS_TAKEN`, `IMMUTABLE_ROW`, `FORBIDDEN`, `UNKNOWN_TABLE`, padres verificados antes del lote); 31 pruebas y seis mutaciones detectadas.
+- **T-032 (2026-10-19):** `POST /v1/sync/pull` con cursor compuesto `(version, pk)` por tabla en un solo batch; 1,200 filas de la misma versión se paginan sin saltos ni repeticiones; reglas y eventos de alerta filtrados por usuario; 14 pruebas.
 
 ## En curso
 - Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-032 (pull) y después el spike D (CPU del push en Free, T-013); luego T-023 y T-024 (usuarios y bootstrap) con Identity Toolkit simulado.
+1. Spike D (CPU del push y del pull en Free, T-013) en `maunedas-dev`; luego T-023 y T-024 (usuarios y bootstrap) con Identity Toolkit simulado.
 2. Spike A (rembg) en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 4. Spike D (T-013) justo después de T-031; ahí se cierra D3.
@@ -129,3 +130,4 @@ Navegador: no hizo falta en ninguna tienda; costó 8.6–23.5 s y 626–759 MB p
 - **2026-10-19** — T-027: registro de dispositivos para push.
 - **2026-10-19** — T-030: registro de sync y esquemas de fila. Decisión T38.
 - **2026-10-19** — T-031: push del sync con LWW y conflictos. Decisión T39.
+- **2026-10-19** — T-032: pull del sync con cursor compuesto. El bloque de sync de la Etapa 1 queda completo en el Worker.
