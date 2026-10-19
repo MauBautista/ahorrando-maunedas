@@ -70,7 +70,31 @@ export async function syncHarness() {
     );
   }
 
-  return { app, tokens, reset, push };
+  async function pull(body: Record<string, unknown> = {}, as: 'admin' | 'member' = 'member') {
+    return app.request(
+      '/v1/sync/pull',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Client-Schema': '1',
+          Authorization: `Bearer ${tokens[as]}`,
+        },
+        body: JSON.stringify(body),
+      },
+      env as never,
+    );
+  }
+
+  return { app, tokens, reset, push, pull };
+}
+
+export interface PullBody {
+  changes: Record<string, Row[]>;
+  cursors: Record<string, [number, string]>;
+  has_more: boolean;
+  server_time: number;
+  schema_version: number;
 }
 
 export interface PushBody {

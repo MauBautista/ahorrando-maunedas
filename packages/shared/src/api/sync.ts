@@ -33,3 +33,30 @@ export interface PushResponse {
   skipped: number;
   conflicts: PushConflict[];
 }
+
+/** Pull limits (04 §4.1). */
+export const PULL_MAX_LIMIT = 500;
+
+/** Cursor of one table: `[version, primary key]` of the last row received; `[0, ""]` = from the start. */
+export const PullCursorSchema = z.tuple([z.number().int().nonnegative(), z.string().max(64)]);
+export type PullCursor = z.infer<typeof PullCursorSchema>;
+
+/** `POST /v1/sync/pull` request (04 §4.1). Table names are checked against the registry by the Worker. */
+export const PullRequestSchema = z.strictObject({
+  cursors: z.record(z.string().min(1).max(64), PullCursorSchema).default({}),
+  limit: z.number().int().min(1).max(PULL_MAX_LIMIT).default(PULL_MAX_LIMIT),
+  tables: z.array(z.string().min(1).max(64)).min(1).optional(),
+});
+
+export type PullRequest = z.infer<typeof PullRequestSchema>;
+
+export interface PullResponse {
+  /** Only tables with rows, in processing order (parents first). Tombstones travel too. */
+  changes: Record<string, Array<Record<string, unknown>>>;
+  /** New cursor of every queried table. */
+  cursors: Record<string, PullCursor>;
+  /** Some table returned `limit` rows: pull again. */
+  has_more: boolean;
+  server_time: number;
+  schema_version: number;
+}

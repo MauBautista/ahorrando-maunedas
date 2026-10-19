@@ -132,9 +132,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** todos los casos de push de 04 §8 pasan.
 - **Resultado (2026-10-19):** `POST /v1/sync/push` con 31 pruebas (LWW, reintento idéntico, empate de otro autor, clamp, columnas ausentes, `search_key` desde la fila combinada, validación, tablas desconocidas, duplicados, `MEASURE_LOCKED`, `BARCODE_TAKEN` y mover códigos, `ALIAS_TAKEN`, `IMMUTABLE_ROW`, los cuatro `FORBIDDEN`, padres faltantes en cascada, `BATCH_REJECTED`, límites). El registro declara las llaves foráneas (`refs`), verificadas contra D1. Cambios al algoritmo en 04 §3.2.
 
-### [ ] T-032 · Pull
+### [x] T-032 · Pull
 - **Docs:** 04 §4 · **Depende de:** T-030
 - **Hecho cuando:** casos de pull de 04 §8 pasan, incluido el cursor compuesto con 1,200 filas de la misma versión.
+- **Resultado (2026-10-19):** `POST /v1/sync/pull` con 14 pruebas (desde cero, cursores, tombstones, 1,200 filas de la misma versión en páginas de 500, fila editada entre páginas, filtro por usuario de reglas y eventos, columnas de `users`, `tables`, validación).
 
 ### [ ] T-033 · Catálogo (consulta)
 - **Docs:** 03 §7 · **Depende de:** T-031
