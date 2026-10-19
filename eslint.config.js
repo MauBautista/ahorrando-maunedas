@@ -19,6 +19,15 @@ export default defineConfig([
   js.configs.recommended,
   tseslint.configs.recommended,
   {
+    rules: {
+      // `_name` and the siblings of a `...rest` are intentionally unused (e.g. dropping columns).
+      '@typescript-eslint/no-unused-vars': [
+        'error',
+        { argsIgnorePattern: '^_', varsIgnorePattern: '^_', ignoreRestSiblings: true },
+      ],
+    },
+  },
+  {
     files: ['**/*.js', '**/*.config.ts', '**/scripts/**/*.ts', '**/test/**/*.ts'],
     languageOptions: { globals: globals.node },
   },

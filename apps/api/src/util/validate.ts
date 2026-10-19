@@ -9,9 +9,14 @@ function issuesOf(error: z.ZodError) {
 
 /** Parses the JSON body with a shared Zod schema → `400 E-VALIDATION_ERROR` when invalid. */
 export async function parseJsonBody<S extends z.ZodType>(c: Context, schema: S): Promise<z.infer<S>> {
+  return parseJsonText(await c.req.text(), schema);
+}
+
+/** Same, for a body already read as text (e.g. after a size check). */
+export function parseJsonText<S extends z.ZodType>(text: string, schema: S): z.infer<S> {
   let raw: unknown;
   try {
-    raw = await c.req.json();
+    raw = JSON.parse(text);
   } catch {
     throw new ApiError(400, 'VALIDATION_ERROR', {
       issues: [{ path: [], code: 'invalid_json', message: 'JSON inválido' }],

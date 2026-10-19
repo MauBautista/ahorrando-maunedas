@@ -127,9 +127,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** `TABLES` cubre todas las tablas sync/down del esquema; cada tabla tiene Zod de fila; test que compara columnas del registro contra `PRAGMA table_info` de D1.
 - **Resultado (2026-10-19):** registro de 21 tablas (17 sync, 4 down) y sus esquemas Zod; 88 pruebas contra D1 (cobertura, columnas, llaves, índices únicos parciales, orden padre→hijo por llaves foráneas, esquemas = columnas) y 16 de reglas de fila. Validaciones adicionales en 04 §2.2.
 
-### [ ] T-031 · Push
+### [x] T-031 · Push
 - **Docs:** 04 §3 · **Depende de:** T-030, T-021
 - **Hecho cuando:** todos los casos de push de 04 §8 pasan.
+- **Resultado (2026-10-19):** `POST /v1/sync/push` con 31 pruebas (LWW, reintento idéntico, empate de otro autor, clamp, columnas ausentes, `search_key` desde la fila combinada, validación, tablas desconocidas, duplicados, `MEASURE_LOCKED`, `BARCODE_TAKEN` y mover códigos, `ALIAS_TAKEN`, `IMMUTABLE_ROW`, los cuatro `FORBIDDEN`, padres faltantes en cascada, `BATCH_REJECTED`, límites). El registro declara las llaves foráneas (`refs`), verificadas contra D1. Cambios al algoritmo en 04 §3.2.
 
 ### [ ] T-032 · Pull
 - **Docs:** 04 §4 · **Depende de:** T-030

@@ -124,24 +124,29 @@ Validaciones además de las de la tabla anterior: nombres recortados de 1 a 200 
   }>;
 }
 
-// 409 E-BATCH_REJECTED — D1 rechazó el lote (FK o carrera en índice único). Nada se escribió.
+// 409 E-BATCH_REJECTED — D1 rechazó el lote pese a las verificaciones previas (carrera en un índice único u
+//                         otra restricción inesperada). Nada se escribió.
 ```
 
 Un push con conflictos **no es error**: responde 200 y aplica el resto.
 
 ### 3.2 Algoritmo (Worker)
 
+Implementación: `apps/api/src/sync/push.ts` (T-031). El orden real de los pasos 3 a 5 cambió respecto a v1.1 para validar la fila completa:
+
 1. **Autenticar** y validar tamaño (≤ 100 mutaciones, ≤ 512 KB) → `413`/`400`.
 2. **Clasificar**: tabla desconocida o `mode='down'` → conflicto `UNKNOWN_TABLE`.
-3. **Sanear cada fila**: quedarse con `writable`; forzar `updated_by = user.id`; `updated_at = min(updated_at, now + 5 min)`; aplicar `derive`.
-4. **Validar** con el Zod de la tabla → `VALIDATION` (con `details.issues`).
-5. **Leer existentes**: por tabla, un `SELECT … WHERE pk IN (SELECT value FROM json_each(?1))` con los ids del lote como un solo parámetro JSON (D1 admite 100 parámetros por consulta y, en Free, 50 consultas por invocación: ver spike D).
+3. **Sanear cada fila**: quedarse con `writable`; el `id` debe ser UUID y `updated_at` debe venir (si no → `VALIDATION`); forzar `updated_by = user.id` (y `user_id = user.id` en tablas de alcance usuario); `updated_at = min(updated_at, now + 5 min)`. La misma fila dos veces en un push: gana la última; las anteriores → `VALIDATION` (`details.reason = 'DUPLICATE_IN_BATCH'`).
+4. **Validar** la fila **combinada** (columnas `writable` del existente + las que llegan) con el Zod de la tabla → `VALIDATION` (con `details.issues`). `derive` también usa la fila combinada: un cliente que no manda `brand` no la borra de `search_key`. Se escriben los valores normalizados por Zod (p. ej. nombres recortados).
+5. **Leer existentes** (antes del paso 4): por tabla, un `SELECT … WHERE pk IN (SELECT value FROM json_each(?1))` con los ids del lote como un solo parámetro JSON (D1 admite 100 parámetros por consulta y, en Free, 50 consultas por invocación: ver spike D).
 6. **Reglas con existente**, en este orden:
    - **Reintento idéntico**: existe, `existing.updated_at == incoming.updated_at` y `existing.updated_by == user.id` → se cuenta como aplicado, sin conflicto (la respuesta anterior se perdió después del commit).
    - `STALE`: existe y `existing.updated_at > incoming.updated_at`, o es igual pero de otro autor → no se escribe; `server_row = existing`.
    - `IMMUTABLE_ROW`: `appendOnly` y cambia algo distinto de `deleted_at`.
-   - `FORBIDDEN`: tombstone nuevo en tabla `adminDelete` por un miembro; `alert_rules` ajena; `price_observations` con `source != 'shelf'` o que modifica una fila `web`; rendition con `tier` no permitido.
-7. **Únicos**: para tablas con `uniqueLive`, consultar filas vivas con esos valores y otro `id` → `BARCODE_TAKEN` (`details.variant_id`) o `ALIAS_TAKEN` (`server_row` = alias existente).
+   - `FORBIDDEN`: tombstone nuevo en tabla `adminDelete` por un miembro (`details.reason = 'ADMIN_DELETE'`); `alert_rules` ajena (`NOT_OWNER`); `price_observations` con `source != 'shelf'` o que modifica una fila `web` (`WEB_OBSERVATION`); rendition nueva con `tier` fuera de `device`/`manual` (`RENDITION_TIER`). Restaurar un registro borrado no es un borrado.
+   - `VALIDATION` con `details.reason = 'MEASURE_LOCKED'`: cambio de `measure` de una variante que ya tiene líneas de compra vivas.
+7. **Únicos**: para tablas con `uniqueLive`, consultar filas vivas con esos valores y otro `id` → `BARCODE_TAKEN` (`details.variant_id`) o `ALIAS_TAKEN` (`server_row` = alias existente). No es conflicto si la otra fila se borra o cambia de valor en el mismo push (mover un código); entre filas del mismo push gana la primera.
+   - **Padres** (`refs` del registro, igual a las llaves foráneas de D1): cada referencia no nula debe existir en D1 (viva o borrada) o aceptarse en el mismo push; si no → `VALIDATION` (`details = { reason: 'MISSING_PARENT', column, table }`) solo para esa fila, y en cascada para sus hijos del mismo push. Así el lote no falla entero por un padre faltante (además, el D1 local no reporta como restricción una llave foránea diferida violada al confirmar).
 8. **Construir el lote** con las filas aceptadas, ordenadas por `order`:
    ```
    PRAGMA defer_foreign_keys = on
@@ -150,7 +155,7 @@ Un push con conflictos **no es error**: responde 200 y aplica el resto.
    ```
 9. **Ejecutar** `DB.batch()`. Si falla por restricción → `409 E-BATCH_REJECTED` con el mensaje de D1 en `details`.
 10. **Efectos diferidos** (`ctx.waitUntil`): ninguno en E1. (En E2 las observaciones `shelf` no disparan alertas.)
-11. Responder.
+11. Responder. `applied` cuenta las filas escritas más los reintentos idénticos; `skipped`, los conflictos.
 
 ### 3.3 Upsert dinámico
 
@@ -408,7 +413,7 @@ class PullApplier @Inject constructor(private val db: AppDatabase) {
 | `STALE` | Reemplaza la fila local por `server_row` | Snackbar: "Otro dispositivo actualizó *<nombre>*" (solo tablas visibles: compras, productos, variantes) |
 | `ALIAS_TAKEN` | Reemplaza por `server_row` | Ninguno |
 | `BARCODE_TAKEN` | Registra `sync_issue` | Diálogo al abrir la app: "Este código ya pertenece a *<variante>*". Opciones: **Usar esa variante** (reasigna localmente líneas, observaciones, listings, reglas, alias e imágenes de mi variante a la existente y borra mi código) · **Mantener separado** (borra mi código) |
-| `VALIDATION`, `FORBIDDEN`, `IMMUTABLE_ROW` | Si hay `server_row`, la restaura; si no, marca la fila local como rechazada | Ajustes → "Cambios rechazados" con el motivo |
+| `VALIDATION`, `FORBIDDEN`, `IMMUTABLE_ROW` | Si hay `server_row`, la restaura; si no, marca la fila local como rechazada | Ajustes → "Cambios rechazados" con el motivo (`details.reason`: `MISSING_PARENT`, `MEASURE_LOCKED`, `DUPLICATE_IN_BATCH`, `ADMIN_DELETE`, …) |
 
 ### 6.6 Programación
 

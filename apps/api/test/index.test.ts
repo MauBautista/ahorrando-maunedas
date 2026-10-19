@@ -80,12 +80,12 @@ describe('X-Client-Schema', () => {
     });
   });
 
-  it('lets /v1/sync/* through when present (routes arrive with T-031)', async () => {
+  it('lets /v1/sync/* through when present (then authentication applies)', async () => {
     const res = await call('/v1/sync/push', {
       method: 'POST',
       body: '{}',
       headers: { 'X-Client-Schema': '1' },
     });
-    expect(res.status).toBe(404);
+    expect(res.status).toBe(401);
   });
 });
