@@ -9,3 +9,4 @@ agent/
 **/.wrangler/
 apps/api/worker-configuration.d.ts
 apps/web/src/styles/tokens.css
+.claude/
