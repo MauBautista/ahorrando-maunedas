@@ -346,6 +346,9 @@ Para el editor de compra y la revisión de tickets en web. `q` obligatorio; `lim
   next_cursor: string | null;
 }
 ```
+- `from`/`to` filtran `purchased_at` (inclusivos; `from > to` → `400`); `limit` de 1 a 100. Solo compras vivas; las compras son del hogar, no de cada usuario.
+- `lines_total_cents` es la suma de `final_cents` de las líneas vivas, antes del descuento de ticket (para compararla con `total_cents`); `receipt_pages` cuenta las imágenes vivas `owner=purchase, role=receipt`.
+- `next_cursor` es opaco (`purchased_at`, `id`), así que dos compras a la misma hora no se repiten ni se saltan. Implementación (T-035): `routes/purchases.ts`.
 
 ### `GET /v1/purchases/:id`
 ```ts
@@ -359,6 +362,8 @@ Para el editor de compra y la revisión de tickets en web. `q` obligatorio; `lim
   receipt_images: ImageRef[];     // images con owner=purchase y role=receipt, por created_at
 }
 ```
+- Solo líneas vivas, por `line_no`. `display_cents` es lo pagado por unidad de despliegue con el descuento de ticket prorrateado (`prorateTicketDiscount`, igual que `v_price_points`), también en borradores; `display_unit` sigue §3. Líneas sin vincular → campos del producto en `null`.
+- `promotions`: las de la compra y las de sus líneas vivas. Compra inexistente o borrada → `404`.
 
 ## 8. Códigos de barras
 

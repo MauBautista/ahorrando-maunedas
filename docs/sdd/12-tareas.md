@@ -149,9 +149,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** `variants/:id/history` y `products/:id/compare` devuelven valores que coinciden con `fixtures/normalizacion.json` y con el prorrateo; "mejor precio" según 03 §3.
 - **Resultado (2026-10-19):** `prorateTicketDiscount` y `effectiveUnitCents` con la sección `prorrateo_ticket` (6 casos); migración `0002_price_points_guard.sql` para que la vista no divida entre cero ni dé precios negativos (T41); historial y comparador con la misma regla de mejor precio que la lista; rutas separadas por recurso como en 03 §2. La vista de D1 pasa el fixture; 10 pruebas de API y 4 de la regla compartida. La versión Kotlin va en T-101 y la `@DatabaseView` de Room en T-102, con el mismo fixture.
 
-### [ ] T-035 · Compras (consulta)
+### [x] T-035 · Compras (consulta)
 - **Docs:** 03 §7 · **Depende de:** T-031
 - **Hecho cuando:** lista paginada con filtros y detalle con líneas, promociones e imágenes de ticket.
+- **Resultado (2026-10-19):** `GET /v1/purchases` (filtros por fecha, tienda y estado; cursor opaco que desempata compras a la misma hora) y `GET /v1/purchases/:id` (líneas con producto y precio por unidad con el cupón prorrateado, también en borradores; promociones de la compra y de sus líneas vivas; páginas del ticket con URLs firmadas); 9 pruebas.
 
 ### [ ] T-036 · Códigos de barras y catálogo abierto
 - **Docs:** 10 §2 · **Depende de:** T-031

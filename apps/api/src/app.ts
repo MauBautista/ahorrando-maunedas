@@ -10,6 +10,7 @@ import { health } from './routes/health';
 import { lookups } from './routes/lookups';
 import { me } from './routes/me';
 import { products } from './routes/products';
+import { purchases } from './routes/purchases';
 import { search } from './routes/search';
 import { sync } from './routes/sync';
 import { variants } from './routes/variants';
@@ -42,6 +43,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', products);
   app.route('/', variants);
   app.route('/', search);
+  app.route('/', purchases);
   options.extraRoutes?.(app);
   return app;
 }
