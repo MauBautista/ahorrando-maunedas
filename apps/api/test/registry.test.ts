@@ -22,10 +22,10 @@ async function pragmaColumns(table: string) {
 
 async function foreignKeys(table: string) {
   const { results } = await db()
-    .prepare('SELECT "table" AS ref FROM pragma_foreign_key_list(?1)')
+    .prepare('SELECT "table" AS ref, "from" AS col, "to" AS target FROM pragma_foreign_key_list(?1)')
     .bind(table)
-    .all<{ ref: string }>();
-  return results.map((r) => r.ref);
+    .all<{ ref: string; col: string; target: string }>();
+  return results;
 }
 
 describe('sync registry vs D1 (T-030)', () => {
@@ -70,11 +70,18 @@ describe('sync registry vs D1 (T-030)', () => {
   });
 
   it.each(TABLE_NAMES)('%s: every foreign key points to an earlier table (parents first)', async (name) => {
-    for (const ref of await foreignKeys(name)) {
+    for (const { ref } of await foreignKeys(name)) {
       if (ref === name) continue; // categories.parent_id
       expect(TABLE_NAMES, `${name} → ${ref}`).toContain(ref);
       expect(TABLES[ref as TableName].order, `${name} → ${ref}`).toBeLessThan(TABLES[name].order);
     }
+  });
+
+  it.each(TABLE_NAMES)('%s: refs declare exactly the foreign keys of D1', async (name) => {
+    const fks = await foreignKeys(name);
+    expect(fks.every((f) => f.target === 'id')).toBe(true);
+    const declared = (TABLES[name] as { refs?: Record<string, string> }).refs ?? {};
+    expect(declared).toEqual(Object.fromEntries(fks.map((f) => [f.col, f.ref])));
   });
 
   it('declares the partial unique indexes of the schema', async () => {

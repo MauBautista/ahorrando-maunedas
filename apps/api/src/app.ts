@@ -8,6 +8,7 @@ import { requestId } from './middleware/request-id';
 import { devices } from './routes/devices';
 import { health } from './routes/health';
 import { me } from './routes/me';
+import { sync } from './routes/sync';
 
 export interface AppOptions {
   /** Keys that verify Firebase ID tokens; tests pass local keys. Default: Google's JWKS. */
@@ -32,6 +33,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', health);
   app.route('/', me);
   app.route('/', devices);
+  app.route('/', sync);
   options.extraRoutes?.(app);
   return app;
 }
