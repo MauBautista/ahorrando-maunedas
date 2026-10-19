@@ -28,6 +28,7 @@ export const barcodes = new Hono<AppEnv>().get('/v1/barcodes/:code', requireUser
           fetch: c.get('outboundFetch'),
           userAgent: c.env.OFF_USER_AGENT,
           now: Date.now(),
+          requestId: c.get('requestId'),
         }),
   };
   return c.json(body);

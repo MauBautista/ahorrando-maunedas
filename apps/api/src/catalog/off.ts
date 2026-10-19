@@ -1,6 +1,7 @@
 import type { CatalogSource, OpenCatalogEntry } from '@maunedas/shared/api/barcodes';
 import { parseQuantity } from '@maunedas/shared/catalog/quantity';
 import { ApiError } from '../errors';
+import { log } from '../util/log';
 
 const DAY_MS = 86_400_000;
 /** off_cache freshness (10 §2.1): a hit lasts 30 days, a miss 7. */
@@ -30,6 +31,7 @@ export interface OpenCatalogDeps {
   fetch: typeof fetch;
   userAgent: string;
   now: number;
+  requestId?: string;
 }
 
 type Answer = { found: true; product: CachedProduct } | { found: false } | { error: string };
@@ -143,7 +145,7 @@ export async function lookupOpenCatalog(
     }
   }
   if (errors.length > 0) {
-    console.warn(JSON.stringify({ msg: 'open catalog lookup failed', code, errors }));
+    log('warn', 'open catalog lookup failed', { request_id: deps.requestId, code, errors });
     if (cachedHit) return cachedHit;
     throw new ApiError(502, 'UPSTREAM_ERROR', { service: 'open_catalog' });
   }

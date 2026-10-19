@@ -8,6 +8,7 @@ import { requestId } from './middleware/request-id';
 import { barcodes } from './routes/barcodes';
 import { devices } from './routes/devices';
 import { health } from './routes/health';
+import { images } from './routes/images';
 import { lookups } from './routes/lookups';
 import { me } from './routes/me';
 import { products } from './routes/products';
@@ -50,6 +51,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', search);
   app.route('/', purchases);
   app.route('/', barcodes);
+  app.route('/', images);
   options.extraRoutes?.(app);
   return app;
 }

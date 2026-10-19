@@ -89,7 +89,9 @@ POST /v1/images/{imageId}/import
 
 - Hosts permitidos: `images.openfoodfacts.org`, `static.openfoodfacts.org`, `images.openbeautyfacts.org`, `images.openproductsfacts.org`.
 - Host fuera de la lista → `400 E-VALIDATION_ERROR` con `details.reason = 'HOST_NOT_ALLOWED'`.
-- Máximo 10 MB; debe ser `image/*`. Se guarda tal cual (sin recorte).
+- La URL debe ser `https`, sin usuario, contraseña ni puerto. Las redirecciones se siguen a mano (máximo 3) y cada destino debe estar en la lista; si no, `HOST_NOT_ALLOWED`.
+- La fila `images` debe existir viva con `original_key = images/{imageId}/original.(jpg|png|webp)` → si no, `409 E-IMAGE_NOT_FOUND`. Si el original ya está en R2, responde `201` sin volver a descargar.
+- Máximo 10 MB (se cuenta al leer, aunque falte `Content-Length`) → `413`; debe ser `image/*` → `415`; el catálogo falla o tarda más de 10 s → `502 E-UPSTREAM_ERROR` (`service: open_catalog_image`). Se guarda tal cual (sin recorte), con el `Content-Type` de origen.
 - En Android, si no hay red en ese momento, se agrega a `pending_uploads` con `kind='import'` y `source_url` (04 §6.1).
 
 ## 3. URLs firmadas
@@ -139,9 +141,13 @@ Implementación: `apps/api/src/images/signing.ts` y `images/refs.ts` (T-033, ade
 3. `Content-Length` ≤ 15 MB → si no, `413`.
 4. Original: la fila `images` existe y `original_key = images/{imageId}/{name}`. Rendition: la fila `image_renditions` existe, `r2_key` coincide y `tier ∈ {device, manual}`. Si no → `409 E-IMAGE_NOT_FOUND`.
 5. `IMAGES.put(key, request.body, { httpMetadata: { contentType } })` en streaming (si el runtime exige longitud conocida, envolver en `FixedLengthStream(contentLength)`).
-6. `201 { key, bytes }`. Subir de nuevo la misma clave es idempotente.
+6. `201 { key, bytes }`. Subir de nuevo la misma clave es idempotente: si el objeto ya existe se responde su tamaño y **no** se sobrescribe (la primera subida gana; las claves son inmutables y se sirven con `immutable`).
 
-`GET /v1/images/:imageId/blobs/:name`: acepta Bearer o firma; responde el objeto de R2 con `Cache-Control: private, max-age=31536000, immutable` y `ETag`.
+`Content-Length` es obligatorio (`400 E-VALIDATION_ERROR`, `reason: CONTENT_LENGTH_REQUIRED`); un nombre fuera del patrón → `400` (`reason: INVALID_NAME`).
+
+`GET /v1/images/:imageId/blobs/:name`: acepta Bearer o firma; responde el objeto de R2 con `Cache-Control: private, max-age=31536000, immutable` y `ETag` (`If-None-Match` → `304`). Con `exp` o `sig` en la URL se exige una firma válida para esa ruta exacta (`401 E-INVALID_SIGNATURE` si está alterada, vencida o es de otro archivo); sin ellos, Bearer (`401 E-UNAUTHENTICATED`). Objeto inexistente → `404`.
+
+Implementación (T-037): `routes/images.ts`, `images/blobs.ts` e `images/import.ts`.
 
 ### 4.2 Android
 
