@@ -132,7 +132,7 @@ Dos teléfonos Android (A y B), una computadora y un iPhone.
 ## 6. Checklist manual — cierre de Etapa 2
 
 - [ ] Compartir una URL de Amazon desde su app → listing creado y revisado en ≤ 5 min.
-- [ ] Una URL por cada tienda prioritaria (Amazon, Costco, Walmart, Sam's) con precio correcto para el CP 72750.
+- [ ] Una URL por cada tienda prioritaria (Amazon, Costco, Sam's) con precio correcto para la zona (Amazon ubica por IP; Sam's: ver club en T-207).
 - [ ] Cambiar el intervalo de un listing a 4 h se refleja en el agente en ≤ 2 min.
 - [ ] Regla "debajo de $X": forzar el caso con un umbral alto → notificación, toque abre la variante.
 - [ ] Dos reglas del mismo usuario en la misma observación → una sola notificación.

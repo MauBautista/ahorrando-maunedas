@@ -41,7 +41,7 @@ agent/
 │   ├── adapters/
 │   │   ├── base.py             # Adapter, ScrapeResult, FetchContext
 │   │   ├── registry.py
-│   │   ├── amazon_mx.py  walmart_mx.py  sams_mx.py  costco_mx.py
+│   │   ├── amazon_mx.py  sams_mx.py  costco_mx.py
 │   ├── images/remove_bg.py     # (E3)
 │   └── health.py               # healthcheck del contenedor
 └── tests/
@@ -136,7 +136,7 @@ Auth: `Authorization: Bearer <AGENT_TOKEN>`. El Worker calcula `sha256(token)` y
   "cursor": [118, "0192…"],                  // listings; [0, ""] la primera vez
   "info": {
     "outbox": 0, "due": 3, "mem_mb": 612, "load1": 0.8,
-    "blocked": ["walmart_mx"],               // adapters con listings bloqueados
+    "blocked": ["sams_mx"],                  // adapters con listings bloqueados
     "last_error": null
   }
 }
@@ -158,7 +158,7 @@ Auth: `Authorization: Bearer <AGENT_TOKEN>`. El Worker calcula `sha256(token)` y
   "store_defaults": { "<store_id>": 480 },
   "check_now": ["0192…"],                    // check_requested_at > COALESCE(last_checked_at, 0)
   "image_jobs_queued": 0,
-  "config": { "min_spacing_s": { "amazon_mx": 45, "walmart_mx": 30, "sams_mx": 30, "costco_mx": 30, "default": 20 } }
+  "config": { "min_spacing_s": { "amazon_mx": 45, "sams_mx": 30, "costco_mx": 30, "default": 20 } }
 }
 ```
 
@@ -381,14 +381,17 @@ class Adapter(Protocol):
 
 Estrategia común (`BaseAdapter.fetch`): HTTP → JSON-LD → estado embebido → selectores → Playwright. Cada paso registra `extra.method` para saber qué funciona.
 
-Hipótesis iniciales por tienda — **se confirman o corrigen en el spike B (T-011)** con páginas guardadas como fixtures:
+Resultado del spike B (T-011, 2026-10-19; detalle en `docs/spikes/spike-b-scraping.md`, fixtures en `agent/tests/fixtures/html/`). Ninguna tienda necesitó navegador:
 
-| Adapter | Dominios | Canónica e id | Fuente probable del precio | Notas |
+| Adapter | Dominios | Canónica e id | Fuente del precio | Notas |
 |---|---|---|---|---|
-| `amazon_mx` | `amazon.com.mx` (`amzn.to`, `a.co` se resuelven en el Worker) | `https://www.amazon.com.mx/dp/{ASIN}`; ASIN con `/(?:dp\|gp/product\|gp/aw/d)/([A-Z0-9]{10})` | Selectores del bloque de precio principal (`.a-offscreen` dentro del contenedor de precio), precio de lista en el bloque "Precio de lista"; disponibilidad en `#availability` | Separación 45 s. Detectar página de captcha. Guardar vendedor en `extra.seller` |
-| `walmart_mx` | `walmart.com.mx` | Id numérico al final de la ruta `/ip/…/{id}` | JSON-LD `Product` o estado embebido del framework | Precio y stock dependen de la tienda: fijar CP `72750` |
-| `sams_mx` | `sams.com.mx` | Id de producto de la ruta | Igual que Walmart (mismo grupo; posiblemente misma plataforma) | CP `72750`; algunos precios pueden requerir sesión de socio → si es así, `extra.member_only = true` |
-| `costco_mx` | `costco.com.mx` | Código de producto en `/p/{code}` | JSON-LD u objeto de estado de la página | Verificar si el precio público requiere seleccionar almacén |
+| `amazon_mx` | `amazon.com.mx` (`amzn.to`, `a.co` se resuelven en el Worker) | `https://www.amazon.com.mx/dp/{ASIN}`; ASIN con `/(?:dp\|gp/product\|gp/aw/d)/([A-Z0-9]{10})` | HTTP + selectores: `#corePriceDisplay_desktop_feature_div .apex-pricetopay-value .a-offscreen`. No hay JSON-LD de producto. El primer `.a-text-price` es el precio **por unidad**, no el de lista (lista: `.basisPrice`, por confirmar con fixture) | Separación 45 s. "No disponible por el momento" → `in_stock=false` sin precio. Vendedor en `#merchantInfoFeature_feature_div`. Ubica por IP (Cholula 72760): no hace falta fijar CP |
+| `sams_mx` | `sams.com.mx` | Id de producto al final de la ruta `/ip/…/{id}` | HTTP + JSON-LD; precio de lista y stock en `__NEXT_DATA__` → `props.pageProps.initialData.data.product` (`priceInfo.currentPrice.price`, `priceInfo.wasPrice`, `availabilityStatus`). Un recorrido genérico encuentra primero los carruseles | Sin sesión usa un club por defecto de CDMX (CP 11220); T-207 revisa si el precio cambia por club y cómo fijar uno de Puebla. Si un precio requiere sesión de socio: `extra.member_only = true` |
+| `costco_mx` | `costco.com.mx` | Código de producto en `/p/{code}` | HTTP + JSON-LD (`"@type": "product"` en minúsculas: comparar sin distinguir mayúsculas) | En el DOM, solo `sip-product-details` es del producto; el primer `.product-price-amount` y los "Agotado" de la página son del carrusel |
+
+Walmart (`walmart.com.mx` y `super.walmart.com.mx`) no tiene adapter: responde con captcha de PerimeterX desde la primera petición HTTP y por la regla 10 no se sigue (decisión T34). Su página de bloqueo queda como fixture (`walmart_mx/bloqueo.html`) para probar `blocks.py`.
+
+Extracción: `selectolax` ≥ 1.0 ya no trae el parser Modest; usar `selectolax.lexbor.LexborHTMLParser`.
 
 ## 10. Respaldos (T-230)
 
@@ -458,7 +461,7 @@ services:
     env_file: ./ahorrando-maunedas/agent/.env
     volumes:
       - ./data/maunedas:/data
-    mem_limit: 1500m          # ajustar con el spike B
+    mem_limit: 1200m          # spike B: pico de Chromium 759 MB; Playwright solo como último recurso
     cpus: 1.5
     shm_size: 512m
     logging:

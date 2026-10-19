@@ -66,8 +66,8 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-010 · Spike A: rembg en el servidor
 - **Docs:** 11 §7 · **Decide:** D5
-### [ ] T-011 · Spike B: scraping de tiendas prioritarias
-- **Docs:** 11 §7, 07 §9 · **Decide:** métodos por tienda, `mem_limit` · **Deja:** fixtures HTML en `agent/tests/fixtures/html/`
+### [x] T-011 · Spike B: scraping de tiendas prioritarias
+- **Docs:** 11 §7, 07 §9 · **Decide:** métodos por tienda, `mem_limit` · **Deja:** fixtures HTML en `agent/tests/fixtures/html/` · **Resultado:** `docs/spikes/spike-b-scraping.md`
 ### [ ] T-012 · Spike C: extracción de tickets
 - **Docs:** 09 §9 · **Depende de:** T-003, T-005 · **Decide:** D2 y `AI_RECEIPT_MODEL`
 ### [ ] T-013 · Spike D: CPU del Worker
@@ -110,7 +110,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-026 · Esquema D1 y datos semilla
 - **Docs:** `esquema-d1.sql` · **Depende de:** T-020
-- **Hacer:** migración `0001_init.sql` escrita a mano a partir de `esquema-d1.sql` (si drizzle-kit no la reproduce fielmente: `COLLATE NOCASE`, índices parciales, `CHECK`, vista); Drizzle schema para consultas tipadas, con un test que compare contra `PRAGMA table_info`; script de semillas (tiendas de `PLAN.md`, categorías propuestas, `stores.adapter` para Amazon, Costco, Walmart y Sam's).
+- **Hacer:** migración `0001_init.sql` escrita a mano a partir de `esquema-d1.sql` (si drizzle-kit no la reproduce fielmente: `COLLATE NOCASE`, índices parciales, `CHECK`, vista); Drizzle schema para consultas tipadas, con un test que compare contra `PRAGMA table_info`; script de semillas (tiendas de `PLAN.md`, categorías propuestas, `stores.adapter` para Amazon, Costco y Sam's; Walmart sin adapter).
 - **Hecho cuando:** `wrangler d1 migrations apply` funciona local y en dev; `sync_meta` con `version` y `schema_version`.
 
 ### [ ] T-027 · Dispositivos
@@ -280,8 +280,9 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-204 · Navegador (Playwright)
 - **Docs:** 07 §8.2 · **Depende de:** T-203
 - **Hecho cuando:** reinicio por número de páginas y por memoria probado.
-### [ ] T-205 · Adapter `amazon_mx` · [ ] T-206 · `walmart_mx` · [ ] T-207 · `sams_mx` · [ ] T-208 · `costco_mx`
-- **Docs:** 07 §9 · **Depende de:** T-203 (y T-204 si la tienda lo requiere)
+### [ ] T-205 · Adapter `amazon_mx` · [ ] T-207 · `sams_mx` · [ ] T-208 · `costco_mx`
+- **Docs:** 07 §9, `docs/spikes/spike-b-scraping.md` · **Depende de:** T-203 (ninguna requirió navegador en el spike B)
+- **T-206 · `walmart_mx`: descartada (2026-10-19).** Walmart bloquea con captcha de PerimeterX desde la primera petición; por la regla 10 no se sigue (decisión T34).
 - **Hecho cuando:** fixtures `ok`, `sin stock`, `con precio de lista` y `bloqueo` pasan; una URL real devuelve el precio correcto para CP 72750.
 ### [ ] T-210 · Resolver URL, revisar ahora, listar listings
 - **Docs:** 03 §11 · **Depende de:** T-031

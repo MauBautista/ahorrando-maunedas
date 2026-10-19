@@ -88,7 +88,7 @@ Formato: **ID · requisito · etapa · criterio de aceptación**. "E1" = etapa 1
 
 | ID | Requisito | Etapa | Criterio de aceptación |
 |---|---|---|---|
-| RF-TRK-01 | Vincular una URL de Amazon, Costco, Walmart o Sam's a una variante (pegar o compartir) | E2 | Enlaces cortos (`amzn.to`, `a.co`) se resuelven a la URL canónica |
+| RF-TRK-01 | Vincular una URL de Amazon, Costco o Sam's a una variante (pegar o compartir); una URL de Walmart responde `422 E-UNSUPPORTED_URL` | E2 | Enlaces cortos (`amzn.to`, `a.co`) se resuelven a la URL canónica |
 | RF-TRK-02 | Intervalo de revisión configurable por listing (default por tienda) | E2 | Cambiar a 4 h se refleja en el agente en ≤ 2 min |
 | RF-TRK-03 | Revisar ahora | E2 | Se revisa en ≤ 5 min si el agente está en línea |
 | RF-TRK-04 | Estado del listing | E2 | Muestra último precio, última revisión, estado (ok, bloqueado, error, no encontrado) |

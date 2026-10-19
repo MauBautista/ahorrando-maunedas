@@ -12,7 +12,7 @@ Objetivo: esqueleto desplegable y decisiones abiertas resueltas con datos antes 
 
 - [~] Monorepo, CI, recursos de Cloudflare, Firebase y OpenRouter — T-001 a T-005 (T-001 y T-002 hechas)
 - [x] `packages/shared` pasando todos los fixtures; tokens de diseño — T-006, T-007
-- [ ] Spikes A (rembg), B (scraping), C (tickets), D (CPU), E (correo sintético) — T-010 a T-014
+- [~] Spikes A (rembg), B (scraping), C (tickets), D (CPU), E (correo sintético) — T-010 a T-014 (B hecho)
 - [ ] Decisiones D2, D5, D9 cerradas — T-015 (D3 en T-013)
 
 **Hecho cuando:** spikes A, B, C y E documentados en `ESTADO.md`, D2, D5 y D9 cerradas, `maunedas-dev` responde y el spike E validó login real con Firebase. El spike D (D3) se ejecuta en la Etapa 1, justo después del push (T-031).
@@ -34,7 +34,7 @@ Objetivo: los cuatro usuarios registran compras reales, offline en Android, con 
 - [ ] Cierre con checklist y dos semanas de uso — T-190
 
 Datos semilla (T-026):
-- **Tiendas:** Costco, Sam's Club, Soriana, Bodega Aurrera, Gran Bodega, Walmart, Farmacias Guadalajara, Farmacias Similares, Chedraui, La Comer, OXXO, Amazon, Mercado Libre. Con `adapter` en Amazon (`amazon_mx`), Costco (`costco_mx`), Walmart (`walmart_mx`) y Sam's (`sams_mx`).
+- **Tiendas:** Costco, Sam's Club, Soriana, Bodega Aurrera, Gran Bodega, Walmart, Farmacias Guadalajara, Farmacias Similares, Chedraui, La Comer, OXXO, Amazon, Mercado Libre. Con `adapter` en Amazon (`amazon_mx`), Costco (`costco_mx`) y Sam's (`sams_mx`). Walmart es tienda física sin tracking web (T34).
 - **Categorías:** Despensa (Granos y pastas, Enlatados, Aceites y condimentos, Botanas), Refrigerados (Lácteos, Carnes, Embutidos), Frutas y verduras, Bebidas, Limpieza, Higiene personal, Farmacia, Mascotas.
 
 **Hecho cuando:** checklist de `docs/sdd/11-pruebas.md` §5 completo y dos semanas de uso real.
@@ -46,7 +46,7 @@ Datos semilla (T-026):
 Objetivo: monitorear precios web desde casa (CP 72750) y avisar por push.
 
 - [ ] Agente: proyecto, `/work`, scheduler, descarga y extracción, navegador — T-200 a T-204
-- [ ] Adapters Amazon, Walmart, Sam's y Costco — T-205 a T-208
+- [ ] Adapters Amazon, Sam's y Costco — T-205, T-207, T-208 (T-206 Walmart descartada, T34)
 - [ ] Worker: resolver URL, ingesta, alertas, FCM, watchdog — T-210 a T-214
 - [ ] Android y web: listings, reglas, historial de alertas, serie web, estado del agente — T-220 a T-223
 - [ ] Respaldos y restauración probada — T-230, T-231
