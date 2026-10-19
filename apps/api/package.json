@@ -21,7 +21,8 @@
     "@maunedas/shared": "workspace:*",
     "drizzle-orm": "catalog:",
     "hono": "catalog:",
-    "jose": "catalog:"
+    "jose": "catalog:",
+    "zod": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "catalog:",
