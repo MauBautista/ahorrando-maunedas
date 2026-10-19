@@ -179,6 +179,8 @@ Recursos por entorno: D1 `maunedas` / `maunedas-dev`, R2 `maunedas-images` / `ma
 
 Un solo Cron (cada hora, minuto 7) ejecuta el watchdog del agente y, a las 04:07 hora de México, el mantenimiento diario (limpieza de `token_cache`, `off_cache` vencido y `image_jobs` viejos).
 
+Mantenimiento (T-041, `cron/maintenance.ts`): la hora se decide con la zona `America/Mexico_City`, no con un desfase fijo. Borra `token_cache` con `expires_at` pasado, `off_cache` fuera de su vigencia (aciertos de más de 30 días y faltas de más de 7, las mismas ventanas de la consulta; la caché vencida que sirve de respaldo ante fallas, T42, dura hasta el siguiente mantenimiento) e `image_jobs` en `done` o `failed` con más de 30 días sin cambios; los `queued` y `claimed` nunca se borran. Solo toca tablas de servidor.
+
 ## 3. Tipos comunes
 
 ```ts

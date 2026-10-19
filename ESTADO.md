@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-038 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-038, T-041 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -28,12 +28,13 @@
 - **T-036 (2026-10-19):** búsqueda por código de barras: catálogo propio y, si no está, Open Food Facts → Open Beauty Facts → Open Products Facts con caché (30 días si se encontró, 7 si no), licencia y atribución de la imagen; 13 pruebas sin red.
 - **T-037 (2026-10-19):** imágenes en R2: subida de originales y renditions del cliente (la fila debe existir por sync y apuntar a esa clave; la primera subida gana), descarga con sesión o URL firmada, e importación de fotos de Open Food Facts solo desde sus hosts; 16 pruebas. `IMAGE_URL_SECRET` de dev se regeneró (aún no había URLs en uso).
 - **T-038 (2026-10-19):** fusión de duplicados (solo admin): al fusionar variantes, códigos, compras, precios, listings, alertas, alias y fotos pasan al destino; al fusionar productos, sus variantes, fotos y etiquetas; el origen queda borrado y los clientes reciben todo por sync; 9 pruebas.
+- **T-041 (2026-10-19):** mantenimiento diario a las 04:07 de Ciudad de México dentro del cron horario: borra tokens vencidos, caché de Open Food Facts vencida y trabajos de imagen terminados hace más de 30 días; 3 pruebas con reloj simulado.
 
 ## En curso
 - Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-041 (cron de mantenimiento), lo último del backend que no depende de Firebase; después T-023 y T-024 con Identity Toolkit simulado;
+1. T-023 y T-024 (administración de usuarios y bootstrap) con Identity Toolkit simulado; el admin real en dev espera a T-004;
 2. Spike A (rembg) en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 4. Spike D (T-013) justo después de T-031; ahí se cierra D3.
@@ -164,3 +165,4 @@ Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se ap
 - **2026-10-19** — T-036: búsqueda por código de barras con Open Food Facts y caché (T42).
 - **2026-10-19** — T-037: subida, descarga firmada e importación de imágenes (T43).
 - **2026-10-19** — T-038: fusión de productos y variantes duplicados (T44). Bloque T-033 a T-038 completo.
+- **2026-10-19** — T-041: cron de mantenimiento diario. El backend sin Firebase de la Etapa 1 queda completo.
