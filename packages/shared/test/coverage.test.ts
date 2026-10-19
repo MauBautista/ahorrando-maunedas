@@ -6,7 +6,7 @@ import { listFixtures } from './fixtures';
 const SUITES: Record<string, string> = {
   'cantidades.json': 'quantity.fixtures.test.ts',
   'ids.json': 'uuid.fixtures.test.ts',
-  'normalizacion.json': 'units.fixtures.test.ts',
+  'normalizacion.json': 'units.fixtures.test.ts', // prorrateo_ticket: ticketDiscount.fixtures.test.ts
   'promociones.json': 'promotions.fixtures.test.ts',
   'textos.json': 'text.fixtures.test.ts',
   'usuarios.json': 'username.fixtures.test.ts',

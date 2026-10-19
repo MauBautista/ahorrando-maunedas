@@ -143,10 +143,11 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** `lookups`, `products` (búsqueda sin acentos, categorías con subcategorías, paginación), `products/:id` y `search/variants` con tests.
 - **Resultado (2026-10-19):** las cuatro rutas, mejor precio por unidad (03 §3) y `ImageRef` con URLs firmadas (firma de 10 §3 adelantada de T-037); 16 pruebas de catálogo y 4 de firma.
 
-### [ ] T-034 · Historial y comparador
+### [x] T-034 · Historial y comparador
 - **Docs:** 03 §7, `ARQUITECTURA.md` §3.3 · **Depende de:** T-033
 - **Hacer:** `prorateTicketDiscount` en `packages/shared` con su sección de fixture (prorrateo del descuento de ticket, `esquema-d1.sql` → `v_price_points`).
 - **Hecho cuando:** `variants/:id/history` y `products/:id/compare` devuelven valores que coinciden con `fixtures/normalizacion.json` y con el prorrateo; "mejor precio" según 03 §3.
+- **Resultado (2026-10-19):** `prorateTicketDiscount` y `effectiveUnitCents` con la sección `prorrateo_ticket` (6 casos); migración `0002_price_points_guard.sql` para que la vista no divida entre cero ni dé precios negativos (T41); historial y comparador con la misma regla de mejor precio que la lista; rutas separadas por recurso como en 03 §2. La vista de D1 pasa el fixture; 10 pruebas de API y 4 de la regla compartida. La versión Kotlin va en T-101 y la `@DatabaseView` de Room en T-102, con el mismo fixture.
 
 ### [ ] T-035 · Compras (consulta)
 - **Docs:** 03 §7 · **Depende de:** T-031
@@ -191,7 +192,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-102 · `core:database`
 - **Docs:** 04 §6.1 · **Depende de:** T-100, T-030
-- **Hecho cuando:** entidades espejo de las tablas sync/down, tablas locales, vista `v_price_points`, DAOs; test que compara nombres de columna con el registro de sync; esquema de Room exportado.
+- **Hecho cuando:** entidades espejo de las tablas sync/down, tablas locales, vista `v_price_points`, DAOs; test que compara nombres de columna con el registro de sync; esquema de Room exportado. La vista de Room pasa `normalizacion.json` → `prorrateo_ticket`, como la de D1 (T41).
 
 ### [ ] T-103 · `core:network`
 - **Docs:** 02 §6.3, 03 §1 · **Depende de:** T-100

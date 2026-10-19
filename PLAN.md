@@ -25,7 +25,7 @@ Objetivo: los cuatro usuarios registran compras reales, offline en Android, con 
 
 - [~] Worker: base, auth (usuario/contraseña + Google), usuarios, bootstrap, proxy de auth, esquema y semillas — T-020 a T-027 (T-020, T-021, T-022, T-026 y T-027 hechas)
 - [x] Sync push/pull — T-030 a T-032
-- [~] Consulta, historial, comparador, compras, códigos, imágenes, fusión — T-033 a T-038 (T-033 hecha)
+- [~] Consulta, historial, comparador, compras, códigos, imágenes, fusión — T-033 a T-038 (T-033 y T-034 hechas)
 - [ ] IA: gateway, presupuesto y extracción de tickets — T-039, T-040
 - [ ] Cron de mantenimiento — T-041
 - [ ] Android base (módulos, pricing, Room, red, sync, subidas, diseño) — T-100 a T-106

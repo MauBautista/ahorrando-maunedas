@@ -1,16 +1,15 @@
 import {
+  CompareQuerySchema,
   ProductsQuerySchema,
-  SearchVariantsQuerySchema,
   type ProductListItem,
   type ProductsResponse,
-  type VariantSearchItem,
 } from '@maunedas/shared/api/catalog';
 import type { DisplayUnit } from '@maunedas/shared/pricing/units';
-import { searchKey } from '@maunedas/shared/text/searchKey';
 import { Hono } from 'hono';
 import { z } from 'zod';
 import { requireUser } from '../auth/middleware';
-import { bestPrices, latestPoints } from '../catalog/prices';
+import { isBarcodeQuery, searchWords, sqlParams } from '../db/queries/params';
+import { bestPrices, comparePrices, latestPoints } from '../db/queries/prices';
 import type { AppEnv } from '../env';
 import { ApiError } from '../errors';
 import { imageRefs } from '../images/refs';
@@ -19,42 +18,19 @@ import { parseParam, parseQuery } from '../util/validate';
 
 type Row = Record<string, unknown>;
 
-/** Words of a search: normalized like products.search_key; every word must appear (AND, partial). */
-const wordsOf = (q: string | undefined) => (q ? searchKey(q).split(' ').filter(Boolean).slice(0, 8) : []);
-const onlyDigits = (q: string | undefined) => (q ? /^\d{6,14}$/.test(q.trim()) : false);
-
-/** Read-only catalog endpoints used by the web (Android reads Room) — 03 §7. */
-export const catalog = new Hono<AppEnv>()
-  .get('/v1/lookups', requireUser(), async (c) => {
-    const db = c.env.DB;
-    const [stores, branches, categories, tags] = await db.batch<Row>([
-      db.prepare('SELECT * FROM stores WHERE deleted_at IS NULL ORDER BY name, id'),
-      db.prepare('SELECT * FROM store_branches WHERE deleted_at IS NULL ORDER BY store_id, name, id'),
-      db.prepare('SELECT * FROM categories WHERE deleted_at IS NULL ORDER BY sort_order, name, id'),
-      db.prepare('SELECT * FROM tags WHERE deleted_at IS NULL ORDER BY name, id'),
-    ]);
-    return c.json({
-      stores: stores!.results,
-      store_branches: branches!.results,
-      categories: categories!.results,
-      tags: tags!.results,
-    });
-  })
-
+/** Product list, detail and comparator for the web (Android reads Room) — 03 §7. */
+export const products = new Hono<AppEnv>()
   .get('/v1/products', requireUser(), async (c) => {
     const query = parseQuery(c, ProductsQuerySchema);
     const where = ['p.deleted_at IS NULL'];
-    const params: unknown[] = [];
-    const bind = (v: unknown) => {
-      params.push(v);
-      return `?${params.length}`;
-    };
+    const { params, bind } = sqlParams();
 
-    const words = wordsOf(query.q);
-    if (words.length > 0 || onlyDigits(query.q)) {
+    const words = searchWords(query.q);
+    const barcode = isBarcodeQuery(query.q);
+    if (words.length > 0 || barcode) {
       const text =
         words.length > 0 ? words.map((w) => `instr(p.search_key, ${bind(w)}) > 0`).join(' AND ') : '0';
-      const code = onlyDigits(query.q)
+      const code = barcode
         ? ` OR EXISTS (SELECT 1 FROM barcodes b JOIN variants v ON v.id = b.variant_id
                        WHERE v.product_id = p.id AND v.deleted_at IS NULL AND b.deleted_at IS NULL
                          AND b.code = ${bind(query.q!.trim())})`
@@ -176,52 +152,14 @@ export const catalog = new Hono<AppEnv>()
     });
   })
 
-  .get('/v1/search/variants', requireUser(), async (c) => {
-    const query = parseQuery(c, SearchVariantsQuerySchema);
-    const params: unknown[] = [];
-    const bind = (v: unknown) => {
-      params.push(v);
-      return `?${params.length}`;
-    };
-    const words = wordsOf(query.q);
-    const digits = onlyDigits(query.q);
-    const codeMatch = digits
-      ? `EXISTS (SELECT 1 FROM barcodes b WHERE b.variant_id = v.id AND b.deleted_at IS NULL AND b.code = ${bind(query.q)})`
-      : '0';
-    const text =
-      words.length > 0
-        ? words.map((w) => `instr(p.search_key || ' ' || lower(v.label), ${bind(w)}) > 0`).join(' AND ')
-        : '0';
-    const sql = `SELECT v.id AS variant_id, p.id AS product_id, p.name AS product_name, p.brand, v.label AS variant_label,
-                        v.primary_image_id AS variant_image, p.primary_image_id AS product_image,
-                        (${codeMatch}) AS barcode_match
-                 FROM variants v JOIN products p ON p.id = v.product_id
-                 WHERE v.deleted_at IS NULL AND p.deleted_at IS NULL AND ((${codeMatch}) OR (${text}))
-                 ORDER BY barcode_match DESC, p.search_key, v.label, v.id LIMIT ${bind(query.limit)}`;
-    const { results } = await c.env.DB.prepare(sql)
-      .bind(...params)
-      .all<{
-        variant_id: string;
-        product_id: string;
-        product_name: string;
-        brand: string | null;
-        variant_label: string;
-        variant_image: string | null;
-        product_image: string | null;
-        barcode_match: number;
-      }>();
-    const images = await imageRefs(
-      c.env,
-      results.flatMap((r) => [r.variant_image, r.product_image]),
-    );
-    const items: VariantSearchItem[] = results.map((r) => ({
-      variant_id: r.variant_id,
-      product_id: r.product_id,
-      product_name: r.product_name,
-      brand: r.brand,
-      variant_label: r.variant_label,
-      barcode_match: r.barcode_match === 1,
-      image: images.get(r.variant_image ?? '') ?? images.get(r.product_image ?? '') ?? null,
-    }));
-    return c.json({ items });
+  .get('/v1/products/:id/compare', requireUser(), async (c) => {
+    const id = parseParam(c.req.param('id'), z.uuid(), 'id');
+    const { days } = parseQuery(c, CompareQuerySchema);
+    const product = await c.env.DB.prepare(
+      'SELECT display_unit FROM products WHERE id = ?1 AND deleted_at IS NULL',
+    )
+      .bind(id)
+      .first<{ display_unit: DisplayUnit }>();
+    if (!product) throw new ApiError(404, 'NOT_FOUND');
+    return c.json(await comparePrices(c.env.DB, id, product.display_unit, days, Date.now()));
   });

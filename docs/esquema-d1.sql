@@ -524,7 +524,10 @@ CREATE TABLE token_cache (
 -- no se usan funciones de ventana (Android API 26 trae SQLite 3.18).
 -- Compras: el descuento de ticket (purchases.discount_cents) se prorratea
 -- en proporción al final_cents de cada línea viva de la compra (RF-COM-05):
---   pagado_línea = final_cents × (1 − discount_cents / Σ final_cents)
+--   pagado_línea = final_cents × (1 − min(discount_cents, Σ final_cents) / Σ final_cents)
+-- Con Σ final_cents = 0 no hay nada que prorratear (factor 1); un descuento
+-- mayor que la suma deja las líneas en 0, nunca negativas. Mismo cálculo que
+-- prorateTicketDiscount (packages/shared) y fixtures/normalizacion.json.
 -- ---------------------------------------------------------------------
 CREATE VIEW v_price_points AS
 SELECT
@@ -536,18 +539,21 @@ SELECT
   NULL                                                  AS listing_id,
   p.purchased_at                                        AS observed_at,
   pi.unit_price_cents                                   AS list_unit_cents,
-  CAST(ROUND(pi.final_cents * (1.0 - p.discount_cents * 1.0 / t.lines_final_cents) / pi.quantity) AS INTEGER)
+  CAST(ROUND(pi.final_cents * t.paid_factor / pi.quantity) AS INTEGER)
                                                         AS effective_unit_cents,
-  pi.final_cents * (1.0 - p.discount_cents * 1.0 / t.lines_final_cents)
+  pi.final_cents * t.paid_factor
     / (pi.quantity * v.unit_amount * v.pack_count)      AS cents_per_base,
   (pi.discount_cents > 0 OR p.discount_cents > 0)       AS has_promo
 FROM purchase_items pi
 JOIN purchases p ON p.id = pi.purchase_id
 JOIN variants  v ON v.id = pi.variant_id
-JOIN (SELECT purchase_id, SUM(final_cents) AS lines_final_cents
-      FROM purchase_items
-      WHERE deleted_at IS NULL
-      GROUP BY purchase_id) t ON t.purchase_id = pi.purchase_id
+JOIN (SELECT i.purchase_id,
+             COALESCE(1.0 - MIN(pu.discount_cents, SUM(i.final_cents)) * 1.0 / NULLIF(SUM(i.final_cents), 0), 1.0)
+               AS paid_factor
+      FROM purchase_items i
+      JOIN purchases pu ON pu.id = i.purchase_id
+      WHERE i.deleted_at IS NULL
+      GROUP BY i.purchase_id) t ON t.purchase_id = pi.purchase_id
 WHERE pi.deleted_at IS NULL AND p.deleted_at IS NULL AND p.status = 'confirmed'
 UNION ALL
 SELECT

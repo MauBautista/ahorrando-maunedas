@@ -53,5 +53,51 @@
       "esperado": "error"
     }
   ],
+  "prorrateo_ticket": {
+    "descripcion": "Descuento a nivel ticket (RF-COM-05) prorrateado según el final_cents de cada línea viva de la compra: paid_cents = final_cents × (1 − min(discount_cents, Σ final_cents) / Σ final_cents); con Σ final_cents = 0 el factor es 1. effective_unit_cents = round_half_up(paid_cents / quantity); cents_per_base = paid_cents / (quantity × unit_amount × pack_count). Lo cumplen prorateTicketDiscount (packages/shared, Kotlin) y la vista v_price_points (D1 y Room).",
+    "casos": [
+      {
+        "nombre": "Cupón de $20 en un ticket de 3 líneas", "discount_cents": 2000,
+        "lineas": [
+          { "variante": { "measure": "volume", "unit_amount": 1000, "pack_count": 1 }, "quantity": 2, "final_cents": 5700, "esperado": { "paid_cents": 5044.073647871116, "effective_unit_cents": 2522, "cents_per_base": 2.522036823935558 } },
+          { "variante": { "measure": "mass", "unit_amount": 1000, "pack_count": 1, "sold_by_weight": true }, "quantity": 0.845, "final_cents": 2780, "esperado": { "paid_cents": 2460.0920598388952, "effective_unit_cents": 2911, "cents_per_base": 2.9113515501052016 } },
+          { "variante": { "measure": "volume", "unit_amount": 3000, "pack_count": 1 }, "quantity": 1, "final_cents": 8900, "esperado": { "paid_cents": 7875.834292289988, "effective_unit_cents": 7876, "cents_per_base": 2.6252780974299963 } }
+        ]
+      },
+      {
+        "nombre": "Sin descuento de ticket", "discount_cents": 0,
+        "lineas": [
+          { "variante": { "measure": "count", "unit_amount": 30, "pack_count": 1 }, "quantity": 1, "final_cents": 7490, "esperado": { "paid_cents": 7490, "effective_unit_cents": 7490, "cents_per_base": 249.66666666666666 } },
+          { "variante": { "measure": "volume", "unit_amount": 1000, "pack_count": 1 }, "quantity": 1, "final_cents": 2850, "esperado": { "paid_cents": 2850, "effective_unit_cents": 2850, "cents_per_base": 2.85 } }
+        ]
+      },
+      {
+        "nombre": "Línea de regalo en $0 con cupón", "discount_cents": 1000,
+        "lineas": [
+          { "variante": { "measure": "volume", "unit_amount": 1000, "pack_count": 6 }, "quantity": 1, "final_cents": 15900, "esperado": { "paid_cents": 14900, "effective_unit_cents": 14900, "cents_per_base": 2.4833333333333334 } },
+          { "variante": { "measure": "count", "unit_amount": 1, "pack_count": 1 }, "quantity": 1, "final_cents": 0, "esperado": { "paid_cents": 0, "effective_unit_cents": 0, "cents_per_base": 0 } }
+        ]
+      },
+      {
+        "nombre": "Todas las líneas en $0", "discount_cents": 0,
+        "lineas": [
+          { "variante": { "measure": "count", "unit_amount": 1, "pack_count": 1 }, "quantity": 1, "final_cents": 0, "esperado": { "paid_cents": 0, "effective_unit_cents": 0, "cents_per_base": 0 } }
+        ]
+      },
+      {
+        "nombre": "Descuento mayor que la suma de las líneas", "discount_cents": 5000,
+        "lineas": [
+          { "variante": { "measure": "volume", "unit_amount": 1000, "pack_count": 1 }, "quantity": 1, "final_cents": 2850, "esperado": { "paid_cents": 0, "effective_unit_cents": 0, "cents_per_base": 0 } }
+        ]
+      },
+      {
+        "nombre": "Redondeo half-up del precio por unidad", "discount_cents": 0,
+        "lineas": [
+          { "variante": { "measure": "count", "unit_amount": 1, "pack_count": 1 }, "quantity": 2, "final_cents": 1001, "esperado": { "paid_cents": 1001, "effective_unit_cents": 501, "cents_per_base": 500.5 } }
+        ]
+      }
+    ],
+    "tolerancia": 1e-9
+  },
   "tolerancia_cents_per_base": 1e-9
 }

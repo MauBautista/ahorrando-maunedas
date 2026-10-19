@@ -263,7 +263,7 @@ Upsert por `device_id`. Si otro dispositivo tenía el mismo `fcm_token`, se le p
 - `q`: se normaliza con `searchKey()`; cada palabra debe aparecer en `products.search_key` (AND, coincidencia parcial). Si `q` son de 6 a 14 dígitos, busca también por código exacto.
 - `category_id` incluye subcategorías (CTE recursivo).
 - `limit` de 1 a 100 (30 por omisión). Orden por `search_key` e `id` (sin acentos ni mayúsculas; equivale a nombre y marca); `next_cursor` es opaco.
-- Implementación (T-033): `apps/api/src/routes/catalog.ts`; `best` en `catalog/prices.ts`. Las URLs de `ImageRef` son absolutas (`PUBLIC_BASE_URL`) y firmadas por 24 h (10 §3).
+- Implementación (T-033): `apps/api/src/routes/{lookups,products,search}.ts`; `best` en `db/queries/prices.ts` (`pickBest`, la misma función que usa el comparador). Las URLs de `ImageRef` son absolutas (`PUBLIC_BASE_URL`) y firmadas por 24 h (10 §3).
 ```ts
 // 200
 {
@@ -298,6 +298,7 @@ Producto inexistente o borrado → `404 E-NOT_FOUND`. `display_unit` de cada pun
   display_unit: DisplayUnit;
   rows: Array<{
     variant_id: Id; store_id: Id;
+    display_unit: DisplayUnit;     // la del producto, o la de la medida de la variante si no corresponde (§3)
     last: { display_cents: Cents; observed_at: Millis; source: PriceSource };
     min: { display_cents: Cents; observed_at: Millis };
     avg_display_cents: Cents;
@@ -306,6 +307,10 @@ Producto inexistente o borrado → `404 E-NOT_FOUND`. `display_unit` de cada pun
   best: { variant_id: Id; store_id: Id } | null;    // menor "last" por unidad
 }
 ```
+- Una fila por (variante, tienda) con puntos en los últimos `days` días (1 a 3650; 90 por omisión): `last` es el más reciente, `min` el de menor precio por unidad (en empate, el más reciente) y `avg_display_cents` el promedio de `cents_per_base` de los `n` puntos. Las variantes borradas no aparecen.
+- `best` aplica la regla de §3 a los `last` (solo variantes cuya medida corresponde al `display_unit`); con `days = 90` coincide con el `best` de `GET /v1/products`.
+- Orden: filas comparables por `last` de menor a mayor; luego las de otra medida. Producto inexistente o borrado → `404`.
+- Implementación (T-034): `routes/products.ts` y `comparePrices` en `db/queries/prices.ts`.
 
 ### `GET /v1/variants/:id/history?from=&to=&sources=purchase,shelf,web&store_id=`
 ```ts
@@ -321,7 +326,7 @@ Producto inexistente o borrado → `404 E-NOT_FOUND`. `display_unit` de cada pun
   web_confirmed_until: Record<Id, Millis>;   // listing_id → listing_state.last_checked_at
 }
 ```
-Defaults: `to = ahora`, `from = to − 365 días`.
+Defaults: `to = ahora`, `from = to − 365 días`. `from > to` → `400`. `sources` es una lista separada por comas de `purchase`, `shelf` y `web` (las tres por omisión). Puntos en orden de `observed_at` (y `point_id`); solo compras confirmadas, con el descuento de ticket prorrateado (`v_price_points`). `web_confirmed_until` incluye los listings vivos de la variante (y de la tienda, si se filtra) con `last_checked_at`. Variante o producto inexistente o borrado → `404`. Implementación (T-034): `routes/variants.ts`.
 
 ### `GET /v1/search/variants?q=&limit=20`
 Para el editor de compra y la revisión de tickets en web. `q` obligatorio; `limit` de 1 a 50. Las palabras se buscan en `search_key` del producto y en la etiqueta de la variante; un código exacto va primero con `barcode_match: true`.
