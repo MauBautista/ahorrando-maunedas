@@ -141,7 +141,7 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
   - `not_found_handling: "single-page-application"`: cualquier ruta sin archivo devuelve `index.html` (React Router resuelve).
   - `run_worker_first: ["/v1/*", "/agent/*", "/__/auth/*", "/__/firebase/*"]`: esas rutas siempre pasan por el Worker.
 - Variables de Vite (versionadas, sin secretos): `VITE_FIREBASE_API_KEY`, `VITE_FIREBASE_PROJECT_ID`, `VITE_FIREBASE_APP_ID`, `VITE_SYNTHETIC_EMAIL_DOMAIN`. Archivos: `.env.development` (`vite dev`, proyecto de dev), `.env.dev` (`vite build --mode dev` para `maunedas-dev`; conserva `import.meta.env.PROD`, así que `authDomain` es el propio host) y `.env.production`.
-- `pnpm --filter api deploy` = `pnpm --filter web build && wrangler deploy`; `deploy:dev` = `pnpm --filter web build --mode dev && wrangler deploy --env dev`.
+- `pnpm --filter api deploy:prod` = `pnpm --filter web build && wrangler deploy`; `deploy:dev` = `pnpm --filter web build --mode dev && wrangler deploy --env dev` (no se llama `deploy` a secas porque choca con `pnpm deploy`).
 
 ## 7. iPhone
 

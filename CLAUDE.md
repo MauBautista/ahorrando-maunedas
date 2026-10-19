@@ -41,6 +41,7 @@ Se crean en la Etapa 0. Mantener esta lista al día.
 
 ```bash
 nvm use && corepack enable pnpm             # Node 24 (.nvmrc) y pnpm de packageManager
+apps/api/node_modules/.bin/wrangler auth list   # wrangler usa el perfil "maunedas" ligado a este repo (cuenta propia, T35)
 pnpm install
 pnpm lint                                   # ESLint en todo el monorepo (raíz)
 pnpm format:check                           # Prettier (no toca docs/ ni fixtures/)
@@ -52,7 +53,7 @@ pnpm --filter api test                      # Vitest dentro de workerd con @clou
 pnpm --filter api db:generate               # drizzle-kit → migrations/ (se crea en T-026)
 pnpm --filter api db:migrate:local          # wrangler d1 migrations apply maunedas --local (T-026)
 pnpm --filter api deploy:dev                # web (--mode dev) + Worker "maunedas-dev"
-pnpm --filter api deploy                    # web + Worker "maunedas" (producción)
+pnpm --filter api deploy:prod               # web + Worker "maunedas" (producción; `deploy` a secas es un comando de pnpm)
 pnpm --filter web dev                       # proxy de /v1 y /__ al Worker local
 pnpm --filter web build
 pnpm --filter shared test                   # fixtures

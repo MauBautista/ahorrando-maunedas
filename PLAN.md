@@ -10,7 +10,7 @@ Convención: `[ ]` pendiente · `[~]` en curso · `[x]` hecho.
 
 Objetivo: esqueleto desplegable y decisiones abiertas resueltas con datos antes de escribir funcionalidad.
 
-- [~] Monorepo, CI, recursos de Cloudflare, Firebase y OpenRouter — T-001 a T-005 (T-001 y T-002 hechas)
+- [~] Monorepo, CI, recursos de Cloudflare, Firebase y OpenRouter — T-001 a T-005 (T-001 a T-003 hechas)
 - [x] `packages/shared` pasando todos los fixtures; tokens de diseño — T-006, T-007
 - [~] Spikes A (rembg), B (scraping), C (tickets), D (CPU), E (correo sintético) — T-010 a T-014 (B hecho)
 - [ ] Decisiones D2, D5, D9 cerradas — T-015 (D3 en T-013)
@@ -23,7 +23,7 @@ Objetivo: esqueleto desplegable y decisiones abiertas resueltas con datos antes 
 
 Objetivo: los cuatro usuarios registran compras reales, offline en Android, con historial y comparación por unidad; iPhone por web.
 
-- [ ] Worker: base, auth (usuario/contraseña + Google), usuarios, bootstrap, proxy de auth, esquema y semillas — T-020 a T-027
+- [~] Worker: base, auth (usuario/contraseña + Google), usuarios, bootstrap, proxy de auth, esquema y semillas — T-020 a T-027 (T-020 hecha)
 - [ ] Sync push/pull — T-030 a T-032
 - [ ] Consulta, historial, comparador, compras, códigos, imágenes, fusión — T-033 a T-038
 - [ ] IA: gateway, presupuesto y extracción de tickets — T-039, T-040

@@ -1,5 +1,5 @@
 // SDD 03 §2. vars, d1_databases and r2_buckets are not inherited by environments: env.dev repeats them.
-// Placeholders filled later: database_id (T-003, new Maunedas Cloudflare account), SUBDOMAIN (T-003),
+// Maunedas Cloudflare account (T35), subdomain maunedas.workers.dev. Placeholders filled later:
 // FIREBASE_PROJECT_ID (T-004), AI_RECEIPT_MODEL (spike C, T-012).
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
@@ -20,7 +20,7 @@
     {
       "binding": "DB",
       "database_name": "maunedas",
-      "database_id": "00000000-0000-0000-0000-000000000001",
+      "database_id": "6edc1233-2e2a-448a-b811-867ad040636a",
       "migrations_dir": "migrations",
     },
   ],
@@ -28,7 +28,7 @@
   "vars": {
     "FIREBASE_PROJECT_ID": "pending-t004",
     "SYNTHETIC_EMAIL_DOMAIN": "maunedas.local",
-    "PUBLIC_BASE_URL": "https://maunedas.SUBDOMAIN.workers.dev",
+    "PUBLIC_BASE_URL": "https://maunedas.maunedas.workers.dev",
     "MIN_CLIENT_SCHEMA": "1",
     "OFF_USER_AGENT": "AhorrandoMaunedas/1.0 (uso personal)",
     "AI_RECEIPT_PROVIDER": "openrouter",
@@ -47,7 +47,7 @@
         {
           "binding": "DB",
           "database_name": "maunedas-dev",
-          "database_id": "00000000-0000-0000-0000-000000000002",
+          "database_id": "82bb3b65-e590-4fe9-b3e9-2663aa8f58b7",
           "migrations_dir": "migrations",
         },
       ],
@@ -55,7 +55,7 @@
       "vars": {
         "FIREBASE_PROJECT_ID": "pending-t004-dev",
         "SYNTHETIC_EMAIL_DOMAIN": "maunedas.local",
-        "PUBLIC_BASE_URL": "https://maunedas-dev.SUBDOMAIN.workers.dev",
+        "PUBLIC_BASE_URL": "https://maunedas-dev.maunedas.workers.dev",
         "MIN_CLIENT_SCHEMA": "1",
         "OFF_USER_AGENT": "AhorrandoMaunedas/1.0 (uso personal)",
         "AI_RECEIPT_PROVIDER": "openrouter",
