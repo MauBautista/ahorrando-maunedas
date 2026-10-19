@@ -8,10 +8,18 @@
     "cf-typegen": "wrangler types",
     "typecheck": "node scripts/ensure-web-dist.ts && wrangler types && tsc -p tsconfig.json && tsc -p test/tsconfig.json",
     "test": "node scripts/ensure-web-dist.ts && vitest run",
-    "deploy:dev": "pnpm --filter web build --mode dev && wrangler deploy --env dev",
-    "deploy:prod": "pnpm --filter web build && wrangler deploy --env ''"
+    "deploy:dev": "pnpm run db:migrate:dev && pnpm --filter web build --mode dev && wrangler deploy --env dev",
+    "deploy:prod": "pnpm run db:migrate:prod && pnpm --filter web build && wrangler deploy --env ''",
+    "db:migrate:local": "wrangler d1 migrations apply maunedas --local",
+    "db:migrate:dev": "wrangler d1 migrations apply maunedas-dev --env dev --remote",
+    "db:migrate:prod": "wrangler d1 migrations apply maunedas --env '' --remote",
+    "db:seed:local": "wrangler d1 execute maunedas --local --file seeds/0001_lookups.sql",
+    "db:seed:dev": "wrangler d1 execute maunedas-dev --env dev --remote --file seeds/0001_lookups.sql",
+    "db:seed:prod": "wrangler d1 execute maunedas --env '' --remote --file seeds/0001_lookups.sql"
   },
   "dependencies": {
+    "@maunedas/shared": "workspace:*",
+    "drizzle-orm": "catalog:",
     "hono": "catalog:"
   },
   "devDependencies": {

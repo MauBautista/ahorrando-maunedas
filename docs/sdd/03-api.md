@@ -80,7 +80,7 @@ apps/api/src/
 ├── receipts/                extract, match, normalize (ver 09)
 ├── images/                  blobs, signing, import (ver 10)
 ├── catalog/                 off (Open Food Facts y hermanos); el parser de contenido vive en packages/shared
-├── db/                      schema.ts (Drizzle), queries/
+├── db/                      schema.ts (Drizzle, solo consultas tipadas), meta.ts (sync_meta), queries/
 ├── cron/                    scheduled (despacho del Cron), watchdog, maintenance
 └── util/                    log (JSON con request_id), uuid, time, hash
 ```

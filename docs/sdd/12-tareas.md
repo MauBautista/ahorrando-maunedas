@@ -109,10 +109,11 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Docs:** 02 §5.5 · **Depende de:** T-020
 - **Hecho cuando:** `/__/auth/handler` en dev devuelve la página de Firebase (200) sin redirección.
 
-### [ ] T-026 · Esquema D1 y datos semilla
+### [x] T-026 · Esquema D1 y datos semilla
 - **Docs:** `esquema-d1.sql` · **Depende de:** T-020
 - **Hacer:** migración `0001_init.sql` escrita a mano a partir de `esquema-d1.sql` (si drizzle-kit no la reproduce fielmente: `COLLATE NOCASE`, índices parciales, `CHECK`, vista); Drizzle schema para consultas tipadas, con un test que compare contra `PRAGMA table_info`; script de semillas (tiendas de `PLAN.md`, categorías propuestas, `stores.adapter` para Amazon, Costco y Sam's; Walmart sin adapter).
 - **Hecho cuando:** `wrangler d1 migrations apply` funciona local y en dev; `sync_meta` con `version` y `schema_version`.
+- **Resultado (2026-10-19):** `migrations/0001_init.sql` copia de `esquema-d1.sql` (Drizzle 0.45 no tiene `COLLATE` en SQLite, así que `drizzle-kit` quedó fuera); `src/db/schema.ts` para consultas tipadas; `seeds/0001_lookups.sql` idempotente (13 tiendas, 15 categorías, IDs UUIDv7 fijos). `test/schema.test.ts` compara migraciones contra el diseño y Drizzle contra `PRAGMA table_info`, y prueba el prorrateo de `v_price_points`. Aplicado en local y en `maunedas-dev`; prod se migra con `deploy:prod`.
 
 ### [ ] T-027 · Dispositivos
 - **Docs:** 03 §5 · **Depende de:** T-021
