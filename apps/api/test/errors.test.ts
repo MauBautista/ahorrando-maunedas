@@ -4,16 +4,18 @@ import { createApp } from '../src/app';
 import { ApiError } from '../src/errors';
 
 // Test-only routes; the production app never mounts them.
-const app = createApp((a) => {
-  a.get('/v1/__test/conflict', () => {
-    throw new ApiError(409, 'MERGE_INVALID', { reason: 'same_id' });
-  });
-  a.get('/v1/__test/custom-message', () => {
-    throw new ApiError(502, 'UPSTREAM_ERROR', { service: 'openrouter' }, 'OpenRouter no respondió.');
-  });
-  a.get('/v1/__test/crash', () => {
-    throw new Error('boom: secret detail that must not leak');
-  });
+const app = createApp({
+  extraRoutes: (a) => {
+    a.get('/v1/__test/conflict', () => {
+      throw new ApiError(409, 'MERGE_INVALID', { reason: 'same_id' });
+    });
+    a.get('/v1/__test/custom-message', () => {
+      throw new ApiError(502, 'UPSTREAM_ERROR', { service: 'openrouter' }, 'OpenRouter no respondió.');
+    });
+    a.get('/v1/__test/crash', () => {
+      throw new Error('boom: secret detail that must not leak');
+    });
+  },
 });
 
 const call = (path: string, headers: Record<string, string> = {}) =>

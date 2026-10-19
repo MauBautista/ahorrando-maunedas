@@ -1,3 +1,6 @@
+import type { JWTVerifyGetKey } from 'jose';
+import type { UserRow } from './db/rows';
+
 // SDD 03 §2. Values per environment live in wrangler.jsonc (vars) and `wrangler secret` (secrets).
 export interface Env {
   DB: D1Database;
@@ -28,5 +31,11 @@ export interface Env {
 /** Hono generics shared by every route and middleware. */
 export interface AppEnv {
   Bindings: Env;
-  Variables: { requestId: string };
+  Variables: {
+    requestId: string;
+    /** Keys that verify Firebase ID tokens: Google's JWKS in production, local test keys in tests. */
+    firebaseKeys: JWTVerifyGetKey;
+    /** Set by `requireUser`. */
+    user: UserRow;
+  };
 }

@@ -161,6 +161,9 @@ async function resolveUser(db: D1Database, p: FirebaseClaims): Promise<UserRow |
 
 Notas:
 - `createRemoteJWKSet` cachea las llaves en memoria del isolate; la descarga es espera de red, no CPU.
+- Implementación (T-021): la verificación vive en `auth/firebase-token.ts` y las llaves se inyectan con `createApp({ firebaseKeys })`; en producción son las de Google y en las pruebas un JWKS local con llaves RSA de prueba.
+- Errores: firma, `iss`, `aud`, `exp`/`iat` (tolerancia de 5 s), algoritmo distinto de RS256 o `sub` vacío → `401 E-INVALID_TOKEN`. Si no se pueden descargar las llaves de Google → `502 E-UPSTREAM_ERROR` (`details.service = 'google_jwks'`), para que el cliente no descarte un token válido.
+- Un inicio de sesión con contraseña nunca se vincula por correo, aunque coincida con un `google_email`: solo `sign_in_provider = 'google.com'` con `email_verified = true`.
 - Opcional si el spike D muestra presión: cache en memoria `Map<sub, {user, exp}>` de 60 s.
 
 ### 5.2 Token de Google para servicios (compartido con FCM) (T-022)

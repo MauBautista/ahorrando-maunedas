@@ -89,9 +89,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hacer:** Hono, `ApiError` + `onError` (formato 03 §1.1), `X-Request-Id`, verificación de `X-Client-Schema`, `GET /v1/health`, `wrangler.jsonc` completo con assets, cron vacío.
 - **Hecho cuando:** tests de formato de error, 426 y health pasan; deploy en dev.
 
-### [ ] T-021 · Middleware de autenticación y `/v1/me`
+### [x] T-021 · Middleware de autenticación y `/v1/me`
 - **Docs:** 02 §5.1 · **Depende de:** T-020, T-026
 - **Hecho cuando:** pasan los casos del middleware de 02 §9.
+- **Resultado (2026-10-19):** 20 pruebas con JWKS local (firma, `iss`, `aud`, expiración, `alg: none`, `sub` vacío, identidad, Google verificado y no verificado, mayúsculas en el correo, inactivo, admin, llaves de Google inaccesibles → 502). La prueba con tokens reales de Firebase se hace en el spike E (T-014).
 
 ### [ ] T-022 · Token de Google y `token_cache`
 - **Docs:** 02 §5.2 · **Depende de:** T-020, T-026
