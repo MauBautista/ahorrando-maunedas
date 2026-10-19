@@ -94,9 +94,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** pasan los casos del middleware de 02 §9.
 - **Resultado (2026-10-19):** 20 pruebas con JWKS local (firma, `iss`, `aud`, expiración, `alg: none`, `sub` vacío, identidad, Google verificado y no verificado, mayúsculas en el correo, inactivo, admin, llaves de Google inaccesibles → 502). La prueba con tokens reales de Firebase se hace en el spike E (T-014).
 
-### [ ] T-022 · Token de Google y `token_cache`
+### [x] T-022 · Token de Google y `token_cache`
 - **Docs:** 02 §5.2 · **Depende de:** T-020, T-026
 - **Hecho cuando:** con `fetch` simulado se obtiene y cachea el token (memoria y D1); se renueva al vencer.
+- **Resultado (2026-10-19):** 9 pruebas con `fetch` y reloj simulados y una cuenta de servicio desechable (firma y claims del JWT, caché en memoria y en D1, renovación un minuto antes, intercambio único con peticiones simultáneas, errores de Google y secreto ausente). Se prueba contra Google real cuando exista la cuenta de servicio (T-004).
 
 ### [ ] T-023 · Administración de usuarios
 - **Docs:** 02 §5.3, 03 §12 · **Depende de:** T-021, T-022

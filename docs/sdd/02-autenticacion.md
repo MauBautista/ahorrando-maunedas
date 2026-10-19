@@ -222,6 +222,8 @@ export async function googleAccessToken(env: Env): Promise<string> {
 }
 ```
 
+Implementación (T-022): `GoogleTokenSource` en `google/oauth.ts` con `fetch` y reloj inyectables (pruebas sin red) y una instancia por isolate (`googleAccessToken(env)`). Además de lo anterior: las peticiones simultáneas en frío comparten un solo intercambio; el JWT lleva `kid = private_key_id`; una respuesta de Google sin `access_token`/`expires_in` válidos → `502 E-UPSTREAM_ERROR`; si `GOOGLE_SERVICE_ACCOUNT` falta o está mal formado → `500 E-INTERNAL` (error de configuración, registrado en logs) sin llamar a Google. El token nunca se registra en logs.
+
 ### 5.3 Administración de cuentas en Firebase (T-023)
 
 Identity Toolkit (las mismas rutas que usa el Admin SDK), con el token de §5.2:
