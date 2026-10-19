@@ -1,4 +1,6 @@
-// Minimal Worker until T-003 (resource ids) and T-020 (full config, see SDD 03 §2).
+// SDD 03 §2. vars, d1_databases and r2_buckets are not inherited by environments: env.dev repeats them.
+// Placeholders filled later: database_id (T-003, new Maunedas Cloudflare account), SUBDOMAIN (T-003),
+// FIREBASE_PROJECT_ID (T-004), AI_RECEIPT_MODEL (spike C, T-012).
 {
   "$schema": "./node_modules/wrangler/config-schema.json",
   "name": "maunedas",
@@ -7,7 +9,64 @@
   "compatibility_flags": ["nodejs_compat"],
   "workers_dev": true,
   "observability": { "enabled": true },
+  "assets": {
+    "directory": "../web/dist",
+    "binding": "ASSETS",
+    "not_found_handling": "single-page-application",
+    "run_worker_first": ["/v1/*", "/agent/*", "/__/auth/*", "/__/firebase/*"],
+  },
+  "triggers": { "crons": ["7 * * * *"] },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "maunedas",
+      "database_id": "00000000-0000-0000-0000-000000000001",
+      "migrations_dir": "migrations",
+    },
+  ],
+  "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "maunedas-images" }],
+  "vars": {
+    "FIREBASE_PROJECT_ID": "pending-t004",
+    "SYNTHETIC_EMAIL_DOMAIN": "maunedas.local",
+    "PUBLIC_BASE_URL": "https://maunedas.SUBDOMAIN.workers.dev",
+    "MIN_CLIENT_SCHEMA": "1",
+    "OFF_USER_AGENT": "AhorrandoMaunedas/1.0 (uso personal)",
+    "AI_RECEIPT_PROVIDER": "openrouter",
+    "AI_RECEIPT_MODEL": "<se define en el spike C>",
+    "AI_RECEIPT_EST_COST_USD": "0.01",
+    "AI_IMAGE_EDIT_PROVIDER": "openrouter",
+    "AI_IMAGE_EDIT_MODEL": "<etapa 3>",
+    "AI_IMAGE_EDIT_EST_COST_USD": "0.04",
+    "AI_MONTHLY_BUDGET_USD": "6",
+    "AI_SOFT_LIMIT_PCT": "80",
+  },
   "env": {
-    "dev": { "name": "maunedas-dev" },
+    "dev": {
+      "name": "maunedas-dev",
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "maunedas-dev",
+          "database_id": "00000000-0000-0000-0000-000000000002",
+          "migrations_dir": "migrations",
+        },
+      ],
+      "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "maunedas-images-dev" }],
+      "vars": {
+        "FIREBASE_PROJECT_ID": "pending-t004-dev",
+        "SYNTHETIC_EMAIL_DOMAIN": "maunedas.local",
+        "PUBLIC_BASE_URL": "https://maunedas-dev.SUBDOMAIN.workers.dev",
+        "MIN_CLIENT_SCHEMA": "1",
+        "OFF_USER_AGENT": "AhorrandoMaunedas/1.0 (uso personal)",
+        "AI_RECEIPT_PROVIDER": "openrouter",
+        "AI_RECEIPT_MODEL": "<se define en el spike C>",
+        "AI_RECEIPT_EST_COST_USD": "0.01",
+        "AI_IMAGE_EDIT_PROVIDER": "openrouter",
+        "AI_IMAGE_EDIT_MODEL": "<etapa 3>",
+        "AI_IMAGE_EDIT_EST_COST_USD": "0.04",
+        "AI_MONTHLY_BUDGET_USD": "6",
+        "AI_SOFT_LIMIT_PCT": "80",
+      },
+    },
   },
 }
