@@ -41,3 +41,10 @@ export function parseParam<S extends z.ZodType>(
   }
   return parsed.data;
 }
+
+/** Query string with a shared Zod schema → `400 E-VALIDATION_ERROR` when invalid (unknown keys ignored). */
+export function parseQuery<S extends z.ZodType>(c: Context, schema: S): z.infer<S> {
+  const parsed = schema.safeParse(c.req.query());
+  if (!parsed.success) throw new ApiError(400, 'VALIDATION_ERROR', { issues: issuesOf(parsed.error) });
+  return parsed.data;
+}

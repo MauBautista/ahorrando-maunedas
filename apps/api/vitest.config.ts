@@ -12,6 +12,8 @@ export default defineConfig({
         // Extra databases only for schema tests: the design schema and the seed script are applied there.
         d1Databases: { DB: 'maunedas-test', REFERENCE_DB: 'reference-test', SEED_DB: 'seed-test' },
         bindings: {
+          // Test-only secret for signed image URLs (real ones live in `wrangler secret`).
+          IMAGE_URL_SECRET: 'test-image-url-secret',
           TEST_MIGRATIONS: await readD1Migrations(dir('./migrations')),
           REFERENCE_SCHEMA: await readD1Migrations(dir('../../docs')),
           TEST_SEEDS: await readD1Migrations(dir('./seeds')),
