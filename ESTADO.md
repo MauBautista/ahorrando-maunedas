@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-038, T-041 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-023, T-030 a T-038, T-041 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -29,12 +29,13 @@
 - **T-037 (2026-10-19):** imágenes en R2: subida de originales y renditions del cliente (la fila debe existir por sync y apuntar a esa clave; la primera subida gana), descarga con sesión o URL firmada, e importación de fotos de Open Food Facts solo desde sus hosts; 16 pruebas. `IMAGE_URL_SECRET` de dev se regeneró (aún no había URLs en uso).
 - **T-038 (2026-10-19):** fusión de duplicados (solo admin): al fusionar variantes, códigos, compras, precios, listings, alertas, alias y fotos pasan al destino; al fusionar productos, sus variantes, fotos y etiquetas; el origen queda borrado y los clientes reciben todo por sync; 9 pruebas.
 - **T-041 (2026-10-19):** mantenimiento diario a las 04:07 de Ciudad de México dentro del cron horario: borra tokens vencidos, caché de Open Food Facts vencida y trabajos de imagen terminados hace más de 30 días; 3 pruebas con reloj simulado.
+- **T-023 (2026-10-19):** administración de usuarios (solo admin): lista, alta con contraseña y/o correo de Google, edición (nombre, rol, activo, correo de Google) y cambio de contraseña, con Identity Toolkit simulado; nunca deja la casa sin admin activo; 18 pruebas. Falta probar contra Firebase real (T-004).
 
 ## En curso
 - Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-023 y T-024 (administración de usuarios y bootstrap) con Identity Toolkit simulado; el admin real en dev espera a T-004;
+1. T-024 (bootstrap del primer admin) con Identity Toolkit simulado; crear el admin real en dev espera a T-004;
 2. Spike A (rembg) en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 4. Spike D (T-013) justo después de T-031; ahí se cierra D3.
@@ -87,6 +88,7 @@
 | T42 | **Fallas del catálogo abierto.** Si ningún catálogo encontró el código y alguno falló (HTTP ≠ 200/404, red, JSON inválido o > 5 s), no se guarda `found=0`: se sirve la caché positiva vencida o se responde `502 UPSTREAM_ERROR` (`service: open_catalog`) | El SDD no cubría las fallas; guardar un "no encontrado" por un error escondería el producto 7 días. Una falla no detiene la búsqueda en los catálogos siguientes |
 | T43 | **Binarios inmutables, la primera subida gana.** `PUT` de una clave que ya está en R2 responde `201` con su tamaño sin sobrescribir; la importación tampoco vuelve a descargar | Las URLs se sirven con `Cache-Control: immutable`; sobrescribir dejaría cachés con otra imagen. Un reintento del `UploadWorker` sigue siendo idempotente |
 | T44 | **Fusión: también fotos y filas borradas.** El destino recibe las imágenes del origen y, si no tenía, su foto principal; se mueven también las filas ya borradas que apuntaban al origen; un id inexistente responde `404` | El SDD no decía qué pasaba con las fotos (quedarían en un registro borrado) ni con los tombstones; moverlos evita referencias a una variante muerta si alguien revive una fila |
+| T45 | **Usuarios: Firebase primero y reversión.** Activar o desactivar cambia cada cuenta de Firebase antes de D1 y las regresa si algo falla; `google_email` en minúsculas (cambiar solo mayúsculas no borra identidades); una carrera de `UNIQUE` tras crear la cuenta compensa y responde `409`; contraseña a un usuario inactivo crea la cuenta desactivada | El SDD fijaba la compensación del alta pero no el orden ni las fallas a medias de la activación; así ninguna cuenta queda activa en Firebase con el usuario inactivo en D1, ni al revés |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -166,3 +168,4 @@ Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se ap
 - **2026-10-19** — T-037: subida, descarga firmada e importación de imágenes (T43).
 - **2026-10-19** — T-038: fusión de productos y variantes duplicados (T44). Bloque T-033 a T-038 completo.
 - **2026-10-19** — T-041: cron de mantenimiento diario. El backend sin Firebase de la Etapa 1 queda completo.
+- **2026-10-19** — T-023: administración de usuarios con Identity Toolkit simulado (T45).

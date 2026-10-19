@@ -454,6 +454,8 @@ Cambiar o quitar `google_email` borra las identidades `google.com` del usuario (
 ### `POST /v1/admin/users/:id/password`
 `{ password: string }` → `204`
 
+Común a `/v1/admin/users*`: solo admin (`403 E-FORBIDDEN`); usuario inexistente → `404`; `username` se normaliza (`normalizeUsername`) y debe cumplir `USERNAME_RE` (`400 E-USERNAME_INVALID`); contraseña de menos de 8 caracteres → `400 E-WEAK_PASSWORD`, antes de llamar a Firebase; un `PATCH` sin campos → `400`. Respuesta `user` con la misma forma que los elementos de la lista. Implementación (T-023): `routes/admin.ts` y `auth/users.ts`.
+
 ### `POST /v1/admin/merge`
 ```ts
 // request
