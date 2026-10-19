@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-035 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-036 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -25,12 +25,13 @@
 - **T-033 (2026-10-19):** consultas de catálogo para la web (`lookups`, lista de productos con búsqueda sin acentos, subcategorías, etiquetas, cursor y mejor precio por unidad; ficha con etiquetas, códigos y últimos precios; búsqueda de variantes) y URLs firmadas de imágenes; 20 pruebas.
 - **T-034 (2026-10-19):** historial por variante y comparador variante × tienda con la misma regla de mejor precio que la lista; prorrateo del descuento de ticket en `packages/shared` con su fixture; la vista `v_price_points` corregida para compras con todas las líneas en $0 o cupones mayores que la suma (migración 0002, T41); rutas separadas por recurso como en 03 §2; 14 pruebas.
 - **T-035 (2026-10-19):** consulta de compras para la web: lista con filtros y paginación, y detalle con líneas, precio por unidad con el cupón prorrateado (también en borradores), promociones y páginas del ticket; 9 pruebas.
+- **T-036 (2026-10-19):** búsqueda por código de barras: catálogo propio y, si no está, Open Food Facts → Open Beauty Facts → Open Products Facts con caché (30 días si se encontró, 7 si no), licencia y atribución de la imagen; 13 pruebas sin red.
 
 ## En curso
 - Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-036 (códigos de barras con Open Food Facts) y T-038 (fusión), que no dependen de Firebase;
+1. T-037 (subida, descarga e importación de imágenes) y T-038 (fusión), que no dependen de Firebase;
 2. Spike A (rembg) en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 4. Spike D (T-013) justo después de T-031; ahí se cierra D3.
@@ -80,6 +81,7 @@
 | T39 | Push: la fila se valida combinada con la existente (y `search_key` se deriva de ella); las llaves foráneas se verifican antes del lote y un padre faltante rechaza solo esa fila (`MISSING_PARENT`, en cascada); `BATCH_REJECTED` queda para carreras y errores inesperados | Un cliente con esquema anterior no corrompe datos derivados; un padre faltante no tira el lote entero; el D1 local no reporta como restricción una llave foránea diferida violada al confirmar |
 | T40 | **Plan Workers Free (antes D3).** Pull de 100 filas por tabla por omisión; se vigilan errores 1102/`exceededCpu` y, si aparecen en uso real, se pasa a Paid (5 USD/mes) | Decisión de Mauricio con los datos del spike D: push y pull pasan de 10 ms en p95 (21–26 y 13–23 ms) pero Cloudflare no cortó ninguna petición; costo cero mientras no haya fallas |
 | T41 | **`v_price_points` sin división entre cero.** El factor del descuento de ticket es `1 − min(descuento, Σ final) / Σ final`, y 1 si Σ final = 0 (migración `0002_price_points_guard.sql`, `esquema-d1.sql`, `prorateTicketDiscount`, fixture `prorrateo_ticket`) | La fórmula del SDD daba precio NULL cuando todas las líneas valían $0 y precios negativos con un cupón mayor que la suma de las líneas; no cambian columnas sincronizadas, así que `schema_version` sigue en 1. Room aún no existe: su `@DatabaseView` se escribe en T-102 con el SQL de `esquema-d1.sql` y pasa el mismo fixture |
+| T42 | **Fallas del catálogo abierto.** Si ningún catálogo encontró el código y alguno falló (HTTP ≠ 200/404, red, JSON inválido o > 5 s), no se guarda `found=0`: se sirve la caché positiva vencida o se responde `502 UPSTREAM_ERROR` (`service: open_catalog`) | El SDD no cubría las fallas; guardar un "no encontrado" por un error escondería el producto 7 días. Una falla no detiene la búsqueda en los catálogos siguientes |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -155,3 +157,4 @@ Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se ap
 - **2026-10-19** — T-033: consultas de catálogo y URLs firmadas.
 - **2026-10-19** — T-034: historial, comparador y prorrateo del descuento de ticket; vista de precios corregida (T41).
 - **2026-10-19** — T-035: consulta de compras (lista y detalle).
+- **2026-10-19** — T-036: búsqueda por código de barras con Open Food Facts y caché (T42).
