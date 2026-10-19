@@ -38,3 +38,6 @@ __pycache__/
 .idea/
 .vscode/
 .DS_Store
+
+# Local worktrees used for parallel work
+.claude/worktrees/

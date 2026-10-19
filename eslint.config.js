@@ -14,6 +14,7 @@ export default defineConfig([
     'apps/android/',
     'agent/',
     'apps/api/worker-configuration.d.ts',
+    '.claude/',
   ]),
   js.configs.recommended,
   tseslint.configs.recommended,
