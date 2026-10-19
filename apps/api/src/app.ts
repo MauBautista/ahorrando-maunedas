@@ -5,6 +5,7 @@ import type { AppEnv } from './env';
 import { notFound, onError } from './errors';
 import { clientSchema } from './middleware/client-schema';
 import { requestId } from './middleware/request-id';
+import { admin } from './routes/admin';
 import { barcodes } from './routes/barcodes';
 import { devices } from './routes/devices';
 import { health } from './routes/health';
@@ -52,6 +53,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', purchases);
   app.route('/', barcodes);
   app.route('/', images);
+  app.route('/', admin);
   options.extraRoutes?.(app);
   return app;
 }
