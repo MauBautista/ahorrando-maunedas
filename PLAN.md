@@ -27,7 +27,7 @@ Objetivo: los cuatro usuarios registran compras reales, offline en Android, con 
 - [x] Sync push/pull — T-030 a T-032
 - [x] Consulta, historial, comparador, compras, códigos, imágenes, fusión — T-033 a T-038
 - [ ] IA: gateway, presupuesto y extracción de tickets — T-039, T-040
-- [ ] Cron de mantenimiento — T-041
+- [x] Cron de mantenimiento — T-041
 - [ ] Android base (módulos, pricing, Room, red, sync, subidas, diseño) — T-100 a T-106
 - [ ] Android funcional: login, inicio, catálogo, fichas, escáner, fotos, compras, tickets, anaquel, ajustes — T-110 a T-126
 - [ ] Web: base, catálogo, compras, tickets, anaquel, admin, cuenta — T-160 a T-166

@@ -178,9 +178,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Docs:** 09 §3–7 · **Depende de:** T-037, T-039, T-012
 - **Hecho cuando:** con proveedor simulado: conversión y advertencias (09 §4.4), reutilización por `images_key`, 402/409/422/429/503, coincidencias por alias y código, sugerencias con `score`, detección de promociones y tienda. La vinculación preselecciona candidatos por SQL (≤ 50) y su CPU se mide en `maunedas-dev` (spike D: puntuar contra todo el catálogo cuesta p95 65 ms).
 
-### [ ] T-041 · Cron de mantenimiento
+### [x] T-041 · Cron de mantenimiento
 - **Docs:** 03 §2 · **Depende de:** T-022
 - **Hecho cuando:** limpia `token_cache`, `off_cache` vencido e `image_jobs` viejos a las 04:07 hora de México (probado con reloj simulado).
+- **Resultado (2026-10-19):** `cron/maintenance.ts` llamado desde el `scheduled` real; hora por zona horaria; `image_jobs` terminados con más de 30 días; 3 pruebas con `createScheduledController`.
 
 ---
 
