@@ -50,10 +50,10 @@ pnpm test                                   # Vitest en cada paquete
 pnpm tokens                                 # regenera tokens.css y Tokens.kt desde tokens.json
 pnpm --filter api dev                       # Worker local con D1/R2 locales (secretos en apps/api/.dev.vars)
 pnpm --filter api test                      # Vitest dentro de workerd con @cloudflare/vitest-plugin
-pnpm --filter api db:generate               # drizzle-kit → migrations/ (se crea en T-026)
-pnpm --filter api db:migrate:local          # wrangler d1 migrations apply maunedas --local (T-026)
-pnpm --filter api deploy:dev                # web (--mode dev) + Worker "maunedas-dev"
-pnpm --filter api deploy:prod               # web + Worker "maunedas" (producción; `deploy` a secas es un comando de pnpm)
+pnpm --filter api db:migrate:local          # migraciones en la D1 local (también :dev y :prod, remotas)
+pnpm --filter api db:seed:local             # semillas idempotentes (también :dev y :prod)
+pnpm --filter api deploy:dev                # migraciones + web (--mode dev) + Worker "maunedas-dev"
+pnpm --filter api deploy:prod               # migraciones + web + Worker "maunedas" (`deploy` a secas es un comando de pnpm)
 pnpm --filter web dev                       # proxy de /v1 y /__ al Worker local
 pnpm --filter web build
 pnpm --filter shared test                   # fixtures
@@ -70,7 +70,7 @@ docker compose up -d maunedas-agent         # en el servidor casero (Etapa 2)
 3. **IDs** UUIDv7 generados por el cliente. `product_tags` y `receipt_aliases` usan UUIDv5 determinista (namespaces en `packages/shared`).
 4. **Tablas sincronizables** tienen `created_at`, `updated_at`, `deleted_at`, `updated_by`, `version`. Nunca DELETE físico. Solo el servidor asigna `version`.
 5. **Columnas que escribe el servidor no van en tablas que edita el cliente.** Usa tablas `*_state`, tablas de solo bajada o filas append-only.
-6. **Cambio de esquema** = migración D1 + entidad y migración Room + `docs/esquema-d1.sql` + tests de sync, en el mismo cambio.
+6. **Cambio de esquema** = migración D1 + entidad y migración Room + `docs/esquema-d1.sql` + tests de sync, en el mismo cambio. Las migraciones se escriben a mano en `apps/api/migrations/` (Drizzle no expresa `COLLATE NOCASE`); `docs/esquema-d1.sql` refleja siempre el esquema acumulado y `apps/api/test/schema.test.ts` falla si difieren.
 7. **Reglas compartidas** (precio por unidad, promociones, textos, cantidades, usuarios) viven en TS (`packages/shared`) y Kotlin (`core:pricing`, `core:model`); el agente implementa el precio por unidad. Todas pasan los `fixtures/*.json` que les corresponden. Si un test falla, se corrige la implementación, no el fixture (salvo que la regla del SDD cambie en el mismo cambio).
 8. **IA** solo desde `apps/api/src/ai/`: elige proveedor y modelo por variable de entorno, verifica presupuesto antes de llamar y registra el costo en `ai_usage`. La key de OpenRouter no existe fuera del Worker.
 9. **Agente** solo habla con `/agent/v1/*` usando `AGENT_TOKEN`. Nunca abre puertos ni recibe conexiones.
