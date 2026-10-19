@@ -271,6 +271,13 @@ Cambiar o quitar `google_email` (PATCH): validar `GOOGLE_EMAIL_TAKEN` y, en el m
 
 Desactivar: `users.active = 0` + `disableUser: true` en cada identidad. Reactivar: lo inverso.
 
+Implementación (T-023): `auth/firebase-admin.ts` (`IdentityToolkit`) y `auth/users.ts`; la fuente del token y el `fetch` se inyectan en `createApp` para probar sin red. Detalles (decisión T45):
+- Al activar o desactivar se llama primero a Firebase, cuenta por cuenta; si una falla o luego falla D1, las ya cambiadas se regresan a su estado anterior y se responde el error.
+- `google_email` se guarda en minúsculas; cambiar solo mayúsculas no cuenta como cambio y no borra identidades.
+- Si D1 pierde una carrera de `UNIQUE` tras crear la cuenta, se compensa igual y se responde `409` (`USERNAME_TAKEN` o `GOOGLE_EMAIL_TAKEN`). Si la compensación falla, queda en logs con el `localId`.
+- Al poner contraseña a un usuario inactivo, la cuenta nueva nace desactivada en Firebase.
+- Las contraseñas no se guardan ni se registran; los errores de validación nunca las repiten.
+
 ### 5.4 Bootstrap del primer admin (T-024)
 
 ```http

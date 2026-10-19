@@ -1,4 +1,5 @@
 import type { JWTVerifyGetKey } from 'jose';
+import type { AccessTokenSource } from './auth/firebase-admin';
 import type { UserRow } from './db/rows';
 
 // SDD 03 §2. Values per environment live in wrangler.jsonc (vars) and `wrangler secret` (secrets).
@@ -37,6 +38,8 @@ export interface AppEnv {
     firebaseKeys: JWTVerifyGetKey;
     /** fetch for third-party APIs (Open Food Facts…); tests inject a fake. */
     outboundFetch: typeof fetch;
+    /** Google access tokens for Identity Toolkit and FCM; tests pass a fixed one. */
+    googleTokens: AccessTokenSource;
     /** Set by `requireUser`. */
     user: UserRow;
   };

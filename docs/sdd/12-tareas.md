@@ -100,9 +100,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** con `fetch` simulado se obtiene y cachea el token (memoria y D1); se renueva al vencer.
 - **Resultado (2026-10-19):** 9 pruebas con `fetch` y reloj simulados y una cuenta de servicio desechable (firma y claims del JWT, caché en memoria y en D1, renovación un minuto antes, intercambio único con peticiones simultáneas, errores de Google y secreto ausente). Se prueba contra Google real cuando exista la cuenta de servicio (T-004).
 
-### [ ] T-023 · Administración de usuarios
+### [x] T-023 · Administración de usuarios
 - **Docs:** 02 §5.3, 03 §12 · **Depende de:** T-021, T-022
 - **Hecho cuando:** `GET/POST/PATCH /v1/admin/users` y `/password` funcionan con Identity Toolkit simulado; `USERNAME_TAKEN`, `GOOGLE_EMAIL_TAKEN`, `LAST_ADMIN` y la compensación probados.
+- **Resultado (2026-10-19):** las cuatro rutas con Identity Toolkit simulado; compensación ante fallas de D1 (también por carrera de `UNIQUE`), activación con reversión si Firebase falla a medias, borrado de identidades de Google al cambiar el correo (T45); 18 pruebas. Contra Firebase real se prueba al tener T-004.
 
 ### [ ] T-024 · Bootstrap
 - **Docs:** 02 §5.4 · **Depende de:** T-023

@@ -1,7 +1,9 @@
 import { Hono } from 'hono';
 import type { JWTVerifyGetKey } from 'jose';
+import type { AccessTokenSource } from './auth/firebase-admin';
 import { googleSigningKeys } from './auth/firebase-token';
 import type { AppEnv } from './env';
+import { googleTokens } from './google/oauth';
 import { notFound, onError } from './errors';
 import { clientSchema } from './middleware/client-schema';
 import { requestId } from './middleware/request-id';
@@ -23,6 +25,8 @@ export interface AppOptions {
   firebaseKeys?: JWTVerifyGetKey;
   /** fetch for third-party APIs; tests pass a fake so nothing leaves the machine. */
   fetch?: typeof fetch;
+  /** Google access tokens (02 §5.2); tests pass a fixed one. */
+  googleTokens?: AccessTokenSource;
   /** Routes that only tests mount. */
   extraRoutes?: (app: Hono<AppEnv>) => void;
 }
@@ -32,10 +36,12 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   const app = new Hono<AppEnv>();
   const firebaseKeys = options.firebaseKeys ?? googleSigningKeys;
   const outboundFetch = options.fetch ?? ((input, init) => fetch(input, init));
+  const tokens = options.googleTokens ?? googleTokens;
   app.use('*', requestId);
   app.use('*', async (c, next) => {
     c.set('firebaseKeys', firebaseKeys);
     c.set('outboundFetch', outboundFetch);
+    c.set('googleTokens', tokens);
     await next();
   });
   app.onError(onError);
