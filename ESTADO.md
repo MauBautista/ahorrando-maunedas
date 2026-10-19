@@ -23,12 +23,13 @@
 - **T-031 (2026-10-19):** `POST /v1/sync/push` (LWW por fila, reintento idéntico, clamp, conflictos `STALE`, `VALIDATION`, `BARCODE_TAKEN`, `ALIAS_TAKEN`, `IMMUTABLE_ROW`, `FORBIDDEN`, `UNKNOWN_TABLE`, padres verificados antes del lote); 31 pruebas y seis mutaciones detectadas.
 - **T-032 (2026-10-19):** `POST /v1/sync/pull` con cursor compuesto `(version, pk)` por tabla en un solo batch; 1,200 filas de la misma versión se paginan sin saltos ni repeticiones; reglas y eventos de alerta filtrados por usuario; 14 pruebas.
 - **T-033 (2026-10-19):** consultas de catálogo para la web (`lookups`, lista de productos con búsqueda sin acentos, subcategorías, etiquetas, cursor y mejor precio por unidad; ficha con etiquetas, códigos y últimos precios; búsqueda de variantes) y URLs firmadas de imágenes; 20 pruebas.
+- **T-034 (2026-10-19):** historial por variante y comparador variante × tienda con la misma regla de mejor precio que la lista; prorrateo del descuento de ticket en `packages/shared` con su fixture; la vista `v_price_points` corregida para compras con todas las líneas en $0 o cupones mayores que la suma (migración 0002, T41); rutas separadas por recurso como en 03 §2; 14 pruebas.
 
 ## En curso
 - Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-034 a T-036 (historial y comparador con prorrateo, compras y códigos de barras) y T-038 (fusión), que no dependen de Firebase; luego T-023 y T-024 (usuarios y bootstrap) con Identity Toolkit simulado.
+1. T-035 y T-036 (consulta de compras; códigos de barras con Open Food Facts) y T-038 (fusión), que no dependen de Firebase;
 2. Spike A (rembg) en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 4. Spike D (T-013) justo después de T-031; ahí se cierra D3.
@@ -77,6 +78,7 @@
 | T38 | Esquemas de fila: obligatorias las columnas `NOT NULL` sin default, opcionales las demás (las columnas nuevas siempre opcionales); validaciones adicionales en 04 §2.2 (intervalo de 1 h a 7 días, granel, UUIDv5 verificados, alias normalizado, longitudes) | Clientes con esquema anterior no rompen el push; datos inválidos se rechazan con `VALIDATION` antes de llegar a D1 |
 | T39 | Push: la fila se valida combinada con la existente (y `search_key` se deriva de ella); las llaves foráneas se verifican antes del lote y un padre faltante rechaza solo esa fila (`MISSING_PARENT`, en cascada); `BATCH_REJECTED` queda para carreras y errores inesperados | Un cliente con esquema anterior no corrompe datos derivados; un padre faltante no tira el lote entero; el D1 local no reporta como restricción una llave foránea diferida violada al confirmar |
 | T40 | **Plan Workers Free (antes D3).** Pull de 100 filas por tabla por omisión; se vigilan errores 1102/`exceededCpu` y, si aparecen en uso real, se pasa a Paid (5 USD/mes) | Decisión de Mauricio con los datos del spike D: push y pull pasan de 10 ms en p95 (21–26 y 13–23 ms) pero Cloudflare no cortó ninguna petición; costo cero mientras no haya fallas |
+| T41 | **`v_price_points` sin división entre cero.** El factor del descuento de ticket es `1 − min(descuento, Σ final) / Σ final`, y 1 si Σ final = 0 (migración `0002_price_points_guard.sql`, `esquema-d1.sql`, `prorateTicketDiscount`, fixture `prorrateo_ticket`) | La fórmula del SDD daba precio NULL cuando todas las líneas valían $0 y precios negativos con un cupón mayor que la suma de las líneas; no cambian columnas sincronizadas, así que `schema_version` sigue en 1. Room aún no existe: su `@DatabaseView` se escribe en T-102 con el SQL de `esquema-d1.sql` y pasa el mismo fixture |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -150,3 +152,4 @@ Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se ap
 - **2026-10-19** — T-032: pull del sync con cursor compuesto. El bloque de sync de la Etapa 1 queda completo en el Worker.
 - **2026-10-19** — Spike D en `maunedas-dev`: push y pull pasan de 10 ms en p95 pero el plan Free no corta; D3 cerrada → Free con pull de 100 filas (T40). Secreto, rutas y datos del spike retirados.
 - **2026-10-19** — T-033: consultas de catálogo y URLs firmadas.
+- **2026-10-19** — T-034: historial, comparador y prorrateo del descuento de ticket; vista de precios corregida (T41).

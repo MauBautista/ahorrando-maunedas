@@ -9,6 +9,7 @@ declare global {
       TEST_MIGRATIONS: D1Migration[];
       REFERENCE_SCHEMA: D1Migration[];
       TEST_SEEDS: D1Migration[];
+      NORMALIZATION_FIXTURE: unknown;
     }
   }
 }

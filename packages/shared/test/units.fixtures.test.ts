@@ -37,6 +37,8 @@ const fixture = loadFixture(
         esperado: z.literal('error'),
       }),
     ),
+    // Validated in detail by ticketDiscount.fixtures.test.ts.
+    prorrateo_ticket: z.unknown(),
     tolerancia_cents_per_base: z.number(),
   }),
 );

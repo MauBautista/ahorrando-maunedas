@@ -1,3 +1,4 @@
+import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import { cloudflareTest, readD1Migrations } from '@cloudflare/vitest-plugin';
 import { defineConfig } from 'vitest/config';
@@ -17,6 +18,8 @@ export default defineConfig({
           TEST_MIGRATIONS: await readD1Migrations(dir('./migrations')),
           REFERENCE_SCHEMA: await readD1Migrations(dir('../../docs')),
           TEST_SEEDS: await readD1Migrations(dir('./seeds')),
+          // Shared vectors (CLAUDE.md rule 7) for the price view and the history endpoint.
+          NORMALIZATION_FIXTURE: JSON.parse(readFileSync(dir('../../fixtures/normalizacion.json'), 'utf8')),
         },
       },
     })),

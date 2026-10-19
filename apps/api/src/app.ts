@@ -5,11 +5,14 @@ import type { AppEnv } from './env';
 import { notFound, onError } from './errors';
 import { clientSchema } from './middleware/client-schema';
 import { requestId } from './middleware/request-id';
-import { catalog } from './routes/catalog';
 import { devices } from './routes/devices';
 import { health } from './routes/health';
+import { lookups } from './routes/lookups';
 import { me } from './routes/me';
+import { products } from './routes/products';
+import { search } from './routes/search';
 import { sync } from './routes/sync';
+import { variants } from './routes/variants';
 
 export interface AppOptions {
   /** Keys that verify Firebase ID tokens; tests pass local keys. Default: Google's JWKS. */
@@ -35,7 +38,10 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', me);
   app.route('/', devices);
   app.route('/', sync);
-  app.route('/', catalog);
+  app.route('/', lookups);
+  app.route('/', products);
+  app.route('/', variants);
+  app.route('/', search);
   options.extraRoutes?.(app);
   return app;
 }

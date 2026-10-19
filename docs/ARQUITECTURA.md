@@ -133,7 +133,7 @@ export function displayCents(cpb: number, measure: Measure, unit: DisplayUnit): 
 - Una compra = un ticket completo (`purchases`) con líneas (`purchase_items`).
 - Cada línea guarda `unit_price_cents` (lista), `gross_cents`, `discount_cents` y `final_cents` (restricción `final = gross − discount`).
 - `promotions` describe **por qué** hubo descuento, de forma genérica (`type` + `params` JSON). Meses sin intereses se registra con `affects_price = 0`.
-- Descuentos a nivel ticket (cupón global) viven en la compra; para precio por unidad se prorratean proporcionalmente al `final_cents` de cada línea viva de la compra (cálculo en `v_price_points`, no se guarda; función `prorateTicketDiscount` en `packages/shared` con su fixture en T-034).
+- Descuentos a nivel ticket (cupón global) viven en la compra; para precio por unidad se prorratean proporcionalmente al `final_cents` de cada línea viva de la compra (cálculo en `v_price_points`, no se guarda; misma regla en `prorateTicketDiscount` de `packages/shared`, fixture `normalizacion.json` → `prorrateo_ticket`). Si todas las líneas valen $0 no hay nada que prorratear, y un descuento mayor que la suma deja las líneas en $0, nunca negativas.
 - Una línea puede quedar sin `variant_id` (ticket leído pero no vinculado); no entra en historiales hasta vincularse.
 
 ### 3.3 Tres fuentes de precio, una vista
