@@ -1,4 +1,5 @@
-import type { Env } from '../env';
+import type { Context } from 'hono';
+import type { AppEnv, Env } from '../env';
 import { ApiError } from '../errors';
 
 /** Anything that hands out a Google access token (02 §5.2); tests pass a fixed one. */
@@ -67,3 +68,7 @@ export class IdentityToolkit {
     await this.call('accounts:delete', { localId });
   }
 }
+
+/** The Identity Toolkit client of a request, with the injected token source and fetch. */
+export const identityToolkitOf = (c: Context<AppEnv>) =>
+  new IdentityToolkit(c.env, c.get('googleTokens'), c.get('outboundFetch'));

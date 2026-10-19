@@ -105,9 +105,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** `GET/POST/PATCH /v1/admin/users` y `/password` funcionan con Identity Toolkit simulado; `USERNAME_TAKEN`, `GOOGLE_EMAIL_TAKEN`, `LAST_ADMIN` y la compensación probados.
 - **Resultado (2026-10-19):** las cuatro rutas con Identity Toolkit simulado; compensación ante fallas de D1 (también por carrera de `UNIQUE`), activación con reversión si Firebase falla a medias, borrado de identidades de Google al cambiar el correo (T45); 18 pruebas. Contra Firebase real se prueba al tener T-004.
 
-### [ ] T-024 · Bootstrap
+### [~] T-024 · Bootstrap
 - **Docs:** 02 §5.4 · **Depende de:** T-023
 - **Hecho cuando:** los tres casos de 02 §9 pasan; se crea el admin real en dev.
+- **Avance (2026-10-19):** `POST /v1/bootstrap` con los tres casos de 02 §9 y la carrera entre dos bootstraps; 6 pruebas. Falta crear el admin real en dev, que necesita Firebase (T-004).
 
 ### [ ] T-025 · Proxy de auth
 - **Docs:** 02 §5.5 · **Depende de:** T-020

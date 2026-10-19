@@ -78,6 +78,7 @@ export async function createUser(
   env: Pick<Env, 'SYNTHETIC_EMAIL_DOMAIN'>,
   input: CreateUser,
   now: number,
+  options: { onlyIfNoUsers?: boolean } = {},
 ): Promise<AdminUser> {
   const username = normalizeUsername(input.username);
   if (!isValidUsername(username)) throw new ApiError(400, 'USERNAME_INVALID');
@@ -100,28 +101,38 @@ export async function createUser(
           input.display_name,
         );
   const id = uuidv7();
+  let inserted: number;
   try {
-    await db.batch([
+    // With onlyIfNoUsers (bootstrap) the insert is skipped when someone else created a user meanwhile,
+    // and the identity only goes in if its user did.
+    const written = await db.batch([
       db.prepare(`UPDATE sync_meta SET value = value + 1 WHERE key = 'version'`),
       db
         .prepare(
           `INSERT INTO users (id, username, display_name, google_email, role, active, created_at, updated_at, version)
-           VALUES (?1, ?2, ?3, ?4, ?5, 1, ?6, ?6, ${NEXT_VERSION})`,
+           SELECT ?1, ?2, ?3, ?4, ?5, 1, ?6, ?6, ${NEXT_VERSION}
+           WHERE ?7 = 0 OR NOT EXISTS (SELECT 1 FROM users)`,
         )
-        .bind(id, username, input.display_name, googleEmail, input.role, now),
+        .bind(id, username, input.display_name, googleEmail, input.role, now, options.onlyIfNoUsers ? 1 : 0),
       ...(localId
         ? [
             db
               .prepare(
-                `INSERT INTO user_identities (firebase_uid, user_id, provider, created_at) VALUES (?1, ?2, 'password', ?3)`,
+                `INSERT INTO user_identities (firebase_uid, user_id, provider, created_at)
+                 SELECT ?1, ?2, 'password', ?3 WHERE EXISTS (SELECT 1 FROM users WHERE id = ?2)`,
               )
               .bind(localId, id, now),
           ]
         : []),
     ]);
+    inserted = written[1]!.meta.changes;
   } catch (err) {
     if (localId) await compensate(identity, localId);
     throw uniqueConflict(err) ?? err;
+  }
+  if (inserted === 0) {
+    if (localId) await compensate(identity, localId);
+    throw new ApiError(410, 'ALREADY_BOOTSTRAPPED');
   }
   return (await getAdminUser(db, id))!;
 }
