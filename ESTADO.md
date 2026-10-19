@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-032 y spike B hechos; faltan Firebase, OpenRouter y los spikes A, C, D y E.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-032 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -27,7 +27,7 @@
 - Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Spike D (CPU del push y del pull en Free, T-013) en `maunedas-dev`; luego T-023 y T-024 (usuarios y bootstrap) con Identity Toolkit simulado.
+1. T-033 a T-036 (consulta, historial y comparador, compras y códigos de barras) y T-038 (fusión), que no dependen de Firebase; luego T-023 y T-024 (usuarios y bootstrap) con Identity Toolkit simulado.
 2. Spike A (rembg) en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 4. Spike D (T-013) justo después de T-031; ahí se cierra D3.
@@ -75,13 +75,13 @@
 | T37 | Migraciones D1 escritas a mano (`apps/api/migrations/`), `esquema-d1.sql` como esquema acumulado verificado por prueba; Drizzle solo para consultas tipadas (sin `drizzle-kit`); semillas en `apps/api/seeds/` con IDs fijos e `INSERT OR IGNORE`; `deploy:dev`/`deploy:prod` migran antes de desplegar | Drizzle 0.45 no expresa `COLLATE NOCASE` en SQLite; semillas repetibles sin duplicar ni pisar ediciones; que nunca se despliegue código sobre una base sin migrar |
 | T38 | Esquemas de fila: obligatorias las columnas `NOT NULL` sin default, opcionales las demás (las columnas nuevas siempre opcionales); validaciones adicionales en 04 §2.2 (intervalo de 1 h a 7 días, granel, UUIDv5 verificados, alias normalizado, longitudes) | Clientes con esquema anterior no rompen el push; datos inválidos se rechazan con `VALIDATION` antes de llegar a D1 |
 | T39 | Push: la fila se valida combinada con la existente (y `search_key` se deriva de ella); las llaves foráneas se verifican antes del lote y un padre faltante rechaza solo esa fila (`MISSING_PARENT`, en cascada); `BATCH_REJECTED` queda para carreras y errores inesperados | Un cliente con esquema anterior no corrompe datos derivados; un padre faltante no tira el lote entero; el D1 local no reporta como restricción una llave foránea diferida violada al confirmar |
+| T40 | **Plan Workers Free (antes D3).** Pull de 100 filas por tabla por omisión; se vigilan errores 1102/`exceededCpu` y, si aparecen en uso real, se pasa a Paid (5 USD/mes) | Decisión de Mauricio con los datos del spike D: push y pull pasan de 10 ms en p95 (21–26 y 13–23 ms) pero Cloudflare no cortó ninguna petición; costo cero mientras no haya fallas |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
 | # | Tema | Propuesta | Depende de |
 |---|---|---|---|
 | D2 | Extracción de tickets | Modelo de visión vía OpenRouter desde el Worker **desde la etapa 1**; OCR local queda como experimento en la etapa 3 | Spike C (exactitud y costo real) |
-| D3 | Plan de Workers | Empezar en Free; pasar a Paid (5 USD/mes) si el límite de 10 ms de CPU provoca errores 1102 | Spike D |
 | D5 | Modelo de rembg | El más ligero que dé calidad aceptable en el A8-7410 | Spike A |
 | D9 | Dominio del correo sintético | `maunedas.local`; si Firebase lo rechaza, un dominio con TLD real que nunca recibe correo | Spike E |
 
@@ -97,11 +97,11 @@
 | Relojes de teléfono desfasados (LWW) | Clamp de `updated_at` a `now + 5 min` en el servidor |
 | ML Kit Subject Segmentation está en beta | Es solo el nivel T1; T2 en casa cubre el mismo caso |
 | Licencia de imágenes de Open Food Facts | Guardar licencia, atribución y URL de origen por imagen |
-| Límite de 10 ms de CPU del plan Free | Lotes pequeños, trabajo diferido con `waitUntil`, imágenes por URL; plan Paid como salida |
+| Límite de 10 ms de CPU del plan Free: push y pull pasan de 10 ms en p95 (spike D) aunque hoy no se cortan | Pull de 100 filas; vigilar 1102/`exceededCpu` en Workers Logs; T-040 preselecciona candidatos por SQL; plan Paid como salida (T40) |
 | Olvido de contraseña sin correo real | Restablecimiento por el admin desde la web |
 | CPU del servidor (A8-7410, Puma+) **sin AVX2/FMA**: binarios compilados para x86-64-v3 fallarían | workerd verificado el 2026-10-08 (funciona); onnxruntime se prueba en el spike A; si algo falla localmente, CI corre en runners con AVX2 |
 | RAM del servidor (6.7 GB) compartida con Home Assistant y otros contenedores; también es la máquina de desarrollo | Gradle con `-Xmx2g`; no correr Gradle y spikes a la vez; contenedores de spike con `--memory` y `--cpus`; no se toca el compose existente |
-| D1 Free: 50 consultas por invocación y 100 parámetros por consulta; no está claro si cada sentencia de un batch cuenta | El spike D mide batches de 102 y 150 sentencias; salidas: push ≤ 45 filas o plan Paid (D3) |
+| D1 Free: 50 consultas por invocación y 100 parámetros por consulta | Spike D: un batch de 150 sentencias y 60 consultas separadas pasaron sin error (el límite no se aplicó); las lecturas usan `json_each` para no depender de los 100 parámetros |
 
 ## Resultados de spikes
 
@@ -117,6 +117,22 @@ Una sola pasada sobre 12 URLs (3 por tienda) desde este servidor, en un contened
 
 Navegador: no hizo falta en ninguna tienda; costó 8.6–23.5 s y 626–759 MB por página. `mem_limit` recomendado: 1200m. Faltan fixtures "con precio de lista" (no apareció ninguno); se capturan en T-205, T-207 y T-208.
 
+### Spike D · CPU del Worker en Free (T-013) — 2026-10-19
+Código real en `maunedas-dev` (plan Free) con rutas temporales y `wrangler tail`; detalle en `docs/spikes/spike-d-cpu.md`.
+
+| Escenario | CPU p50 | CPU p95 |
+|---|---:|---:|
+| Verificar token de Firebase | 1 ms | 2 ms |
+| Firmar token de Google en frío | 2 ms | 4 ms |
+| Push de 100 filas (compra de 99 líneas) | 12 ms | 21 ms |
+| Push de 50 filas | 11 ms | 26 ms |
+| Pull desde cero, 500 filas por tabla | 17 ms | 23 ms |
+| Pull, 100 filas por tabla | 6 ms | 13 ms |
+| Vinculación ingenua 40 × 500 | 27 ms | 65 ms |
+| Batch de 150 sentencias | 2 ms | 3 ms |
+
+Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se aplicó. D3 → Free (T40).
+
 ## Bitácora
 - **2026-09-30** — Requisitos cerrados. Implementación cambia a Cloudflare como núcleo. Documentos base v0, esquema validado y fixtures de normalización creados.
 - **2026-09-30** — Auth dual (usuario/contraseña + Google), dominio `workers.dev`, CP 72750. SDD v1 escrito.
@@ -131,3 +147,4 @@ Navegador: no hizo falta en ninguna tienda; costó 8.6–23.5 s y 626–759 MB p
 - **2026-10-19** — T-030: registro de sync y esquemas de fila. Decisión T38.
 - **2026-10-19** — T-031: push del sync con LWW y conflictos. Decisión T39.
 - **2026-10-19** — T-032: pull del sync con cursor compuesto. El bloque de sync de la Etapa 1 queda completo en el Worker.
+- **2026-10-19** — Spike D en `maunedas-dev`: push y pull pasan de 10 ms en p95 pero el plan Free no corta; D3 cerrada → Free con pull de 100 filas (T40). Secreto, rutas y datos del spike retirados.

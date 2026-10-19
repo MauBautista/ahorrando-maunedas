@@ -200,7 +200,7 @@ Para el cliente son ediciones normales que llegan por pull.
 // POST /v1/sync/pull
 {
   cursors: Record<string, [number, string]>;   // tabla → [version, id]; ausente = [0, ""]
-  limit?: number;                              // por tabla, 1..500, default 500
+  limit?: number;                              // por tabla, 1..500, default 100 (spike D: CPU en plan Free)
   tables?: string[];                           // default: todas las sync + down
 }
 
