@@ -63,12 +63,14 @@ Requisitos: todos los `RF-*` con interfaz remota. Sync en detalle: [`04-sincroni
 ```
 apps/api/src/
 ├── index.ts                 export default { fetch: app.fetch, scheduled }
-├── app.ts                   Hono: middleware (request id, errores, schema), montaje de rutas
-├── env.ts                   tipo Env
-├── errors.ts                ApiError + onError
+├── app.ts                   Hono: createApp() con request id → errores → schema → rutas
+├── env.ts                   tipo Env y AppEnv (genéricos de Hono)
+├── version.ts               API_VERSION y SCHEMA_VERSION (constante hasta T-026)
+├── errors.ts                ApiError, mensajes en español por código, onError y notFound
+├── middleware/              request-id, client-schema (X-Client-Schema, §1)
 ├── auth/                    middleware, firebase-admin, proxy, bootstrap
 ├── google/oauth.ts          token de servicio (FCM + Identity Toolkit)
-├── routes/                  me, devices, lookups, products, variants, search, purchases,
+├── routes/                  health, me, devices, lookups, products, variants, search, purchases,
 │                            barcodes, images, receipts, listings, alerts, admin
 ├── sync/                    registry, push, pull, upsert (ver 04)
 ├── agent/                   auth, work, observations, jobs, backup (ver 07)
@@ -79,8 +81,8 @@ apps/api/src/
 ├── images/                  blobs, signing, import (ver 10)
 ├── catalog/                 off (Open Food Facts y hermanos); el parser de contenido vive en packages/shared
 ├── db/                      schema.ts (Drizzle), queries/
-├── cron/                    watchdog, maintenance
-└── util/                    uuid, time, hash
+├── cron/                    scheduled (despacho del Cron), watchdog, maintenance
+└── util/                    log (JSON con request_id), uuid, time, hash
 ```
 
 ```ts

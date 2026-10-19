@@ -1,5 +1,8 @@
+import { app } from './app';
+import { scheduled } from './cron/scheduled';
+import type { Env } from './env';
+
 export default {
-  async fetch(): Promise<Response> {
-    return Response.json({ ok: true, service: 'maunedas' });
-  },
+  fetch: app.fetch,
+  scheduled,
 } satisfies ExportedHandler<Env>;

@@ -24,10 +24,11 @@ jobs:
       - run: pnpm install --frozen-lockfile
       - run: pnpm format:check
       - run: pnpm lint
-      - run: pnpm typecheck
       - name: Generated design tokens are up to date
         run: pnpm tokens && git diff --exit-code
+      # The Worker serves apps/web/dist as static assets; typecheck and tests use the real build.
       - run: pnpm --filter web build
+      - run: pnpm typecheck
       - run: pnpm test
 
   android:

@@ -1,15 +1,18 @@
 {
   "name": "api",
-  "version": "0.0.0",
+  "version": "0.1.0",
   "private": true,
   "type": "module",
   "scripts": {
-    "dev": "wrangler dev",
+    "dev": "node scripts/ensure-web-dist.ts && wrangler dev",
     "cf-typegen": "wrangler types",
-    "typecheck": "wrangler types && tsc -p tsconfig.json && tsc -p test/tsconfig.json",
-    "test": "vitest run",
-    "deploy:dev": "wrangler deploy --env dev",
-    "deploy": "wrangler deploy"
+    "typecheck": "node scripts/ensure-web-dist.ts && wrangler types && tsc -p tsconfig.json && tsc -p test/tsconfig.json",
+    "test": "node scripts/ensure-web-dist.ts && vitest run",
+    "deploy:dev": "pnpm --filter web build --mode dev && wrangler deploy --env dev",
+    "deploy": "pnpm --filter web build && wrangler deploy --env ''"
+  },
+  "dependencies": {
+    "hono": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "catalog:",
