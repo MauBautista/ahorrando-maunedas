@@ -461,7 +461,10 @@ Cambiar o quitar `google_email` borra las identidades `google.com` del usuario (
 ```
 - `variant`: reasigna `barcodes`, `purchase_items`, `price_observations`, `listings`, `alert_rules`, `receipt_aliases`, `images` (owner) al destino; tombstone del origen.
 - `product`: mueve las variantes del origen al producto destino; une etiquetas marcando como borradas las `product_tags` del origen y creando o reviviendo `uuidv5(destino:etiqueta)` (04 §2.1), para no dejar duplicados vivos; tombstone del origen.
-- Todas las filas tocadas reciben nueva `version` (un solo batch). `409 E-MERGE_INVALID` si son el mismo, si alguno está eliminado o si en `variant` las medidas difieren (`mass` vs `volume`).
+- Todas las filas tocadas reciben nueva `version` (un solo batch). `409 E-MERGE_INVALID` si son el mismo, si alguno está eliminado o si en `variant` las medidas difieren (`mass` vs `volume`); `details.reason` = `SAME`, `DELETED` o `MEASURE_MISMATCH`. Un id que no existe en la tabla de `kind` → `404 E-NOT_FOUND`. Solo admin (`403 E-FORBIDDEN`).
+- Se mueven también las filas ya borradas que apuntan al origen, para que nada quede ligado a él. El destino recibe las imágenes del origen (`images.owner_id`) y, si no tenía, su `primary_image_id` (decisión T44).
+- Al fusionar variantes, los precios por unidad de las compras y observaciones movidas se recalculan con el contenido del destino (`v_price_points`): fusionar solo presentaciones iguales.
+- `moved` incluye todas las tablas con su conteo (también 0): `variant` → las 6 tablas con `variant_id` e `images`; `product` → `variants`, `images` y `product_tags` (ligas del origen unidas al destino). Implementación (T-038): `routes/admin.ts` y `db/queries/merge.ts`; una prueba compara la lista con las llaves foráneas de D1.
 
 ### `GET /v1/admin/ai-budget`
 ```ts

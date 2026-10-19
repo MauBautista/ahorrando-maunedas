@@ -165,9 +165,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Nota:** `signPath`/`verifySigned` e `imageRefs` ya existen (T-033); falta servir y recibir los binarios.
 - **Resultado (2026-10-19):** `PUT`/`GET /v1/images/:imageId/blobs/:name` (dueño de la clave verificado en D1, solo tiers `device`/`manual`, primera subida gana, firma o Bearer, `ETag`/`304`) y `POST /v1/images/:imageId/import` (hosts permitidos también tras redirecciones, sin credenciales, ≤ 10 MB contado al leer, `image/*`); 16 pruebas. `IMAGE_URL_SECRET` existe en dev y prod.
 
-### [ ] T-038 · Fusión (admin)
+### [x] T-038 · Fusión (admin)
 - **Docs:** 03 §12 · **Depende de:** T-031
 - **Hecho cuando:** caso de fusión de 11 §3 pasa para `variant` y `product`; `MERGE_INVALID` probado.
+- **Resultado (2026-10-19):** `POST /v1/admin/merge` en un solo batch con versión nueva para cada fila tocada; ligas de etiquetas unidas sin duplicados vivos (crea o revive el uuidv5 del destino); imágenes y foto principal pasan al destino (T44); 9 pruebas, incluida una que compara las tablas movidas con las llaves foráneas de D1.
 
 ### [ ] T-039 · Gateway de IA y presupuesto
 - **Docs:** 09 §1–2 · **Depende de:** T-020, T-026
