@@ -242,10 +242,10 @@ Proxy transparente a `https://<proyecto>.firebaseapp.com`. Ver `02-autenticacion
 { device_id: Id; platform: 'android' | 'web'; fcm_token: string | null; app_version: string }
 // 204
 ```
-Upsert por `device_id`. Si otro dispositivo tenía el mismo `fcm_token`, se le pone `NULL`.
+Upsert por `device_id`. Si otro dispositivo tenía el mismo `fcm_token`, se le pone `NULL`. Si el `device_id` era de otro usuario (un teléfono que cambió de manos sin cerrar sesión con red), pasa al usuario que lo registra ahora. Esquema Zod compartido: `packages/shared/src/api/devices.ts` (`device_id` UUID, `fcm_token` ≤ 4096 o `null`, `app_version` ≤ 64, sin campos extra).
 
 ### `DELETE /v1/devices/:deviceId`
-`204`. Solo el dueño del dispositivo.
+`204`. Solo el dueño del dispositivo: de otro usuario → `403 E-FORBIDDEN`. Un dispositivo inexistente también responde `204` (cerrar sesión dos veces no es error).
 
 ## 6. Sincronización
 

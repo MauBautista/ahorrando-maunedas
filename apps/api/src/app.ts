@@ -5,6 +5,7 @@ import type { AppEnv } from './env';
 import { notFound, onError } from './errors';
 import { clientSchema } from './middleware/client-schema';
 import { requestId } from './middleware/request-id';
+import { devices } from './routes/devices';
 import { health } from './routes/health';
 import { me } from './routes/me';
 
@@ -30,6 +31,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
 
   app.route('/', health);
   app.route('/', me);
+  app.route('/', devices);
   options.extraRoutes?.(app);
   return app;
 }

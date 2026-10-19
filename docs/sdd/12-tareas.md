@@ -117,9 +117,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** `wrangler d1 migrations apply` funciona local y en dev; `sync_meta` con `version` y `schema_version`.
 - **Resultado (2026-10-19):** `migrations/0001_init.sql` copia de `esquema-d1.sql` (Drizzle 0.45 no tiene `COLLATE` en SQLite, así que `drizzle-kit` quedó fuera); `src/db/schema.ts` para consultas tipadas; `seeds/0001_lookups.sql` idempotente (13 tiendas, 15 categorías, IDs UUIDv7 fijos). `test/schema.test.ts` compara migraciones contra el diseño y Drizzle contra `PRAGMA table_info`, y prueba el prorrateo de `v_price_points`. Aplicado en local y en `maunedas-dev`; prod se migra con `deploy:prod`.
 
-### [ ] T-027 · Dispositivos
+### [x] T-027 · Dispositivos
 - **Docs:** 03 §5 · **Depende de:** T-021
 - **Hecho cuando:** upsert por `device_id`, token duplicado se limpia del otro dispositivo, `DELETE` solo del dueño.
+- **Resultado (2026-10-19):** 16 pruebas (alta, actualización, token movido, teléfono que cambia de dueño, web sin token, validación con Zod, borrado propio, ajeno e inexistente). Helper `parseJsonBody` con `details.issues` para todas las rutas.
 
 ### [ ] T-030 · Registro de sync y esquemas de fila
 - **Docs:** 04 §2 · **Depende de:** T-006, T-026
