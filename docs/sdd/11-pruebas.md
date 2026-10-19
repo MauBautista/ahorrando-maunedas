@@ -86,7 +86,7 @@ Localmente, los scripts `dev`, `typecheck` y `test` de `apps/api` crean `apps/we
 
 Versiones de acciones (2026-10): `actions/checkout@v7`, `actions/setup-node@v7`, `pnpm/action-setup@v6`, `actions/setup-java@v6`, `gradle/actions/setup-gradle@v6`, `astral-sh/setup-uv` v10.2.0 por SHA.
 
-Despliegue: manual en E1 (`pnpm --filter api deploy`). Automatizar solo cuando el flujo esté estable.
+Despliegue: manual en E1 (`pnpm --filter api deploy:dev` y `deploy:prod`). Automatizar solo cuando el flujo esté estable.
 
 ## 5. Checklist manual — cierre de Etapa 1
 

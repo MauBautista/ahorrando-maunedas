@@ -9,7 +9,7 @@
     "typecheck": "node scripts/ensure-web-dist.ts && wrangler types && tsc -p tsconfig.json && tsc -p test/tsconfig.json",
     "test": "node scripts/ensure-web-dist.ts && vitest run",
     "deploy:dev": "pnpm --filter web build --mode dev && wrangler deploy --env dev",
-    "deploy": "pnpm --filter web build && wrangler deploy --env ''"
+    "deploy:prod": "pnpm --filter web build && wrangler deploy --env ''"
   },
   "dependencies": {
     "hono": "catalog:"

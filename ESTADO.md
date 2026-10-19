@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones. Hito 1 completo, SDD v1.1, esqueleto del Worker (T-020, sin deploy) y spike B hechos; faltan T-003 en la cuenta nueva, Firebase, OpenRouter y los spikes A, C, D y E.
+**Etapa actual:** 0 — Fundaciones. Hito 1, SDD v1.1, T-003, T-020 y spike B hechos; faltan Firebase, OpenRouter y los spikes A, C, D y E. Ya se puede avanzar con el backend (T-026 en adelante).
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -12,15 +12,15 @@
 - **Hito 1 (2026-10-08):** repositorio público https://github.com/MauBautista/ahorrando-maunedas (T-001); CI con jobs `ts`, `android` y `agent` en cada push y PR (T-002); `packages/shared` con las reglas compartidas pasando los 6 fixtures, 113 pruebas (T-006); tokens de diseño que generan `tokens.css` y `Tokens.kt`, con prueba de contraste AA (T-007).
 - Entorno verificado: la máquina de desarrollo es el servidor casero; workerd (`wrangler dev` y tests del Worker) corre bien en su CPU.
 - **SDD v1.1** fusionado (2026-10-08).
-- **T-020 (código y pruebas, 2026-10-19):** Worker con Hono, formato de error de 03 §1.1, `X-Request-Id`, `X-Client-Schema`, `GET /v1/health`, cron vacío y `wrangler.jsonc` completo con valores provisionales; 15 pruebas en workerd. Falta el deploy a dev.
+- **T-003 (2026-10-19):** cuenta de Cloudflare propia de Maunedas; D1 `maunedas` y `maunedas-dev`, R2 `maunedas-images` y `maunedas-images-dev`; Workers en https://maunedas.maunedas.workers.dev y https://maunedas-dev.maunedas.workers.dev; `IMAGE_URL_SECRET` en ambos. wrangler usa el perfil `maunedas` ligado al repo (la sesión de booth360 sigue en el perfil `default`).
+- **T-020 (2026-10-19):** Worker con Hono, formato de error de 03 §1.1, `X-Request-Id`, `X-Client-Schema`, `GET /v1/health`, cron vacío y `wrangler.jsonc` completo; 15 pruebas en workerd; desplegado en dev y prod (health, 426, 404 y SPA verificados por HTTPS).
 - **T-011 · spike B (2026-10-19):** ver "Resultados de spikes".
 
 ## En curso
-- T-003: Mauricio creó la cuenta de Cloudflare propia de Maunedas (subdominio `maunedas.workers.dev`, R2 activado). Falta conectar wrangler a esa cuenta con el perfil `maunedas`; después se crean D1/R2, se despliegan `maunedas-dev` y `maunedas` y se carga `IMAGE_URL_SECRET`. Los recursos que se habían creado por error en la cuenta de booth360 se borraron el mismo día.
-- Mauricio: Firebase (dos proyectos, con el host `*.maunedas.workers.dev`) y OpenRouter (T-004, T-005).
+- Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Cerrar T-003 y desplegar T-020 en `maunedas-dev`; T-026 (esquema D1 y semillas).
+1. T-026 (esquema D1 y semillas), luego T-022, T-027, T-030, T-031 y T-032, que no dependen de Firebase.
 2. Spike A (rembg) en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 4. Spike D (T-013) justo después de T-031; ahí se cierra D3.
@@ -80,6 +80,7 @@
 | Riesgo | Mitigación |
 |---|---|
 | Anti-bot en Amazon, Sam's y Costco (Walmart ya bloquea y salió del tracker, T34) | Baja frecuencia, IP residencial, HTTP antes que navegador, backoff, estado "bloqueado" visible; no se evaden captchas |
+| `pnpm --filter api deploy` ejecuta el comando `deploy` de pnpm, no el script | El script se llama `deploy:prod` (y `deploy:dev`) |
 | Sam's muestra el precio de un club de CDMX a visitantes sin sesión | T-207 revisa si el precio cambia por club y si se puede fijar uno de Puebla sin login |
 | Capacidad del A8-7410 (RAM, CPU, instrucciones para onnxruntime) | Spikes A y B antes de comprometer diseño; concurrencia 1 para Chromium |
 | Productos duplicados creados offline por varios usuarios | Códigos únicos, `BARCODE_TAKEN`, herramienta de fusión para admin |
@@ -112,3 +113,4 @@ Navegador: no hizo falta en ninguna tienda; costó 8.6–23.5 s y 626–759 MB p
 - **2026-10-08** — Revisión crítica del SDD (41 hallazgos), diagnóstico del entorno y hoja de ruta. Hito 1 completo: repo público, CI, `packages/shared` (113 pruebas sobre los fixtures) y tokens de diseño. Decisiones T25–T33.
 - **2026-10-08** — SDD v1.1: entornos de wrangler completos y R2 de dev, dos proyectos de Firebase sin bloquear el registro, prorrateo del descuento de ticket en `v_price_points` (validado en SQLite), reintento idéntico sin conflicto, revocación de Google al cambiar `google_email`, `X-Client-Schema` opcional salvo en sync, límites de D1 en el spike D, URLs firmadas cortas sin ventana de 6 h, `pending_uploads.kind`, `SPIKE_TOKEN` temporal, migración inicial a mano y dependencias y endpoints faltantes en las tareas.
 - **2026-10-19** — Cuenta de Cloudflare propia de Maunedas (`maunedas.workers.dev`, T35); se borraron los recursos creados por error en la cuenta de booth360. T-020 en código (falta deploy). Spike B: Amazon, Sam's y Costco funcionan por HTTP; Walmart bloquea y sale del tracker (T34). Decisiones T34–T36.
+- **2026-10-19** — T-003 cerrada en la cuenta propia (wrangler con el perfil `maunedas`; el login OAuth necesita un navegador que alcance `localhost:8976` del servidor, que no tiene navegador). T-020 desplegada en dev y prod. El script de producción pasa a `deploy:prod`.

@@ -34,11 +34,12 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** el workflow corre en cada push y pasa con proyectos vacíos (un test trivial por componente).
 - **Nota:** el job de Android no aplica el plugin `google-services` hasta T-100 (el `google-services.json` depende de T-004).
 
-### [ ] T-003 · Recursos de Cloudflare
+### [x] T-003 · Recursos de Cloudflare
 - **Docs:** 03 §2
 - **Depende de:** T-001
 - **Hacer:** D1 `maunedas` y `maunedas-dev`; R2 `maunedas-images` y `maunedas-images-dev` (privados); Workers `maunedas` y `maunedas-dev` en `workers.dev`; secretos `IMAGE_URL_SECRET`, `AGENT_TOKEN_SHA256` por entorno; `env.dev` con sus propios `vars`, D1 y R2 (03 §2).
 - **Hecho cuando:** `wrangler deploy --env dev` publica un Worker que responde en `https://maunedas-dev.<subdominio>.workers.dev`.
+- **Resultado (2026-10-19):** cuenta propia de Maunedas (T35), `https://maunedas-dev.maunedas.workers.dev` y `https://maunedas.maunedas.workers.dev`; `IMAGE_URL_SECRET` en ambos. `AGENT_TOKEN_SHA256` se carga en T-201, cuando exista la ruta que lo usa.
 
 ### [ ] T-004 · Firebase
 - **Docs:** 02 §2
@@ -82,7 +83,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ## Etapa 1 · Worker
 
-### [ ] T-020 · Esqueleto del Worker
+### [x] T-020 · Esqueleto del Worker
 - **Docs:** 03 §1–2
 - **Depende de:** T-003, T-006
 - **Hacer:** Hono, `ApiError` + `onError` (formato 03 §1.1), `X-Request-Id`, verificación de `X-Client-Schema`, `GET /v1/health`, `wrangler.jsonc` completo con assets, cron vacío.
@@ -271,6 +272,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** contenedor corre en el servidor, SQLite local creada, logs JSON, healthcheck.
 ### [ ] T-201 · `/agent/v1` auth y `/work`
 - **Docs:** 07 §5.1 · **Depende de:** T-026
+- **Hacer:** generar `AGENT_TOKEN` (en `agent/.env` y en el gestor de contraseñas) y cargar su hash con `wrangler secret put AGENT_TOKEN_SHA256` en dev y prod.
 - **Hecho cuando:** token por hash, respuesta de 07 §5.1, `agent_status` con la regla de versión cada 10 min.
 ### [ ] T-202 · Scheduler, gate y outbox del agente
 - **Docs:** 07 §7 · **Depende de:** T-200, T-201

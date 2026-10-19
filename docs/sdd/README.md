@@ -48,7 +48,7 @@ Documentos relacionados: [`../ARQUITECTURA.md`](../ARQUITECTURA.md) (vista gener
 
 | Nombre | Valor | Dónde se usa |
 |---|---|---|
-| Base URL | `https://maunedas.<subdominio>.workers.dev` (dev: `maunedas-dev.<subdominio>.workers.dev`) | Android (`BuildConfig.API_BASE_URL` por sabor), web (mismo origen) |
+| Base URL | `https://maunedas.maunedas.workers.dev` (dev: `https://maunedas-dev.maunedas.workers.dev`; cuenta de Cloudflare propia, T35) | Android (`BuildConfig.API_BASE_URL` por sabor), web (mismo origen) |
 | Proyectos Firebase | Uno para dev y otro para prod (T25) | `FIREBASE_PROJECT_ID`, `VITE_FIREBASE_*`, `google-services.json` por sabor |
 | Zona horaria | `America/Mexico_City` (UTC−6, sin horario de verano) | Presentación, cortes de mes del presupuesto de IA |
 | Moneda | MXN | Todo |
