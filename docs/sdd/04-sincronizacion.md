@@ -92,6 +92,14 @@ Namespaces fijos (no cambian nunca; cambiarlos cambiaría todos los ids):
 
 `products.search_key = searchKey(name + ' ' + (brand ?? ''))`, donde `searchKey`: descomponer (NFKD), quitar marcas diacríticas, pasar a minúsculas, reemplazar cada tramo de caracteres fuera de `a-z0-9` por un espacio y recortar. Casos en `fixtures/textos.json` (`search_key`).
 
+### 2.2 Esquemas de fila (T-030)
+
+`packages/shared/src/sync/rows.ts` tiene un esquema Zod por tabla (`ROW_SCHEMAS`): para tablas `sync`, la fila de push con exactamente las columnas `writable`; para tablas `down`, la fila que baja. `apps/api/test/registry.test.ts` compara el registro y los esquemas contra el `PRAGMA` de D1 (tablas con `version`, columnas, llave primaria, índices únicos parciales y que cada llave foránea apunte a una tabla de orden menor).
+
+Regla de compatibilidad (§3.3): son obligatorias las columnas `NOT NULL` sin valor por defecto; las que tienen default o aceptan `NULL` son opcionales (ausente = no tocar; `null` = poner `NULL`). Toda columna nueva se agrega como opcional. Excepción: las columnas que intervienen en una regla entre campos viajan siempre (`gross_cents`, `discount_cents`, `final_cents`; los tres dueños de `promotions`).
+
+Validaciones además de las de la tabla anterior: nombres recortados de 1 a 200 caracteres (`tags.name` ≤ 100, `variants.label` ≤ 100), `notes` ≤ 2000, `raw_text` ≤ 300; ids UUID; tiempos y centavos enteros ≥ 0; booleanos `0`/`1`; código de barras de 6 a 14 dígitos; URLs `http(s)` ≤ 2048; columnas JSON válidas (`params` ≤ 2000, `extra` y `edit_params` ≤ 4000); intervalo de revisión de 60 a 10,080 min (1 h a 7 días, regla 10); `adapter` ∈ `ADAPTERS` (`packages/shared/src/tracking/adapters.ts`: `amazon_mx`, `costco_mx`, `sams_mx`); a granel solo con `measure='mass'`, `unit_amount=1000` y `pack_count=1`; una categoría no es su propia madre; `below_price` exige `threshold_cents` y `drop_pct` exige `threshold_pct` (0 < x ≤ 100); `product_tags.id` y `receipt_aliases.id` se verifican contra su UUIDv5 (§2.1) y `raw_text_norm` debe estar ya normalizado.
+
 ## 3. Push
 
 ### 3.1 Contrato

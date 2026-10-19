@@ -122,9 +122,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** upsert por `device_id`, token duplicado se limpia del otro dispositivo, `DELETE` solo del dueño.
 - **Resultado (2026-10-19):** 16 pruebas (alta, actualización, token movido, teléfono que cambia de dueño, web sin token, validación con Zod, borrado propio, ajeno e inexistente). Helper `parseJsonBody` con `details.issues` para todas las rutas.
 
-### [ ] T-030 · Registro de sync y esquemas de fila
+### [x] T-030 · Registro de sync y esquemas de fila
 - **Docs:** 04 §2 · **Depende de:** T-006, T-026
 - **Hecho cuando:** `TABLES` cubre todas las tablas sync/down del esquema; cada tabla tiene Zod de fila; test que compara columnas del registro contra `PRAGMA table_info` de D1.
+- **Resultado (2026-10-19):** registro de 21 tablas (17 sync, 4 down) y sus esquemas Zod; 88 pruebas contra D1 (cobertura, columnas, llaves, índices únicos parciales, orden padre→hijo por llaves foráneas, esquemas = columnas) y 16 de reglas de fila. Validaciones adicionales en 04 §2.2.
 
 ### [ ] T-031 · Push
 - **Docs:** 04 §3 · **Depende de:** T-030, T-021
