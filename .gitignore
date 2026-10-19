@@ -41,3 +41,6 @@ __pycache__/
 
 # Local worktrees used for parallel work
 .claude/worktrees/
+
+# Spike raw output (sanitized fixtures go to agent/tests/fixtures/html/)
+agent/spikes/out/
