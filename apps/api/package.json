@@ -20,7 +20,8 @@
   "dependencies": {
     "@maunedas/shared": "workspace:*",
     "drizzle-orm": "catalog:",
-    "hono": "catalog:"
+    "hono": "catalog:",
+    "jose": "catalog:"
   },
   "devDependencies": {
     "@cloudflare/vitest-plugin": "catalog:",
