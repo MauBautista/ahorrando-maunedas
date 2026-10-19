@@ -138,9 +138,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** casos de pull de 04 §8 pasan, incluido el cursor compuesto con 1,200 filas de la misma versión.
 - **Resultado (2026-10-19):** `POST /v1/sync/pull` con 14 pruebas (desde cero, cursores, tombstones, 1,200 filas de la misma versión en páginas de 500, fila editada entre páginas, filtro por usuario de reglas y eventos, columnas de `users`, `tables`, validación).
 
-### [ ] T-033 · Catálogo (consulta)
+### [x] T-033 · Catálogo (consulta)
 - **Docs:** 03 §7 · **Depende de:** T-031
 - **Hecho cuando:** `lookups`, `products` (búsqueda sin acentos, categorías con subcategorías, paginación), `products/:id` y `search/variants` con tests.
+- **Resultado (2026-10-19):** las cuatro rutas, mejor precio por unidad (03 §3) y `ImageRef` con URLs firmadas (firma de 10 §3 adelantada de T-037); 16 pruebas de catálogo y 4 de firma.
 
 ### [ ] T-034 · Historial y comparador
 - **Docs:** 03 §7, `ARQUITECTURA.md` §3.3 · **Depende de:** T-033
@@ -158,6 +159,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-037 · Imágenes: subida, descarga, firma, importación
 - **Docs:** 10 §3–4, 10 §2.3 · **Depende de:** T-031
 - **Hecho cuando:** casos de PUT, firma e importación de 10 §7 pasan; `ImageRef` se arma con URLs firmadas.
+- **Nota:** `signPath`/`verifySigned` e `imageRefs` ya existen (T-033); falta servir y recibir los binarios.
 
 ### [ ] T-038 · Fusión (admin)
 - **Docs:** 03 §12 · **Depende de:** T-031

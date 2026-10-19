@@ -260,8 +260,10 @@ Upsert por `device_id`. Si otro dispositivo tenía el mismo `fcm_token`, se le p
 ```
 
 ### `GET /v1/products?q=&category_id=&tag_id=&cursor=&limit=30`
-- `q`: se normaliza con `searchKey()`; cada palabra debe aparecer en `products.search_key` (AND). Si `q` son solo dígitos, busca también por código exacto.
+- `q`: se normaliza con `searchKey()`; cada palabra debe aparecer en `products.search_key` (AND, coincidencia parcial). Si `q` son de 6 a 14 dígitos, busca también por código exacto.
 - `category_id` incluye subcategorías (CTE recursivo).
+- `limit` de 1 a 100 (30 por omisión). Orden por `search_key` e `id` (sin acentos ni mayúsculas; equivale a nombre y marca); `next_cursor` es opaco.
+- Implementación (T-033): `apps/api/src/routes/catalog.ts`; `best` en `catalog/prices.ts`. Las URLs de `ImageRef` son absolutas (`PUBLIC_BASE_URL`) y firmadas por 24 h (10 §3).
 ```ts
 // 200
 {
@@ -283,10 +285,11 @@ Upsert por `device_id`. Si otro dispositivo tenía el mismo `fcm_token`, se le p
     barcodes: string[];
     image: ImageRef | null;
     latest: Array<{ store_id: Id; source: PriceSource; effective_unit_cents: Cents;
-                    display_cents: Cents; observed_at: Millis }>;   // último punto por tienda y fuente
+                    display_cents: Cents; display_unit: DisplayUnit; observed_at: Millis }>;   // último punto por tienda y fuente
   }>;
 }
 ```
+Producto inexistente o borrado → `404 E-NOT_FOUND`. `display_unit` de cada punto es la del producto, o la de la medida de la variante si no corresponde (§3).
 
 ### `GET /v1/products/:id/compare?days=90`
 ```ts
@@ -321,7 +324,7 @@ Upsert por `device_id`. Si otro dispositivo tenía el mismo `fcm_token`, se le p
 Defaults: `to = ahora`, `from = to − 365 días`.
 
 ### `GET /v1/search/variants?q=&limit=20`
-Para el editor de compra y la revisión de tickets en web.
+Para el editor de compra y la revisión de tickets en web. `q` obligatorio; `limit` de 1 a 50. Las palabras se buscan en `search_key` del producto y en la etiqueta de la variante; un código exacto va primero con `barcode_match: true`.
 ```ts
 // 200
 { items: Array<{ variant_id: Id; product_id: Id; product_name: string; brand: string | null;

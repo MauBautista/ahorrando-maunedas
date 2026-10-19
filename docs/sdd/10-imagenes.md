@@ -119,6 +119,8 @@ async function hmacHex(secret: string, msg: string): Promise<string> {
 }
 ```
 
+Implementación: `apps/api/src/images/signing.ts` y `images/refs.ts` (T-033, adelantado de T-037).
+
 | Uso | TTL |
 |---|---|
 | `ImageRef` en respuestas de consulta (web) | 24 h |

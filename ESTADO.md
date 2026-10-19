@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-032 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-030 a T-033 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -22,12 +22,13 @@
 - **T-030 (2026-10-19):** registro de tablas de sync (21 tablas) y esquemas Zod de fila en `packages/shared`, verificados contra el `PRAGMA` de D1 (incluido el orden padre→hijo por llaves foráneas).
 - **T-031 (2026-10-19):** `POST /v1/sync/push` (LWW por fila, reintento idéntico, clamp, conflictos `STALE`, `VALIDATION`, `BARCODE_TAKEN`, `ALIAS_TAKEN`, `IMMUTABLE_ROW`, `FORBIDDEN`, `UNKNOWN_TABLE`, padres verificados antes del lote); 31 pruebas y seis mutaciones detectadas.
 - **T-032 (2026-10-19):** `POST /v1/sync/pull` con cursor compuesto `(version, pk)` por tabla en un solo batch; 1,200 filas de la misma versión se paginan sin saltos ni repeticiones; reglas y eventos de alerta filtrados por usuario; 14 pruebas.
+- **T-033 (2026-10-19):** consultas de catálogo para la web (`lookups`, lista de productos con búsqueda sin acentos, subcategorías, etiquetas, cursor y mejor precio por unidad; ficha con etiquetas, códigos y últimos precios; búsqueda de variantes) y URLs firmadas de imágenes; 20 pruebas.
 
 ## En curso
 - Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-033 a T-036 (consulta, historial y comparador, compras y códigos de barras) y T-038 (fusión), que no dependen de Firebase; luego T-023 y T-024 (usuarios y bootstrap) con Identity Toolkit simulado.
+1. T-034 a T-036 (historial y comparador con prorrateo, compras y códigos de barras) y T-038 (fusión), que no dependen de Firebase; luego T-023 y T-024 (usuarios y bootstrap) con Identity Toolkit simulado.
 2. Spike A (rembg) en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 4. Spike D (T-013) justo después de T-031; ahí se cierra D3.
@@ -148,3 +149,4 @@ Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se ap
 - **2026-10-19** — T-031: push del sync con LWW y conflictos. Decisión T39.
 - **2026-10-19** — T-032: pull del sync con cursor compuesto. El bloque de sync de la Etapa 1 queda completo en el Worker.
 - **2026-10-19** — Spike D en `maunedas-dev`: push y pull pasan de 10 ms en p95 pero el plan Free no corta; D3 cerrada → Free con pull de 100 filas (T40). Secreto, rutas y datos del spike retirados.
+- **2026-10-19** — T-033: consultas de catálogo y URLs firmadas.
