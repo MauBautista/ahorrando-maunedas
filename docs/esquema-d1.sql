@@ -345,7 +345,7 @@ CREATE TABLE listings (
   id                  TEXT PRIMARY KEY,
   variant_id          TEXT NOT NULL REFERENCES variants(id),
   store_id            TEXT NOT NULL REFERENCES stores(id),
-  adapter             TEXT NOT NULL,                     -- 'amazon_mx','costco_mx','walmart_mx','sams_mx',...
+  adapter             TEXT NOT NULL,                     -- 'amazon_mx','costco_mx','sams_mx',... (Walmart no: T34)
   url                 TEXT NOT NULL,                     -- la que pegó el usuario
   canonical_url       TEXT,                              -- p. ej. https://www.amazon.com.mx/dp/<ASIN>
   external_id         TEXT,                              -- ASIN, SKU, item id

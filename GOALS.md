@@ -17,7 +17,7 @@ Cuatro personas del hogar: un administrador y tres miembros con permisos equival
 | G3 | Precio normalizado por unidad (kg, L, 100 g, 100 ml, pieza) para comparar presentaciones y tiendas | 1 |
 | G4 | Captura rápida en Android: escaneo de código, foto de ticket, precio de anaquel, todo **offline** | 1 |
 | G5 | Web responsive para consulta y captura (y como app en iPhone) | 1 |
-| G6 | Tracker de precios web (Amazon, Costco, Walmart, Sam's) con alertas push configurables por variante o listing | 2 |
+| G6 | Tracker de precios web (Amazon, Costco, Sam's) con alertas push configurables por variante o listing. Walmart quedó fuera el 2026-10-19: bloquea con captcha desde la primera petición (spike B) y no se evaden bloqueos | 2 |
 | G7 | Fotos de producto limpias: catálogo abierto primero; foto propia con fondo removido y editable después | 1 (catálogo) · 3 (edición) |
 | G8 | Respaldo independiente en casa de todos los datos y fotos | 2 |
 

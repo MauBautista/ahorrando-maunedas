@@ -29,7 +29,7 @@ flowchart LR
   FB["Firebase<br/>Auth + FCM"]
   OR["OpenRouter"]
   OFF["Open Food Facts<br/>OPF · OBF"]
-  TIENDAS["Amazon · Costco<br/>Walmart · Sam's"]
+  TIENDAS["Amazon · Costco<br/>Sam's"]
 
   APP <-->|"sync push/pull"| API
   WEB <-->|"HTTPS"| API
@@ -361,7 +361,7 @@ Estrategia de extracción, de la más barata a la más cara:
 3. Selectores CSS específicos de la tienda.
 4. **Playwright** (contexto persistente, bloqueando imágenes, fuentes y media para ahorrar RAM/CPU) solo si 1–3 fallan.
 
-Cada adapter tiene fixtures HTML guardados y tests `pytest`. Ante un fallo de parseo se guarda el HTML (últimos 20) en `/data/snapshots/` para depurar. Algunos precios de Costco, Sam's y Walmart dependen de sucursal o código postal: el adapter usa el código postal de referencia **72750** (zona Puebla–Cholula, decisión T20).
+Cada adapter tiene fixtures HTML guardados y tests `pytest`. Ante un fallo de parseo se guarda el HTML (últimos 20) en `/data/snapshots/` para depurar. Algunos precios de Costco y Sam's dependen de sucursal o código postal: el adapter usa el código postal de referencia **72750** (zona Puebla–Cholula, decisión T20) cuando la tienda lo permite; Amazon ubica por IP. Walmart no se sigue: bloquea con captcha (T34).
 
 Reglas de cortesía: uso personal, baja frecuencia, sin rotación de proxies ni evasión de captchas. Si una tienda bloquea, se marca y se avisa; no se escala.
 
@@ -376,7 +376,7 @@ services:
     env_file: ./ahorrando-maunedas/agent/.env      # no versionado
     volumes:
       - ./data/maunedas:/data                       # SQLite local, snapshots, respaldos
-    mem_limit: 1500m                                # ajustar tras el spike B
+    mem_limit: 1200m                                # spike B: pico de Chromium 759 MB
     cpus: 1.5
     shm_size: 512m                                  # Chromium
 ```
