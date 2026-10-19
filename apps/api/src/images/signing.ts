@@ -31,6 +31,7 @@ export async function verifySigned(
 }
 
 async function hmacHex(secret: string, msg: string): Promise<string> {
+  if (!secret) throw new Error('IMAGE_URL_SECRET is not configured');
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
     'raw',

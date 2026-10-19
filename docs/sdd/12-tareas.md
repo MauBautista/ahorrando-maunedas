@@ -159,10 +159,11 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** casos de lookup de 10 §7 pasan.
 - **Resultado (2026-10-19):** `GET /v1/barcodes/:code` con coincidencia propia, caché positiva (30 días) y negativa (7 días), orden OFF → OBF → OPF, User-Agent, mapeo de 10 §2.1 y manejo de fallas sin caché negativa falsa (T42); 13 pruebas con `fetch` simulado. Forma de la respuesta verificada contra la API real de Open Food Facts.
 
-### [ ] T-037 · Imágenes: subida, descarga, firma, importación
+### [x] T-037 · Imágenes: subida, descarga, firma, importación
 - **Docs:** 10 §3–4, 10 §2.3 · **Depende de:** T-031
 - **Hecho cuando:** casos de PUT, firma e importación de 10 §7 pasan; `ImageRef` se arma con URLs firmadas.
 - **Nota:** `signPath`/`verifySigned` e `imageRefs` ya existen (T-033); falta servir y recibir los binarios.
+- **Resultado (2026-10-19):** `PUT`/`GET /v1/images/:imageId/blobs/:name` (dueño de la clave verificado en D1, solo tiers `device`/`manual`, primera subida gana, firma o Bearer, `ETag`/`304`) y `POST /v1/images/:imageId/import` (hosts permitidos también tras redirecciones, sin credenciales, ≤ 10 MB contado al leer, `image/*`); 16 pruebas. `IMAGE_URL_SECRET` existe en dev y prod.
 
 ### [ ] T-038 · Fusión (admin)
 - **Docs:** 03 §12 · **Depende de:** T-031
