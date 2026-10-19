@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-023, T-030 a T-038, T-041 y spikes B y D hechos; faltan Firebase, OpenRouter y los spikes A, C y E.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-023, T-030 a T-038, T-041 y spikes B y D hechos (T-024 sin el admin real); faltan Firebase, OpenRouter y los spikes A, C y E.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -30,12 +30,13 @@
 - **T-038 (2026-10-19):** fusión de duplicados (solo admin): al fusionar variantes, códigos, compras, precios, listings, alertas, alias y fotos pasan al destino; al fusionar productos, sus variantes, fotos y etiquetas; el origen queda borrado y los clientes reciben todo por sync; 9 pruebas.
 - **T-041 (2026-10-19):** mantenimiento diario a las 04:07 de Ciudad de México dentro del cron horario: borra tokens vencidos, caché de Open Food Facts vencida y trabajos de imagen terminados hace más de 30 días; 3 pruebas con reloj simulado.
 - **T-023 (2026-10-19):** administración de usuarios (solo admin): lista, alta con contraseña y/o correo de Google, edición (nombre, rol, activo, correo de Google) y cambio de contraseña, con Identity Toolkit simulado; nunca deja la casa sin admin activo; 18 pruebas. Falta probar contra Firebase real (T-004).
+- **T-024 (código, 2026-10-19):** `POST /v1/bootstrap` para crear el primer admin una sola vez, protegido con `BOOTSTRAP_TOKEN`; si dos llegan a la vez solo uno gana; 6 pruebas. Falta crear el admin real en dev (necesita T-004).
 
 ## En curso
 - Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-024 (bootstrap del primer admin) con Identity Toolkit simulado; crear el admin real en dev espera a T-004;
+1. **Firebase (T-004)**: desbloquea el admin real en dev (cierra T-024: se genera `BOOTSTRAP_TOKEN` en la terminal y Mauricio escribe su contraseña ahí, sin pasar por el chat), el proxy de auth (T-025) y el spike E;
 2. Spike A (rembg) en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 4. Spike D (T-013) justo después de T-031; ahí se cierra D3.
@@ -169,3 +170,4 @@ Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se ap
 - **2026-10-19** — T-038: fusión de productos y variantes duplicados (T44). Bloque T-033 a T-038 completo.
 - **2026-10-19** — T-041: cron de mantenimiento diario. El backend sin Firebase de la Etapa 1 queda completo.
 - **2026-10-19** — T-023: administración de usuarios con Identity Toolkit simulado (T45).
+- **2026-10-19** — T-024: bootstrap del primer admin (falta el admin real en dev, con Firebase).

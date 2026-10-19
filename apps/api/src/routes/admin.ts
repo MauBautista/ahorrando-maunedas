@@ -6,9 +6,9 @@ import {
   type AdminUser,
   type MergeResponse,
 } from '@maunedas/shared/api/admin';
-import { Hono, type Context } from 'hono';
+import { Hono } from 'hono';
 import { z } from 'zod';
-import { IdentityToolkit } from '../auth/firebase-admin';
+import { identityToolkitOf as identityOf } from '../auth/firebase-admin';
 import { requireUser } from '../auth/middleware';
 import { createUser, listUsers, setUserPassword, updateUser } from '../auth/users';
 import { mergeDuplicates } from '../db/queries/merge';
@@ -16,8 +16,6 @@ import type { AppEnv } from '../env';
 import { parseJsonBody, parseParam } from '../util/validate';
 
 const adminOnly = requireUser({ admin: true });
-const identityOf = (c: Context<AppEnv>) =>
-  new IdentityToolkit(c.env, c.get('googleTokens'), c.get('outboundFetch'));
 
 /** Admin routes (03 §12). The AI budget arrives with T-039 and the agent status with E2. */
 export const admin = new Hono<AppEnv>()

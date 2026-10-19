@@ -9,6 +9,7 @@ import { clientSchema } from './middleware/client-schema';
 import { requestId } from './middleware/request-id';
 import { admin } from './routes/admin';
 import { barcodes } from './routes/barcodes';
+import { bootstrap } from './routes/bootstrap';
 import { devices } from './routes/devices';
 import { health } from './routes/health';
 import { images } from './routes/images';
@@ -49,6 +50,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.use('/v1/*', clientSchema);
 
   app.route('/', health);
+  app.route('/', bootstrap);
   app.route('/', me);
   app.route('/', devices);
   app.route('/', sync);

@@ -31,6 +31,19 @@ export const CreateUserRequestSchema = z
     path: ['password'],
   });
 
+/** `POST /v1/bootstrap` (02 §5.4): the first admin; the role is always admin. */
+export const BootstrapRequestSchema = z
+  .object({
+    username: z.string().max(64),
+    display_name: displayName,
+    password: password.optional(),
+    google_email: googleEmail.optional(),
+  })
+  .refine((r) => r.password !== undefined || r.google_email !== undefined, {
+    message: 'Hace falta una contraseña o un correo de Google',
+    path: ['password'],
+  });
+
 /** `PATCH /v1/admin/users/:id`: only what changes; `google_email: null` removes Google access. */
 export const UpdateUserRequestSchema = z
   .object({
