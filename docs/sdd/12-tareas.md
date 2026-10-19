@@ -71,8 +71,9 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Docs:** 11 §7, 07 §9 · **Decide:** métodos por tienda, `mem_limit` · **Deja:** fixtures HTML en `agent/tests/fixtures/html/` · **Resultado:** `docs/spikes/spike-b-scraping.md`
 ### [ ] T-012 · Spike C: extracción de tickets
 - **Docs:** 09 §9 · **Depende de:** T-003, T-005 · **Decide:** D2 y `AI_RECEIPT_MODEL`
-### [ ] T-013 · Spike D: CPU del Worker
+### [x] T-013 · Spike D: CPU del Worker
 - **Docs:** 11 §7 · **Depende de:** T-021, T-022, T-031 (versiones mínimas) · **Decide:** D3 · **Nota:** se ejecuta en la Etapa 1, justo después de T-031
+- **Resultado (2026-10-19):** `docs/spikes/spike-d-cpu.md`. Token y firma de Google caben (p95 ≤ 4 ms); push p95 21–26 ms, pull p95 23 ms (13 ms con páginas de 100), vinculación ingenua p95 65 ms; ninguna petición cortada y el límite de 50 consultas no se aplicó. D3 → se queda en Free (T40).
 ### [ ] T-014 · Spike E: correo sintético
 - **Docs:** 02 §3, 11 §7 · **Depende de:** T-004 · **Decide:** D9
 ### [ ] T-015 · Cerrar decisiones
@@ -168,7 +169,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-040 · Extracción de tickets
 - **Docs:** 09 §3–7 · **Depende de:** T-037, T-039, T-012
-- **Hecho cuando:** con proveedor simulado: conversión y advertencias (09 §4.4), reutilización por `images_key`, 402/409/422/429/503, coincidencias por alias y código, sugerencias con `score`, detección de promociones y tienda.
+- **Hecho cuando:** con proveedor simulado: conversión y advertencias (09 §4.4), reutilización por `images_key`, 402/409/422/429/503, coincidencias por alias y código, sugerencias con `score`, detección de promociones y tienda. La vinculación preselecciona candidatos por SQL (≤ 50) y su CPU se mide en `maunedas-dev` (spike D: puntuar contra todo el catálogo cuesta p95 65 ms).
 
 ### [ ] T-041 · Cron de mantenimiento
 - **Docs:** 03 §2 · **Depende de:** T-022

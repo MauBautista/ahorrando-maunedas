@@ -103,6 +103,20 @@ describe('pull (04 §4)', () => {
     expect(pages[0]!.cursors.tags).toEqual([7, '0192a5e9-0000-7000-8000-000000000500']);
   });
 
+  it('without limit, pages hold 100 rows per table (spike D, decision T40)', async () => {
+    await env.DB.prepare(
+      `WITH RECURSIVE n(i) AS (SELECT 1 UNION ALL SELECT i + 1 FROM n WHERE i < 150)
+       INSERT INTO tags (id, name, created_at, updated_at, version)
+       SELECT printf('0192a5e9-0000-7000-8000-%012d', i), 'etiqueta ' || i, 1, 1, 3 FROM n`,
+    ).run();
+    const first = await pull({ tables: ['tags'] });
+    expect(first.changes.tags).toHaveLength(100);
+    expect(first.has_more).toBe(true);
+    const second = await pull({ tables: ['tags'], cursors: first.cursors });
+    expect(second.changes.tags).toHaveLength(50);
+    expect(second.has_more).toBe(false);
+  });
+
   it('a row edited between pages is delivered again at its new version, never lost', async () => {
     const rows = Array.from({ length: 6 }, () => store());
     await push(rows);

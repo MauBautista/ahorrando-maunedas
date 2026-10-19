@@ -56,7 +56,7 @@ Documentos relacionados: [`../ARQUITECTURA.md`](../ARQUITECTURA.md) (vista gener
 | Presupuesto IA | 6 USD/mes, aviso al 80 % | Gateway de IA |
 | Intervalo de tracking por defecto | 480 min | `stores.default_check_interval_min` |
 | Límite de push | 100 mutaciones / request | Sync |
-| Límite de pull | 500 filas por tabla / request | Sync |
+| Límite de pull | 100 filas por tabla / request por omisión, máximo 500 (spike D) | Sync |
 | Lote de resultados del agente | 20 / request | `/agent/v1/observations` |
 | `SYNTHETIC_EMAIL_DOMAIN` | `maunedas.local` (spike E) | Auth usuario/contraseña: `vars` del Worker, `VITE_SYNTHETIC_EMAIL_DOMAIN`, `BuildConfig.SYNTHETIC_EMAIL_DOMAIN` |
 | `applicationId` | `com.maubautista.maunedas` | Android |

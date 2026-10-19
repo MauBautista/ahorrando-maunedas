@@ -12,7 +12,7 @@ Objetivo: esqueleto desplegable y decisiones abiertas resueltas con datos antes 
 
 - [~] Monorepo, CI, recursos de Cloudflare, Firebase y OpenRouter — T-001 a T-005 (T-001 a T-003 hechas)
 - [x] `packages/shared` pasando todos los fixtures; tokens de diseño — T-006, T-007
-- [~] Spikes A (rembg), B (scraping), C (tickets), D (CPU), E (correo sintético) — T-010 a T-014 (B hecho)
+- [~] Spikes A (rembg), B (scraping), C (tickets), D (CPU), E (correo sintético) — T-010 a T-014 (B y D hechos)
 - [ ] Decisiones D2, D5, D9 cerradas — T-015 (D3 en T-013)
 
 **Hecho cuando:** spikes A, B, C y E documentados en `ESTADO.md`, D2, D5 y D9 cerradas, `maunedas-dev` responde y el spike E validó login real con Firebase. El spike D (D3) se ejecuta en la Etapa 1, justo después del push (T-031).
