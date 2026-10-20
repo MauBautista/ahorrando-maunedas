@@ -22,7 +22,13 @@ Requisitos: RF-AUTH, RF-CAT, RF-COM, RF-TIC, RF-PRE, RF-SYN, RF-IMG (E1); RF-TRK
 | Distribución | Firebase App Distribution; keystore de release propio (SHA-1/SHA-256 registrados en Firebase) |
 | Variantes de build | `dev` (Worker `maunedas-dev`, proyecto Firebase de dev, `applicationIdSuffix ".dev"`) y `prod`. `BuildConfig` por sabor: `API_BASE_URL`, `GOOGLE_WEB_CLIENT_ID`, `SYNTHETIC_EMAIL_DOMAIN`; `google-services.json` en `app/src/dev/` y `app/src/prod/` (fuera de git) |
 
-Versiones en `gradle/libs.versions.toml`; ninguna versión escrita en los `build.gradle.kts`.
+Versiones en `gradle/libs.versions.toml`; ninguna versión escrita en los `build.gradle.kts`. Solo versiones estables con al menos dos semanas publicadas (mismo criterio que `minimumReleaseAge` en pnpm); por eso lint no avisa de versiones nuevas.
+
+Implementación (T-100):
+- `build-logic/` con plugins de convención: `maunedas.android.application`, `maunedas.android.library`, `maunedas.android.compose`, `maunedas.android.feature` (Compose + Hilt + `core:model`, `core:data`, `core:designsystem`, `core:ui`) y `maunedas.hilt` (KSP). Fijan SDK, Java 17 y `namespace` derivado de la ruta (`:core:model` → `com.maubautista.maunedas.core.model`). AGP 9 compila Kotlin (Kotlin integrado); KGP se fija en el classpath raíz.
+- `GOOGLE_WEB_CLIENT_ID` sale de `maunedas.googleWebClientId.{dev,prod}` y `SYNTHETIC_EMAIL_DOMAIN` de `maunedas.syntheticEmailDomain` en `gradle.properties` (valores públicos).
+- El plugin `google-services` solo se aplica si existe `app/src/{dev,prod}/google-services.json`, así el proyecto compila antes de T-004.
+- Comando de CI y local: `./gradlew checkModuleDependencies unitTests lintDevDebug`. `unitTests` corre las pruebas del sabor `dev` en la app y de `debug` en las librerías; lint revisa todos los módulos desde la app (`checkDependencies`).
 
 ## 2. Módulos
 
@@ -53,6 +59,8 @@ apps/android/
 ```
 
 Dependencias permitidas: `feature → core:*`; `core:data → core:database, core:network, core:sync, core:pricing, core:model`; ningún `core` depende de `feature`.
+
+`checkModuleDependencies` (`build-logic/.../Conventions.kt`, `ModuleRules`) hace fallar el build ante una dependencia de proyecto no permitida: `feature` solo hacia `core`, `core:data` solo hacia su lista y ningún otro `core` hacia `feature` ni hacia `core:data`.
 
 ## 3. Arquitectura de UI
 

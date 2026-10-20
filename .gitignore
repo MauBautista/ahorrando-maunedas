@@ -17,6 +17,8 @@ agent/.env
 
 # Android
 apps/android/.gradle/
+apps/android/build-logic/.gradle/
+apps/android/build-logic/.kotlin/
 apps/android/.kotlin/
 apps/android/build/
 apps/android/**/build/

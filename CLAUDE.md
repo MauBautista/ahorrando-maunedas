@@ -58,7 +58,7 @@ pnpm --filter web dev                       # proxy de /v1 y /__ al Worker local
 pnpm --filter web build
 pnpm --filter shared test                   # fixtures
 
-cd apps/android && ./gradlew testDevDebugUnitTest lintDevDebug
+cd apps/android && ./gradlew checkModuleDependencies unitTests lintDevDebug   # reglas de módulos, pruebas (sabor dev) y lint
 cd agent && uv sync && uv run ruff check . && uv run pytest
 docker compose up -d maunedas-agent         # en el servidor casero (Etapa 2)
 ```

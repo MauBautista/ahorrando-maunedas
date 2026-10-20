@@ -33,6 +33,9 @@ jobs:
 
   android:
     runs-on: ubuntu-latest
+    env:
+      # Empty until T-004 (and always on pull requests from forks): the app builds without it.
+      GOOGLE_SERVICES_JSON_DEV: ${{ secrets.GOOGLE_SERVICES_JSON_DEV }}
     defaults:
       run:
         working-directory: apps/android
@@ -43,7 +46,10 @@ jobs:
           distribution: temurin
           java-version: 17
       - uses: gradle/actions/setup-gradle@v6
-      - run: ./gradlew testDevDebugUnitTest lintDevDebug
+      - name: Write google-services.json (dev)
+        if: env.GOOGLE_SERVICES_JSON_DEV != ''
+        run: printf '%s' "$GOOGLE_SERVICES_JSON_DEV" > app/src/dev/google-services.json
+      - run: ./gradlew checkModuleDependencies unitTests lintDevDebug
 
   agent:
     runs-on: ubuntu-latest
