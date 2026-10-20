@@ -189,9 +189,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ## Etapa 1 · Android
 
-### [ ] T-100 · Proyecto y módulos
+### [~] T-100 · Proyecto y módulos
 - **Docs:** 05 §1–2 · **Depende de:** T-001, T-004
 - **Hecho cuando:** módulos creados con dependencias permitidas, catálogo de versiones, Hilt, sabores `dev`/`prod` con `API_BASE_URL`, `GOOGLE_WEB_CLIENT_ID` y `SYNTHETIC_EMAIL_DOMAIN`, `google-services.json` por sabor (escrito en CI desde `GOOGLE_SERVICES_JSON_DEV`), build en CI.
+- **Avance (2026-10-20):** los 20 módulos de 05 §2 con plugins de convención, `checkModuleDependencies` (probado con tres dependencias prohibidas), catálogo completo, Hilt + Compose en la app, sabores con los tres `BuildConfig` y el paso de CI que escribe `google-services.json` si existe el secreto (el plugin se probó con un archivo falso). Falta con T-004: los `google-services.json` reales, el secreto `GOOGLE_SERVICES_JSON_DEV` y los Web client ID en `gradle.properties`.
 
 ### [ ] T-101 · `core:model` y `core:pricing`
 - **Docs:** 05 §6 · **Depende de:** T-100, T-006

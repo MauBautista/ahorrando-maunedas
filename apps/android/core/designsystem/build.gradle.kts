@@ -1,17 +1,4 @@
 plugins {
-    alias(libs.plugins.android.library)
-}
-
-android {
-    namespace = "com.maubautista.maunedas.core.designsystem"
-    compileSdk = 37
-
-    defaultConfig {
-        minSdk = 26
-    }
-
-    compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_17
-        targetCompatibility = JavaVersion.VERSION_17
-    }
+    id("maunedas.android.library")
+    id("maunedas.android.compose")
 }

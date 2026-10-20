@@ -1,4 +1,5 @@
 pluginManagement {
+    includeBuild("build-logic")
     repositories {
         google {
             content {
@@ -22,5 +23,9 @@ dependencyResolutionManagement {
 
 rootProject.name = "ahorrando-maunedas"
 
+// Modules of SDD 05 §2. Allowed dependencies are checked by `checkModuleDependencies`.
 include(":app")
-include(":core:designsystem")
+listOf("model", "pricing", "database", "network", "auth", "sync", "data", "camera", "designsystem", "ui")
+    .forEach { include(":core:$it") }
+listOf("auth", "home", "purchases", "catalog", "scan", "shelf", "photo", "settings", "tracking")
+    .forEach { include(":feature:$it") }

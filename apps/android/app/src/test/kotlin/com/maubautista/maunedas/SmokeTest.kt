@@ -12,6 +12,17 @@ class SmokeTest {
 
     @Test
     fun devFlavorTargetsDevWorker() {
-        assertTrue(BuildConfig.API_BASE_URL.startsWith("https://maunedas-dev."))
+        assertEquals("https://maunedas-dev.maunedas.workers.dev", BuildConfig.API_BASE_URL)
+        assertTrue(BuildConfig.APPLICATION_ID.endsWith(".dev"))
+    }
+
+    @Test
+    fun authSettingsComeFromTheBuild() {
+        assertEquals("maunedas.local", BuildConfig.SYNTHETIC_EMAIL_DOMAIN)
+        // Empty until T-004 sets maunedas.googleWebClientId.dev; then it is an OAuth client id.
+        assertTrue(
+            BuildConfig.GOOGLE_WEB_CLIENT_ID.isEmpty() ||
+                BuildConfig.GOOGLE_WEB_CLIENT_ID.endsWith(".apps.googleusercontent.com"),
+        )
     }
 }

@@ -81,7 +81,7 @@ Fuente de verdad: [`.github/workflows/ci.yml`](../../.github/workflows/ci.yml). 
 | `ts` | `pnpm/action-setup` (versión de `packageManager`) → `setup-node` con `.nvmrc` → `pnpm install --frozen-lockfile` → `pnpm format:check` → `pnpm lint` → `pnpm tokens && git diff --exit-code` (tokens generados al día) → `pnpm --filter web build` (el Worker sirve `apps/web/dist` como assets; `wrangler types` y los tests del Worker exigen que exista) → `pnpm typecheck` → `pnpm test` |
 
 Localmente, los scripts `dev`, `typecheck` y `test` de `apps/api` crean `apps/web/dist` vacío si no existe (`scripts/ensure-web-dist.ts`), para no obligar a construir la web antes de probar el Worker. Los scripts `deploy` y `deploy:dev` siempre construyen la web primero.
-| `android` | `setup-java` (Temurin 17) → `gradle/actions/setup-gradle` (valida el wrapper) → `./gradlew testDevDebugUnitTest lintDevDebug`. Desde T-100 escribe `app/src/dev/google-services.json` desde el secreto `GOOGLE_SERVICES_JSON_DEV` mediante una variable de entorno (no con `echo '${{ … }}'`) |
+| `android` | `setup-java` (Temurin 17) → `gradle/actions/setup-gradle` (valida el wrapper) → `./gradlew checkModuleDependencies unitTests lintDevDebug`. Desde T-100 escribe `app/src/dev/google-services.json` desde el secreto `GOOGLE_SERVICES_JSON_DEV` mediante una variable de entorno (no con `echo '${{ … }}'`) |
 | `agent` | `astral-sh/setup-uv` (fijada por SHA: ya no publica etiquetas de versión mayor) → `uv sync --frozen` → `ruff check` → `ruff format --check` → `pytest` |
 
 Versiones de acciones (2026-10): `actions/checkout@v7`, `actions/setup-node@v7`, `pnpm/action-setup@v6`, `actions/setup-java@v6`, `gradle/actions/setup-gradle@v6`, `astral-sh/setup-uv` v10.2.0 por SHA.
