@@ -53,7 +53,7 @@
       ],
       "r2_buckets": [{ "binding": "IMAGES", "bucket_name": "maunedas-images-dev" }],
       "vars": {
-        "FIREBASE_PROJECT_ID": "pending-t004-dev",
+        "FIREBASE_PROJECT_ID": "maunedas-dev",
         "SYNTHETIC_EMAIL_DOMAIN": "maunedas.local",
         "PUBLIC_BASE_URL": "https://maunedas-dev.maunedas.workers.dev",
         "MIN_CLIENT_SCHEMA": "1",

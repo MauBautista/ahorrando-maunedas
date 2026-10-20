@@ -32,9 +32,10 @@
 - **T-023 (2026-10-19):** administración de usuarios (solo admin): lista, alta con contraseña y/o correo de Google, edición (nombre, rol, activo, correo de Google) y cambio de contraseña, con Identity Toolkit simulado; nunca deja la casa sin admin activo; 18 pruebas. Falta probar contra Firebase real (T-004).
 - **T-024 (código, 2026-10-19):** `POST /v1/bootstrap` para crear el primer admin una sola vez, protegido con `BOOTSTRAP_TOKEN`; si dos llegan a la vez solo uno gana; 6 pruebas. Falta crear el admin real en dev (necesita T-004).
 - **T-100 (2026-10-20, sin Firebase):** proyecto Android con los 20 módulos del SDD, reglas de dependencias verificadas en el build, catálogo de versiones, Hilt y Compose, sabores `dev`/`prod`; CI corre reglas, pruebas y lint. Faltan los archivos y valores de Firebase (T-004).
+- **T-004 dev (parcial, 2026-10-20):** proyecto Firebase `maunedas-dev` con apps web y Android; el Worker de dev ya verifica tokens de ese proyecto, la web de dev y Android tienen su configuración. Faltan la cuenta de servicio, el cliente OAuth de Android en `google-services.json` y el proyecto de prod.
 
 ## En curso
-- Mauricio: Firebase (dos proyectos, hosts `maunedas-dev.maunedas.workers.dev` y `maunedas.maunedas.workers.dev`) y OpenRouter (T-004, T-005); 10 fotos para el spike A.
+- Mauricio: Firebase dev (cuenta de servicio, cliente web y `google-services.json` con el cliente de Android) y luego prod (T-004); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
 1. **Firebase (T-004)**: desbloquea el admin real en dev (cierra T-024: se genera `BOOTSTRAP_TOKEN` en la terminal y Mauricio escribe su contraseña ahí, sin pasar por el chat), el proxy de auth (T-025) y el spike E;
@@ -173,3 +174,4 @@ Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se ap
 - **2026-10-19** — T-023: administración de usuarios con Identity Toolkit simulado (T45).
 - **2026-10-19** — T-024: bootstrap del primer admin (falta el admin real en dev, con Firebase).
 - **2026-10-20** — T-100: proyecto Android multi-módulo con reglas de dependencias, Hilt, Compose y sabores (T46); faltan los datos de Firebase.
+- **2026-10-20** — T-004 (dev, parcial): configuración pública de `maunedas-dev` en Worker, web y Android.
