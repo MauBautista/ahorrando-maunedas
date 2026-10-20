@@ -41,11 +41,12 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** `wrangler deploy --env dev` publica un Worker que responde en `https://maunedas-dev.<subdominio>.workers.dev`.
 - **Resultado (2026-10-19):** cuenta propia de Maunedas (T35), `https://maunedas-dev.maunedas.workers.dev` y `https://maunedas.maunedas.workers.dev`; `IMAGE_URL_SECRET` en ambos. `AGENT_TOKEN_SHA256` se carga en T-201, cuando exista la ruta que lo usa.
 
-### [ ] T-004 · Firebase
+### [~] T-004 · Firebase
 - **Docs:** 02 §2
 - **Depende de:** T-003 (para conocer el dominio)
 - **Hacer:** dos proyectos (dev y prod, decisión T25), 02 §2.
 - **Hecho cuando:** en cada proyecto: Email/Password y Google habilitados (sin bloquear el registro); dominio autorizado y URI de redirección `/__/auth/handler` del host de su Worker; apps Android (`.dev` en dev) con SHA-1/256 de debug; secreto `GOOGLE_SERVICE_ACCOUNT` del proyecto de dev cargado en `maunedas-dev`.
+- **Avance (2026-10-20):** proyecto `maunedas-dev` con app web y app Android (`com.maubautista.maunedas.dev`, SHA del keystore de debug del servidor); `FIREBASE_PROJECT_ID` en `maunedas-dev`, `.env.development`/`.env.dev` de la web y Web client ID en `gradle.properties`. Faltan en dev: cuenta de servicio (`GOOGLE_SERVICE_ACCOUNT`), confirmar orígenes y URI de redirección del cliente web, *branding*, y volver a descargar `google-services.json` con el cliente OAuth de Android; después, el proyecto de prod.
 
 ### [ ] T-005 · OpenRouter
 - **Docs:** 09 §2
