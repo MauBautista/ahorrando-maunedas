@@ -26,12 +26,15 @@ class SyncWorker
         private val engine: SyncEngine,
         private val status: SyncStatusStore,
         private val clock: Clock,
+        private val uploads: UploadRequester,
     ) : CoroutineWorker(context, params) {
         override suspend fun doWork(): Result {
             if (user.id() == null) return Result.success()
             return try {
                 engine.sync()
                 status.set(SyncStatus.Synced(clock.nowMillis()))
+                // Rows are on the server now: their binaries can go (04 §6.6).
+                uploads.enqueueIfPending()
                 Result.success()
             } catch (e: UpgradeRequiredException) {
                 status.set(SyncStatus.UpgradeRequired)

@@ -168,6 +168,13 @@ UploadWorker (CONNECTED, backoff exponencial):
 
 Coil: si existe el archivo local, lo usa; si no, pide `/v1/images/{id}/blobs/{name}` con el `AuthInterceptor`. Ajustes → Almacenamiento → "Liberar espacio" borra originales locales ya subidos.
 
+Implementación (T-105, `core:sync`):
+- **Lógica:** vive en `UploadEngine`; `UploadWorker` solo la llama. Los pendientes se encolan con `UploadQueue` (`enqueueBlob` / `enqueueImport`) después de escribir sus filas con `LocalWriter`.
+- **Espera de la fila:** una rendition espera también a su propia fila de `image_renditions`, no solo a la de `images`.
+- **Reintento:** `IMAGE_NOT_FOUND`, 5xx, 401, 403 y 429 dejan el pendiente para la siguiente corrida (un problema de sesión no debe perder la foto; cerrar sesión limpia la cola).
+- **Descarte con `sync_issue`:** cualquier otro 4xx (413, 415, `HOST_NOT_ALLOWED`…) y un archivo local inexistente se registran y salen de la cola.
+- **Arranque:** `SyncWorker` llama a `enqueueIfPending()` después de cada sync exitoso; el trabajo único `upload` tiene `KEEP`, `CONNECTED` y backoff exponencial.
+
 ### 4.3 Web
 
 `06-web.md` §5. Orden: push de las filas → `PUT` de binarios → uso (extracción, visualización).

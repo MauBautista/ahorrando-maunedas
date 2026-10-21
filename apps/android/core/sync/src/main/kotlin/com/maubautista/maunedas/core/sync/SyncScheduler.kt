@@ -10,6 +10,7 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import com.maubautista.maunedas.core.database.AppDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
@@ -21,7 +22,9 @@ class SyncScheduler
     @Inject
     constructor(
         @ApplicationContext private val context: Context,
-    ) : SyncRequester {
+        private val db: AppDatabase,
+    ) : SyncRequester,
+        UploadRequester {
         private val work get() = WorkManager.getInstance(context)
         private val connected = Constraints.Builder().setRequiredNetworkType(NetworkType.CONNECTED).build()
 
@@ -59,14 +62,29 @@ class SyncScheduler
             )
         }
 
+        /** Binaries waiting (10 §4.2): one `upload` chain with network and exponential backoff. */
+        override suspend fun enqueueIfPending() {
+            if (db.pendingUploads().count() == 0) return
+            work.enqueueUniqueWork(
+                UPLOAD,
+                ExistingWorkPolicy.KEEP,
+                OneTimeWorkRequestBuilder<UploadWorker>()
+                    .setConstraints(connected)
+                    .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                    .build(),
+            )
+        }
+
         /** Signing out (02 §6.4). */
         fun cancelAll() {
             work.cancelUniqueWork(NOW)
             work.cancelUniqueWork(PERIODIC)
+            work.cancelUniqueWork(UPLOAD)
         }
 
         companion object {
             const val NOW = "sync-now"
             const val PERIODIC = "sync-periodic"
+            const val UPLOAD = "upload"
         }
     }

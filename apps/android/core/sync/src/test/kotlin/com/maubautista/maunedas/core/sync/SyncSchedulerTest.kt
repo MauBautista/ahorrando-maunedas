@@ -8,6 +8,9 @@ import androidx.work.WorkInfo
 import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.maubautista.maunedas.core.database.AppDatabase
+import com.maubautista.maunedas.core.database.entity.PendingUploadEntity
+import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -21,11 +24,13 @@ import java.util.concurrent.TimeUnit
 class SyncSchedulerTest {
     private val context: Context = ApplicationProvider.getApplicationContext()
     private lateinit var scheduler: SyncScheduler
+    private lateinit var db: AppDatabase
 
     @Before
     fun init() {
         WorkManagerTestInitHelper.initializeTestWorkManager(context, Configuration.Builder().setExecutor(SynchronousExecutor()).build())
-        scheduler = SyncScheduler(context)
+        db = androidx.room.Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
+        scheduler = SyncScheduler(context, db)
     }
 
     private fun infos(name: String) = WorkManager.getInstance(context).getWorkInfosForUniqueWork(name).get()
@@ -50,4 +55,16 @@ class SyncSchedulerTest {
         scheduler.cancelAll()
         assertTrue(infos(SyncScheduler.PERIODIC).all { it.state == WorkInfo.State.CANCELLED })
     }
+
+    @Test
+    fun uploadsAreScheduledOnlyWhenSomethingWaits() =
+        runTest {
+            scheduler.enqueueIfPending()
+            assertTrue(infos(SyncScheduler.UPLOAD).isEmpty())
+            db.pendingUploads().enqueue(PendingUploadEntity(kind = "blob", imageId = "i1", name = "original.jpg", localPath = "/x", createdAt = 1))
+            scheduler.enqueueIfPending()
+            val info = infos(SyncScheduler.UPLOAD).single()
+            assertEquals(NetworkType.CONNECTED, info.constraints.requiredNetworkType)
+            db.close()
+        }
 }

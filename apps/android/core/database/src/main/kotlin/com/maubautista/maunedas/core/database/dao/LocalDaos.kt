@@ -94,6 +94,9 @@ interface PendingUploadDao {
 
     @Query("DELETE FROM pending_uploads WHERE id = :id")
     suspend fun remove(id: Long)
+
+    @Query("SELECT count(*) FROM pending_uploads")
+    suspend fun count(): Int
 }
 
 @Dao
