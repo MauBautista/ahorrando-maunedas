@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-023, T-030 a T-038, T-041 y spikes B, D y E hechos (T-024 sin el admin real, T-100 sin los datos de Firebase); faltan OpenRouter, Firebase prod y los spikes A y C.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-024, T-026, T-027, T-030 a T-038, T-041 y spikes B, D y E hechos (T-100 sin el sabor prod); faltan OpenRouter, Firebase prod y los spikes A y C.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -30,16 +30,16 @@
 - **T-038 (2026-10-19):** fusión de duplicados (solo admin): al fusionar variantes, códigos, compras, precios, listings, alertas, alias y fotos pasan al destino; al fusionar productos, sus variantes, fotos y etiquetas; el origen queda borrado y los clientes reciben todo por sync; 9 pruebas.
 - **T-041 (2026-10-19):** mantenimiento diario a las 04:07 de Ciudad de México dentro del cron horario: borra tokens vencidos, caché de Open Food Facts vencida y trabajos de imagen terminados hace más de 30 días; 3 pruebas con reloj simulado.
 - **T-023 (2026-10-19):** administración de usuarios (solo admin): lista, alta con contraseña y/o correo de Google, edición (nombre, rol, activo, correo de Google) y cambio de contraseña, con Identity Toolkit simulado; nunca deja la casa sin admin activo; 18 pruebas. Falta probar contra Firebase real (T-004).
-- **T-024 (código, 2026-10-19):** `POST /v1/bootstrap` para crear el primer admin una sola vez, protegido con `BOOTSTRAP_TOKEN`; si dos llegan a la vez solo uno gana; 6 pruebas. Falta crear el admin real en dev (necesita T-004).
+- **T-024 (2026-10-19/21):** `POST /v1/bootstrap` para crear el primer admin una sola vez, protegido con `BOOTSTRAP_TOKEN`; si dos llegan a la vez solo uno gana; 6 pruebas. Admin real `mau` creado en dev con `apps/api/scripts/bootstrap.sh`; el token ya no existe.
 - **T-100 (2026-10-20, sin Firebase):** proyecto Android con los 20 módulos del SDD, reglas de dependencias verificadas en el build, catálogo de versiones, Hilt y Compose, sabores `dev`/`prod`; CI corre reglas, pruebas y lint. Faltan los archivos y valores de Firebase (T-004).
-- **T-004 dev (parcial, 2026-10-20/21):** proyecto Firebase `maunedas-dev` con apps web y Android; el Worker de dev verifica tokens de ese proyecto y tiene la cuenta de servicio (funciona contra Identity Toolkit). Faltan el cliente OAuth de Android en `google-services.json`, el secreto de CI y el proyecto de prod.
+- **T-004 dev (2026-10-20/21):** proyecto Firebase `maunedas-dev` completo y verificado por API (proveedores, dominio, redirección, SHA, APIs, restricción de la key, `google-services.json` y secreto de CI); el Worker de dev verifica tokens y administra cuentas. Falta confirmar a mano orígenes, *branding* y restricción de APIs, y el proyecto de prod.
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
-- Mauricio: Firebase dev (cuenta de servicio, cliente web y `google-services.json` con el cliente de Android) y luego prod (T-004); OpenRouter (T-005); 10 fotos para el spike A.
+- Mauricio: confirmar a mano en Firebase dev (orígenes, *branding*, APIs de la key) y borrar la llave vieja de la cuenta de servicio; Firebase prod (T-004); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. **Firebase (T-004)**: desbloquea el admin real en dev (cierra T-024: se genera `BOOTSTRAP_TOKEN` en la terminal y Mauricio escribe su contraseña ahí, sin pasar por el chat), el proxy de auth (T-025) y el spike E;
+1. T-025 (proxy de auth para la web) y T-101 (`core:model` y `core:pricing` en Kotlin); Firebase prod cuando se prepare el primer despliegue a producción;
 2. T-101 (`core:model` y `core:pricing` en Kotlin con los fixtures compartidos) y T-102 (Room), que no dependen de Firebase; spike A en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 
@@ -180,3 +180,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-20** — T-100: proyecto Android multi-módulo con reglas de dependencias, Hilt, Compose y sabores (T46); faltan los datos de Firebase.
 - **2026-10-20** — T-004 (dev, parcial): configuración pública de `maunedas-dev` en Worker, web y Android.
 - **2026-10-21** — Spike E: `@maunedas.local` funciona en Firebase (D9 cerrada, T47); cuenta de servicio de dev cargada.
+- **2026-10-21** — T-024 cerrada: admin real en dev; Firebase dev verificado por API; script de bootstrap.

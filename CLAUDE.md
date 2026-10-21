@@ -54,6 +54,7 @@ pnpm --filter api db:migrate:local          # migraciones en la D1 local (tambi√
 pnpm --filter api db:seed:local             # semillas idempotentes (tambi√©n :dev y :prod)
 pnpm --filter api deploy:dev                # migraciones + web (--mode dev) + Worker "maunedas-dev"
 pnpm --filter api deploy:prod               # migraciones + web + Worker "maunedas" (`deploy` a secas es un comando de pnpm)
+apps/api/scripts/bootstrap.sh dev <usuario> "<Nombre>" [correo]   # primer admin de un entorno (en tu propia terminal)
 pnpm --filter web dev                       # proxy de /v1 y /__ al Worker local
 pnpm --filter web build
 pnpm --filter shared test                   # fixtures

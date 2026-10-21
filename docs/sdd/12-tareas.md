@@ -46,7 +46,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Depende de:** T-003 (para conocer el dominio)
 - **Hacer:** dos proyectos (dev y prod, decisión T25), 02 §2.
 - **Hecho cuando:** en cada proyecto: Email/Password y Google habilitados (sin bloquear el registro); dominio autorizado y URI de redirección `/__/auth/handler` del host de su Worker; apps Android (`.dev` en dev) con SHA-1/256 de debug; secreto `GOOGLE_SERVICE_ACCOUNT` del proyecto de dev cargado en `maunedas-dev`.
-- **Avance (2026-10-20):** proyecto `maunedas-dev` con app web y app Android (`com.maubautista.maunedas.dev`, SHA del keystore de debug del servidor); `FIREBASE_PROJECT_ID` en `maunedas-dev`, `.env.development`/`.env.dev` de la web y Web client ID en `gradle.properties`; `GOOGLE_SERVICE_ACCOUNT` en `maunedas-dev` (2026-10-21, probada contra Identity Toolkit en el spike E). Faltan en dev: confirmar orígenes y URI de redirección del cliente web, *branding*, y volver a descargar `google-services.json` con el cliente OAuth de Android; después, el proyecto de prod.
+- **Avance (2026-10-20):** proyecto `maunedas-dev` con app web y app Android (`com.maubautista.maunedas.dev`, SHA del keystore de debug del servidor); `FIREBASE_PROJECT_ID` en `maunedas-dev`, `.env.development`/`.env.dev` de la web y Web client ID en `gradle.properties`; `GOOGLE_SERVICE_ACCOUNT` en `maunedas-dev` (2026-10-21, probada contra Identity Toolkit en el spike E). Verificado por API (2026-10-21): Email/contraseña y Google habilitados, registro sin bloquear, dominio autorizado, URI de redirección, SHA-1/256, FCM e Identity Toolkit habilitadas, API key restringida por sitio y `google-services.json` con clientes Android y web; secreto `GOOGLE_SERVICES_JSON_DEV` en GitHub. Falta confirmar a mano en dev: orígenes de JavaScript, *branding* publicado, restricción de APIs de la key y borrar la llave vieja de la cuenta de servicio; después, el proyecto de prod.
 
 ### [ ] T-005 · OpenRouter
 - **Docs:** 09 §2
@@ -107,10 +107,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** `GET/POST/PATCH /v1/admin/users` y `/password` funcionan con Identity Toolkit simulado; `USERNAME_TAKEN`, `GOOGLE_EMAIL_TAKEN`, `LAST_ADMIN` y la compensación probados.
 - **Resultado (2026-10-19):** las cuatro rutas con Identity Toolkit simulado; compensación ante fallas de D1 (también por carrera de `UNIQUE`), activación con reversión si Firebase falla a medias, borrado de identidades de Google al cambiar el correo (T45); 18 pruebas. Contra Firebase real se prueba al tener T-004.
 
-### [~] T-024 · Bootstrap
+### [x] T-024 · Bootstrap
 - **Docs:** 02 §5.4 · **Depende de:** T-023
 - **Hecho cuando:** los tres casos de 02 §9 pasan; se crea el admin real en dev.
-- **Avance (2026-10-19):** `POST /v1/bootstrap` con los tres casos de 02 §9 y la carrera entre dos bootstraps; 6 pruebas. Falta crear el admin real en dev, que necesita Firebase (T-004).
+- **Resultado (2026-10-19/21):** `POST /v1/bootstrap` con los tres casos de 02 §9 y la carrera entre dos bootstraps; 6 pruebas. Admin real `mau` creado en dev con `apps/api/scripts/bootstrap.sh` (contraseña y token solo en la terminal de Mauricio; el token se borró al terminar).
 
 ### [ ] T-025 · Proxy de auth
 - **Docs:** 02 §5.5 · **Depende de:** T-020
@@ -194,7 +194,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [~] T-100 · Proyecto y módulos
 - **Docs:** 05 §1–2 · **Depende de:** T-001, T-004
 - **Hecho cuando:** módulos creados con dependencias permitidas, catálogo de versiones, Hilt, sabores `dev`/`prod` con `API_BASE_URL`, `GOOGLE_WEB_CLIENT_ID` y `SYNTHETIC_EMAIL_DOMAIN`, `google-services.json` por sabor (escrito en CI desde `GOOGLE_SERVICES_JSON_DEV`), build en CI.
-- **Avance (2026-10-20):** los 20 módulos de 05 §2 con plugins de convención, `checkModuleDependencies` (probado con tres dependencias prohibidas), catálogo completo, Hilt + Compose en la app, sabores con los tres `BuildConfig` y el paso de CI que escribe `google-services.json` si existe el secreto (el plugin se probó con un archivo falso). Falta con T-004: los `google-services.json` reales, el secreto `GOOGLE_SERVICES_JSON_DEV` y los Web client ID en `gradle.properties`.
+- **Avance (2026-10-20):** los 20 módulos de 05 §2 con plugins de convención, `checkModuleDependencies` (probado con tres dependencias prohibidas), catálogo completo, Hilt + Compose en la app, sabores con los tres `BuildConfig` y el paso de CI que escribe `google-services.json` si existe el secreto (el plugin se probó con un archivo falso). Dev completo (2026-10-21): `google-services.json`, secreto de CI y Web client ID. Falta el sabor `prod` (su `google-services.json` y su Web client ID) cuando exista el proyecto de prod.
 
 ### [ ] T-101 · `core:model` y `core:pricing`
 - **Docs:** 05 §6 · **Depende de:** T-100, T-006
