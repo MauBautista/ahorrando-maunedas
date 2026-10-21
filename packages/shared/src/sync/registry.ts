@@ -1,5 +1,6 @@
-// Single source of the synced tables (04 §2). The Worker uses it for push/pull; Android copies it to
-// core/sync/SyncTables.kt. apps/api/test/registry.test.ts compares it against the migrated D1 schema.
+// Single source of the synced tables (04 §2). The Worker uses it for push/pull; Android follows it through
+// packages/shared/sync-schema.json (test/sync-schema.test.ts). apps/api/test/registry.test.ts compares it
+// against the migrated D1 schema.
 import { searchKey } from '../text/searchKey';
 
 export type SyncMode = 'sync' | 'down';

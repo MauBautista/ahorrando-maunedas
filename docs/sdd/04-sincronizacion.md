@@ -283,6 +283,14 @@ data class ProductEntity(
 - Toda consulta de UI filtra `deleted_at IS NULL`.
 - `@DatabaseView` `v_price_points` con el mismo SQL de `esquema-d1.sql`.
 
+Implementación (T-102, `core:database`):
+- **Contrato:** `packages/shared/sync-schema.json` sale del registro de sync y de `esquema-d1.sql` (`packages/shared/test/sync-schema.test.ts`, que falla si deja de coincidir; se regenera con `UPDATE_SYNC_SCHEMA=1 pnpm --filter shared test`).
+- **Pruebas de Room (Robolectric, base en memoria):** `SchemaContractTest` compara cada tabla de Room con ese contrato (nombre, tipo y `NOT NULL` de cada columna, llave primaria, sin tablas de más); `ViewParityTest` exige que el SQL de la vista sea el de `esquema-d1.sql`; `PricePointsFixtureTest` pasa `prorrateo_ticket`.
+- **Booleanos:** son `Int` (0/1).
+- **Índices:** sin los índices únicos parciales de D1 (Room no los expresa y la unicidad la cuida el servidor, 04 §3.2); índices simples en las columnas `*_id`, `search_key`, `code`, `purchased_at` y `observed_at`.
+- **Outbox:** `OutboxDao.nextBatch` ordena por el `order` del registro (padres antes que hijos) y luego por `seq`; una prueba lo verifica con las 17 tablas sync.
+- **Esquema exportado:** en `apps/android/core/database/schemas/` (versión 1).
+
 ### 6.2 Escritura local
 
 ```kotlin
