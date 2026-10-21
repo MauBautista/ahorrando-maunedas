@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Window theme before Compose draws: the surface color of the tokens, so dark mode never flashes white. -->
+    <style name="Theme.Maunedas" parent="android:Theme.Material.Light.NoActionBar">
+        <item name="android:windowBackground">@color/maunedas_surface</item>
+        <item name="android:colorPrimary">@color/maunedas_primary</item>
+        <item name="android:colorAccent">@color/maunedas_primary</item>
+    </style>
+</resources>

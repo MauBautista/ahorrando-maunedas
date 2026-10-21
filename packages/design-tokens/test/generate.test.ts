@@ -1,5 +1,6 @@
 import { readFileSync } from 'node:fs';
 import { describe, expect, it } from 'vitest';
+import { toAndroidColors } from '../src/androidXml.ts';
 import { contrastRatio } from '../src/contrast.ts';
 import { toCss } from '../src/css.ts';
 import { toKotlin } from '../src/kotlin.ts';
@@ -43,6 +44,16 @@ describe('generators', () => {
     expect(kt).toContain('const val primary: Long = 0xFF1B6B3A');
     expect(kt).toContain('const val sizeSp: Int = 16');
     expect(kt).toContain('const val touchTargetMinDp: Int = 48');
+  });
+
+  it('writes Android color resources for light and night with the same names', () => {
+    const light = toAndroidColors(tokens, 'light');
+    const dark = toAndroidColors(tokens, 'dark');
+    expect(light).toContain('<color name="maunedas_surface">#FFFFFF</color>');
+    expect(dark).toContain('<color name="maunedas_surface">#111411</color>');
+    expect(light).toContain('<color name="maunedas_source_purchase">#00796B</color>');
+    const names = (xml: string) => [...xml.matchAll(/name="([a-z_]+)"/g)].map((m) => m[1]);
+    expect(names(dark)).toEqual(names(light));
   });
 
   it('is deterministic', () => {

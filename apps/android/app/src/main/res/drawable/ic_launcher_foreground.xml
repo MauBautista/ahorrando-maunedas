@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- A price tag with its hole, inside the 66 dp safe zone of an adaptive icon. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="@color/maunedas_on_primary"
+        android:fillType="evenOdd"
+        android:pathData="M32,54 L46,38 L76,38 Q80,38 80,42 L80,66 Q80,70 76,70 L46,70 Z M44,54 a4,4 0 1,0 8,0 a4,4 0 1,0 -8,0 Z" />
+    <path
+        android:fillColor="@color/maunedas_primary"
+        android:pathData="M58,47 L72,47 L72,51 L58,51 Z M58,57 L68,57 L68,61 L58,61 Z" />
+</vector>

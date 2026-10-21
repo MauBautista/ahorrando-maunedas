@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-027, T-030 a T-038, T-041, T-101 a T-105 y spikes B, D y E hechos (T-100 sin el sabor prod); faltan OpenRouter, Firebase prod y los spikes A y C.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-027, T-030 a T-038, T-041, T-101 a T-106 y spikes B, D y E hechos (T-100 sin el sabor prod); faltan OpenRouter, Firebase prod y los spikes A y C.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -39,13 +39,14 @@
 - **T-103 (2026-10-21):** red de Android: cliente de la API con el token de Firebase (se renueva y reintenta una vez ante 401), cabeceras de versión, errores de la API con su código y la forma de los datos de sync; 12 pruebas sin red.
 - **T-104 (2026-10-22):** sincronización de Android: escribir local y encolar en una transacción (con los borrados en cascada), subir en lotes de 100 aislando la fila que el servidor rechace, bajar por páginas sin pisar cambios locales más nuevos, resolver conflictos y programar con WorkManager; 22 pruebas, incluidos los casos de 04 §8.
 - **T-105 (2026-10-22):** subida de fotos en Android: cada foto espera a que su registro llegue al servidor, se reintenta si el servidor aún no la conoce, se descarta con aviso si es demasiado grande o de un tipo no permitido, y el archivo local se conserva; también importa fotos del catálogo abierto pendientes.
+- **T-106 (2026-10-22):** sistema de diseño de Android: tema claro y oscuro desde los tokens, ícono de la app, campos de precio y cantidad (aceptan "28.5" y "28,5"), selector de tienda, búsqueda de producto y precio con su precio por unidad y su fuente; probado con la fuente al 200 % sin textos cortados.
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-106 (sistema de diseño); después T-110 (login en Android, que conecta Firebase, WorkManager y la sesión); Firebase prod cuando se prepare el primer despliegue a producción;
+1. T-110 (login en Android: conecta Firebase, WorkManager y la sesión; el teléfono empieza a sincronizar de verdad) y luego las pantallas (T-111 en adelante); Firebase prod cuando se prepare el primer despliegue a producción;
 2. T-101 (`core:model` y `core:pricing` en Kotlin con los fixtures compartidos) y T-102 (Room), que no dependen de Firebase; spike A en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 
@@ -104,6 +105,7 @@
 | T49 | **Red de Android.** El token llega por `IdTokenProvider` (Firebase en `core:auth`, T-110); los errores se convierten en `ApiException` en un `CallAdapter` de Retrofit, no en un interceptor; `encodeDefaults = true`; un cuerpo que no es del Worker es `HTTP_ERROR` y una falla de red sigue siendo `IOException` | Probar sin Firebase; un interceptor de OkHttp solo puede lanzar `IOException` y el `SyncWorker` reintenta ante `IOException`, así que los errores de la API no deben parecer fallas de red; sin `encodeDefaults` el push no podría borrar un valor |
 | T50 | **Sync de Android probado sin WorkManager.** La lógica vive en `SyncEngine` y `SyncWorker` solo traduce resultados (sin sesión → nada; red/5xx/429 → reintento; otro 4xx → falla; 426 → espera actualización); el lote también se divide ante `413`; el pull pide 100 filas; conectar WorkManager y Firebase en la app queda para T-110 | Los casos de 04 §8 se prueban con Room en memoria y MockWebServer; un lote de 100 filas grandes puede pasar de 512 KB; T40 fijó 100 filas; sin `IdTokenProvider` real no tiene caso arrancar los workers |
 | T51 | **Subidas: qué se reintenta y qué se descarta.** `IMAGE_NOT_FOUND`, 5xx, 401, 403 y 429 se reintentan; los demás 4xx y un archivo local faltante pasan a `sync_issues`; una rendition espera también a su propia fila | El SDD solo nombraba 409 y 413/415; perder una foto por un token vencido no tiene sentido, y la rendition se valida contra su propia fila en el Worker (10 §4.1) |
+| T52 | **Diseño de Android.** `Money`/`Quantities` en `core:model` (regla de separadores: uno solo es decimal, repetido agrupa, con ambos manda el de la derecha); colores XML generados desde los tokens; la prueba del 200 % usa Robolectric con gráficos nativos, una ventana de 360 × 800 dp desplazable y cuenta la elipsis como corte | `core:designsystem` no puede depender de `core:ui` (ciclo); los colores no se copian a mano; con gráficos heredados Robolectric no mide texto y la prueba daba falsos positivos |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -198,3 +200,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-21** — T-103: red de Android con MockWebServer (T49).
 - **2026-10-22** — T-104: sincronización de Android (T50).
 - **2026-10-22** — T-105: subida de fotos en Android (T51).
+- **2026-10-22** — T-106: sistema de diseño de Android (T52).

@@ -1,4 +1,5 @@
 import { readFileSync } from 'node:fs';
+import { toAndroidColors } from './androidXml.ts';
 import { toCss } from './css.ts';
 import { toKotlin } from './kotlin.ts';
 import { TokensSchema, type Tokens } from './schema.ts';
@@ -12,6 +13,10 @@ export const KOTLIN_FILE = new URL(
   ROOT,
 );
 
+const ANDROID_RES = 'apps/android/core/designsystem/src/main/res';
+export const ANDROID_COLORS_LIGHT = new URL(`${ANDROID_RES}/values/tokens_colors.xml`, ROOT);
+export const ANDROID_COLORS_DARK = new URL(`${ANDROID_RES}/values-night/tokens_colors.xml`, ROOT);
+
 export function loadTokens(): Tokens {
   return TokensSchema.parse(JSON.parse(readFileSync(TOKENS_FILE, 'utf8')));
 }
@@ -21,5 +26,7 @@ export function renderOutputs(tokens: Tokens): Array<{ file: URL; content: strin
   return [
     { file: CSS_FILE, content: toCss(tokens) },
     { file: KOTLIN_FILE, content: toKotlin(tokens) },
+    { file: ANDROID_COLORS_LIGHT, content: toAndroidColors(tokens, 'light') },
+    { file: ANDROID_COLORS_DARK, content: toAndroidColors(tokens, 'dark') },
   ];
 }

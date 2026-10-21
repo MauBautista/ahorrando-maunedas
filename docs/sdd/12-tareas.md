@@ -222,9 +222,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** caso de `UploadWorker` de 10 §7 pasa.
 - **Resultado (2026-10-22):** `UploadEngine`, `UploadQueue`, `UploadWorker` y su programación; el caso de 10 §7 (espera a que la fila salga del outbox, 409 reintenta, 201 limpia) más 413/415, importaciones, archivo faltante y sesión vencida; 10 pruebas nuevas (T51).
 
-### [ ] T-106 · Sistema de diseño
+### [x] T-106 · Sistema de diseño
 - **Docs:** 05 §7 · **Depende de:** T-007, T-100
 - **Hecho cuando:** tema claro/oscuro desde tokens; `MoneyField`, `QuantityField`, `StorePicker`, `VariantSearchField`, `PriceText` (con precio por unidad) con previews y prueba de fuente al 200 %.
+- **Resultado (2026-10-22):** tema y colores extendidos desde tokens (más `tokens_colors.xml` generado), los cinco componentes con previews, `Money`/`Quantities` en `core:model`, ícono adaptativo y tema de ventana claro/oscuro; 5 pruebas de Compose con Robolectric (incluida la de fuente al 200 % que detecta textos cortados) y 4 de dinero; lint sin avisos (T52).
 
 ### [ ] T-110 · Login y sesión
 - **Docs:** 02 §6 · **Depende de:** T-103, T-021, T-027

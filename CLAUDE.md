@@ -47,7 +47,7 @@ pnpm lint                                   # ESLint en todo el monorepo (raíz)
 pnpm format:check                           # Prettier (no toca docs/ ni fixtures/)
 pnpm typecheck                              # tsc en cada paquete (api corre `wrangler types` antes)
 pnpm test                                   # Vitest en cada paquete
-pnpm tokens                                 # regenera tokens.css y Tokens.kt desde tokens.json
+pnpm tokens                                 # regenera tokens.css, Tokens.kt y tokens_colors.xml desde tokens.json
 pnpm --filter api dev                       # Worker local con D1/R2 locales (secretos en apps/api/.dev.vars)
 pnpm --filter api test                      # Vitest dentro de workerd con @cloudflare/vitest-plugin
 pnpm --filter api db:migrate:local          # migraciones en la D1 local (también :dev y :prod, remotas)

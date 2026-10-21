@@ -11,6 +11,7 @@ import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import com.maubautista.maunedas.core.designsystem.MaunedasTheme
 import dagger.hilt.android.AndroidEntryPoint
 
 /** Single activity; the NavHost and the feature screens arrive with their tasks. */
@@ -20,7 +21,7 @@ class MainActivity : ComponentActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         setContent {
-            MaterialTheme {
+            MaunedasTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
                     Box(contentAlignment = Alignment.Center) {
                         Text(AppInfo.NAME, style = MaterialTheme.typography.headlineSmall)
