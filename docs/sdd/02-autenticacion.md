@@ -294,7 +294,7 @@ Content-Type: application/json
 | Ya existe al menos un usuario | `410 E-ALREADY_BOOTSTRAPPED` |
 | OK | `201 { "user": { … "role": "admin" } }` |
 
-Después: `wrangler secret delete BOOTSTRAP_TOKEN`.
+Después: `wrangler secret delete BOOTSTRAP_TOKEN`. El script `apps/api/scripts/bootstrap.sh dev|prod <usuario> "<Nombre>" [correo-de-google]` hace todo en la terminal del admin: pide la contraseña sin mostrarla, genera y carga el token, llama al endpoint y borra el token al salir.
 
 Implementación (T-024): `routes/bootstrap.ts` y `auth/bootstrap.ts`. Se revisa en este orden: token (comparación en tiempo constante sobre el SHA-256 de ambos; un secreto vacío nunca coincide), que no haya usuarios y luego el cuerpo (mismas reglas que el alta de 03 §12; `role` siempre `admin`). El INSERT del usuario solo procede si `users` sigue vacía (`WHERE NOT EXISTS`): si otro bootstrap gana mientras se crea la cuenta en Firebase, esa cuenta se borra (compensación) y se responde `410`. El token y la contraseña nunca pasan por el chat: se generan y se capturan en la terminal de Mauricio al hacer el bootstrap real (T-004).
 
