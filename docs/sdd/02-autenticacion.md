@@ -311,6 +311,8 @@ export function firebaseAuthProxy(c: Context<AppEnv>) {
 
 En `wrangler.jsonc`, esas rutas van en `assets.run_worker_first` para que no las intercepte la SPA (ver `06-web.md` §6).
 
+Implementación (T-025): `auth/proxy.ts` con el `fetch` inyectable; conserva método, cuerpo, *query* y cabeceras, salvo `Authorization` (el token de la API no tiene nada que hacer en Firebase Hosting); no sigue redirecciones; si Firebase no responde → `502 E-UPSTREAM_ERROR` (`service: firebase_hosting`). En dev, `/__/auth/handler` devuelve 200 con el mismo contenido que `maunedas-dev.firebaseapp.com`. `/__/firebase/init.json` da 404 también directo, porque el proyecto no tiene sitio de Hosting; el SDK pasa `apiKey` y app al handler por la URL, así que no hace falta. Si el login con Google en la web lo pidiera, se despliega un sitio vacío de Hosting.
+
 ## 6. Android (T-110)
 
 ### 6.1 Pantalla de login

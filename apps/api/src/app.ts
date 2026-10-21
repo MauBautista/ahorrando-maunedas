@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { JWTVerifyGetKey } from 'jose';
 import type { AccessTokenSource } from './auth/firebase-admin';
+import { firebaseAuthProxy } from './auth/proxy';
 import { googleSigningKeys } from './auth/firebase-token';
 import type { AppEnv } from './env';
 import { googleTokens } from './google/oauth';
@@ -49,6 +50,8 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.notFound(notFound);
   app.use('/v1/*', clientSchema);
 
+  app.all('/__/auth/*', firebaseAuthProxy);
+  app.all('/__/firebase/*', firebaseAuthProxy);
   app.route('/', health);
   app.route('/', bootstrap);
   app.route('/', me);
