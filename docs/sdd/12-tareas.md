@@ -227,9 +227,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** tema claro/oscuro desde tokens; `MoneyField`, `QuantityField`, `StorePicker`, `VariantSearchField`, `PriceText` (con precio por unidad) con previews y prueba de fuente al 200 %.
 - **Resultado (2026-10-22):** tema y colores extendidos desde tokens (más `tokens_colors.xml` generado), los cinco componentes con previews, `Money`/`Quantities` en `core:model`, ícono adaptativo y tema de ventana claro/oscuro; 5 pruebas de Compose con Robolectric (incluida la de fuente al 200 % que detecta textos cortados) y 4 de dinero; lint sin avisos (T52).
 
-### [ ] T-110 · Login y sesión
+### [~] T-110 · Login y sesión
 - **Docs:** 02 §6 · **Depende de:** T-103, T-021, T-027
 - **Hecho cuando:** usuario/contraseña y Google funcionan contra dev; mensajes de 02 §8; sesión offline; cierre de sesión con advertencia de pendientes. Incluye confirmar el correo sintético `@maunedas.local` con el SDK de Android (pendiente del spike E), y conectar en la app `IdTokenProvider` y `CurrentUser` (Firebase), `ApiConfig`/`ClientInfo`, `HiltWorkerFactory` para WorkManager, `ForegroundSync` y `schedulePeriodic` al iniciar sesión (T-103, T-104).
+- **Avance (2026-10-22):** `core:auth`, pantalla S-01, Inicio provisional con cierre de sesión, app conectada (Firebase, WorkManager con Hilt, sync al entrar); APK de dev construido; 10 pruebas (ViewModel con mensajes de 02 §8, `LoginFinisher` con MockWebServer, cierre de sesión que borra todo, sesión). Falta probar en un teléfono: usuario/contraseña con `@maunedas.local` (cierra lo pendiente del spike E), Google y cierre de sesión.
 
 ### [ ] T-111 · Inicio (S-02)
 - **Depende de:** T-110, T-104

@@ -40,13 +40,14 @@
 - **T-104 (2026-10-22):** sincronización de Android: escribir local y encolar en una transacción (con los borrados en cascada), subir en lotes de 100 aislando la fila que el servidor rechace, bajar por páginas sin pisar cambios locales más nuevos, resolver conflictos y programar con WorkManager; 22 pruebas, incluidos los casos de 04 §8.
 - **T-105 (2026-10-22):** subida de fotos en Android: cada foto espera a que su registro llegue al servidor, se reintenta si el servidor aún no la conoce, se descarta con aviso si es demasiado grande o de un tipo no permitido, y el archivo local se conserva; también importa fotos del catálogo abierto pendientes.
 - **T-106 (2026-10-22):** sistema de diseño de Android: tema claro y oscuro desde los tokens, ícono de la app, campos de precio y cantidad (aceptan "28.5" y "28,5"), selector de tienda, búsqueda de producto y precio con su precio por unidad y su fuente; probado con la fuente al 200 % sin textos cortados.
+- **T-110 (código, 2026-10-22):** login en Android con usuario/contraseña o Google, mensajes del SDD, sesión que abre sin red, cierre de sesión que avisa si hay cambios sin subir; la app ya arranca el sync con WorkManager. Falta la prueba en un teléfono.
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-110 (login en Android: conecta Firebase, WorkManager y la sesión; el teléfono empieza a sincronizar de verdad) y luego las pantallas (T-111 en adelante); Firebase prod cuando se prepare el primer despliegue a producción;
+1. Probar T-110 en un teléfono (Mauricio instala el APK de dev); después las pantallas (T-111 en adelante);
 2. T-101 (`core:model` y `core:pricing` en Kotlin con los fixtures compartidos) y T-102 (Room), que no dependen de Firebase; spike A en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 
@@ -201,3 +202,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-22** — T-104: sincronización de Android (T50).
 - **2026-10-22** — T-105: subida de fotos en Android (T51).
 - **2026-10-22** — T-106: sistema de diseño de Android (T52).
+- **2026-10-22** — T-110: login y sesión en Android (código y pruebas); falta la prueba en teléfono.
