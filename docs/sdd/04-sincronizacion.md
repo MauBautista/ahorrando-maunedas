@@ -277,7 +277,7 @@ data class ProductEntity(
 )
 ```
 
-- El `Json` de sync usa `namingStrategy = JsonNamingStrategy.SnakeCase`, `ignoreUnknownKeys = true`, `explicitNulls = true`, así la misma data class sirve para Room y para la red.
+- El `Json` de sync usa `namingStrategy = JsonNamingStrategy.SnakeCase`, `ignoreUnknownKeys = true`, `explicitNulls = true` y `encodeDefaults = true`, así la misma data class sirve para Room y para la red. `encodeDefaults` es necesario: sin él una columna `null` con valor por omisión no viajaría y el push no podría borrar un valor (`MaunedasJson` en `core:network`).
 - Booleanos de D1 (0/1): propiedades `Int` en la entidad; el modelo de dominio los expone como `Boolean`.
 - Sin llaves foráneas en Room (el orden de llegada no está garantizado); la integridad se valida en el servidor.
 - Toda consulta de UI filtra `deleted_at IS NULL`.

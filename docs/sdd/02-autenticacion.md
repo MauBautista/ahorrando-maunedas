@@ -411,6 +411,8 @@ class TokenAuthenticator @Inject constructor(private val auth: FirebaseAuth) : A
 }
 ```
 
+Implementación (T-103, `core:network`): el interceptor y el autenticador no dependen de Firebase sino de `IdTokenProvider.idToken(forceRefresh)`, que `core:auth` implementa con `FirebaseAuth` en T-110; así la red se prueba con MockWebServer. El interceptor también manda `X-Client-Schema` y `X-Client-Version` (03 §1) en cada request, con o sin sesión.
+
 ### 6.4 Sesión offline y cierre
 
 - Al abrir la app: si `auth.currentUser != null` y `SessionStore` tiene usuario → Inicio, sin red (RF-AUTH-08).
