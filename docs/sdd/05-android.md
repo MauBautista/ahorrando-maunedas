@@ -267,6 +267,12 @@ Redondeo: *half-up* a centavo con `roundHalfUp(x) = floor(x + 0.5)` (igual que `
 - Objetivos táctiles ≥ 48 dp; prueba con escala de fuente 200 % sin textos cortados (RNF-08).
 - Descripciones de contenido en íconos de acción; contraste AA en tema claro y oscuro.
 
+Implementación (T-106):
+- **Tema:** `MaunedasTheme` (claro y oscuro) en `core:designsystem` sale de `Tokens.kt`; aviso, éxito y los colores de cada fuente de precio van en `MaunedasTheme.extended`. `pnpm tokens` genera también `tokens_colors.xml` (claro y noche) para el tema de ventana y el ícono adaptativo.
+- **Dinero y cantidades:** `Money.parseCents`/`format`/`plain` y `Quantities.parse` viven en `core:model`, en texto y sin flotantes. Un separador que aparece una vez es el decimal; repetido, agrupa miles; con los dos, el de la derecha es el decimal. Dinero admite hasta 2 decimales y cantidades hasta 3.
+- **Componentes:** `MoneyField`, `QuantityField` (decimales solo si es a granel), `StorePicker`, `VariantSearchField` y `PriceText`, con previews en claro, oscuro y fuente al 200 %. `PriceText` es un solo texto con dos estilos, para que el precio por unidad salte de línea en vez de cortarse.
+- **Prueba de la fuente al 200 %:** con Robolectric en modo gráfico nativo (el modo heredado no mide texto), en un teléfono de 360 × 800 dp con contenido desplazable. Ningún texto se desborda, y una elipsis cuenta como corte; los campos miden al menos 48 dp.
+
 ## 8. Permisos y manifiesto
 
 | Permiso | Motivo |
