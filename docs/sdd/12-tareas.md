@@ -207,9 +207,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** entidades espejo de las tablas sync/down, tablas locales, vista `v_price_points`, DAOs; test que compara nombres de columna con el registro de sync; esquema de Room exportado. La vista de Room pasa `normalizacion.json` → `prorrateo_ticket`, como la de D1 (T41).
 - **Resultado (2026-10-21):** 21 entidades espejo + `outbox`, `pending_uploads`, `sync_cursors`, `sync_issues`; `v_price_points`; DAOs; esquema exportado. Contrato `packages/shared/sync-schema.json` (registro + `esquema-d1.sql`) y 8 pruebas con Robolectric: columnas, tipos y nulabilidad contra el contrato, SQL de la vista idéntico al de D1, fixture de prorrateo y orden del outbox (T48).
 
-### [ ] T-103 · `core:network`
+### [x] T-103 · `core:network`
 - **Docs:** 02 §6.3, 03 §1 · **Depende de:** T-100
 - **Hecho cuando:** Retrofit con los DTOs de E1, `AuthInterceptor`, `TokenAuthenticator`, errores mapeados a `ApiException(code)`; tests con MockWebServer (401 → refresco → reintento una vez).
+- **Resultado (2026-10-21):** `MaunedasApi` (me, devices, push, pull, códigos, subida e importación de imágenes; los de tickets llegan con T-040), `MaunedasJson`, `AuthInterceptor`/`TokenAuthenticator` sobre `IdTokenProvider`, errores por `CallAdapter` (`ApiException`, `UpgradeRequiredException`, `HTTP_ERROR` si el cuerpo no es del Worker; la red caída sigue siendo `IOException`); 12 pruebas con MockWebServer (T49).
 
 ### [ ] T-104 · `core:sync`
 - **Docs:** 04 §6 · **Depende de:** T-102, T-103, T-031, T-032
