@@ -233,6 +233,9 @@ Implementaciones Kotlin que pasan los fixtures de `fixtures/`:
 | `QuantityParser` | `cantidades.json` | Interpretar "6 x 1 l" del catálogo abierto |
 | `Usernames` | `usuarios.json` | Correo sintético |
 | `Uuids` (`core:model`) | `ids.json` | UUIDv7 e ids deterministas de `product_tags` y `receipt_aliases` |
+| `TicketDiscount` | `normalizacion.json` (`prorrateo_ticket`) | Prorrateo del descuento de ticket, igual que `v_price_points` |
+
+Implementación (T-101): `Usernames`, `Uuids`, `Measure`/`DisplayUnit` y `JsParity` en `core:model`; el resto en `core:pricing` (`Units`, `TicketDiscount`, `Promotions.discount`/`detect`, `SearchKey.of`, `ReceiptText.normalize`, `QuantityParser.parse`/`suggestVariantLabel`, `roundHalfUp`). El plugin `maunedas.fixtures` registra `copyFixtures`, que copia `fixtures/*.json` a los recursos de prueba (API `hostTests` de AGP 9); cada fixture tiene su suite y `FixtureCoverageTest` falla si aparece uno nuevo sin ella. Para la paridad con TS: mismas operaciones de punto flotante en el mismo orden; `\s` de las expresiones regulares es la clase `JS_SPACE` (los espacios de JavaScript) y `trim` es `trimJs`; `Math.round` de JS es `jsRound` (solo en `round3` de cantidades).
 
 ```kotlin
 object Promotions {
