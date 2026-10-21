@@ -46,7 +46,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Depende de:** T-003 (para conocer el dominio)
 - **Hacer:** dos proyectos (dev y prod, decisión T25), 02 §2.
 - **Hecho cuando:** en cada proyecto: Email/Password y Google habilitados (sin bloquear el registro); dominio autorizado y URI de redirección `/__/auth/handler` del host de su Worker; apps Android (`.dev` en dev) con SHA-1/256 de debug; secreto `GOOGLE_SERVICE_ACCOUNT` del proyecto de dev cargado en `maunedas-dev`.
-- **Avance (2026-10-20):** proyecto `maunedas-dev` con app web y app Android (`com.maubautista.maunedas.dev`, SHA del keystore de debug del servidor); `FIREBASE_PROJECT_ID` en `maunedas-dev`, `.env.development`/`.env.dev` de la web y Web client ID en `gradle.properties`; `GOOGLE_SERVICE_ACCOUNT` en `maunedas-dev` (2026-10-21, probada contra Identity Toolkit en el spike E). Verificado por API (2026-10-21): Email/contraseña y Google habilitados, registro sin bloquear, dominio autorizado, URI de redirección, SHA-1/256, FCM e Identity Toolkit habilitadas, API key restringida por sitio y `google-services.json` con clientes Android y web; secreto `GOOGLE_SERVICES_JSON_DEV` en GitHub. Falta confirmar a mano en dev: orígenes de JavaScript, *branding* publicado, restricción de APIs de la key y borrar la llave vieja de la cuenta de servicio; después, el proyecto de prod.
+- **Avance (2026-10-20):** proyecto `maunedas-dev` con app web y app Android (`com.maubautista.maunedas.dev`, SHA del keystore de debug del servidor); `FIREBASE_PROJECT_ID` en `maunedas-dev`, `.env.development`/`.env.dev` de la web y Web client ID en `gradle.properties`; `GOOGLE_SERVICE_ACCOUNT` en `maunedas-dev` (2026-10-21, probada contra Identity Toolkit en el spike E). Verificado por API (2026-10-21): Email/contraseña y Google habilitados, registro sin bloquear, dominio autorizado, URI de redirección, SHA-1/256, FCM e Identity Toolkit habilitadas, API key restringida por sitio y `google-services.json` con clientes Android y web; secreto `GOOGLE_SERVICES_JSON_DEV` en GitHub. Confirmado a mano por Mauricio (2026-10-21): orígenes de JavaScript, *branding* publicado, restricción de APIs de la key y llave vieja de la cuenta de servicio borrada. **Dev completo**; falta el proyecto de prod.
 
 ### [ ] T-005 · OpenRouter
 - **Docs:** 09 §2
@@ -112,9 +112,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** los tres casos de 02 §9 pasan; se crea el admin real en dev.
 - **Resultado (2026-10-19/21):** `POST /v1/bootstrap` con los tres casos de 02 §9 y la carrera entre dos bootstraps; 6 pruebas. Admin real `mau` creado en dev con `apps/api/scripts/bootstrap.sh` (contraseña y token solo en la terminal de Mauricio; el token se borró al terminar).
 
-### [ ] T-025 · Proxy de auth
+### [x] T-025 · Proxy de auth
 - **Docs:** 02 §5.5 · **Depende de:** T-020
 - **Hecho cuando:** `/__/auth/handler` en dev devuelve la página de Firebase (200) sin redirección.
+- **Resultado (2026-10-21):** `auth/proxy.ts`; en `maunedas-dev`, `/__/auth/handler` responde 200 con el mismo contenido que `firebaseapp.com`; 6 pruebas. `init.json` da 404 también directo (no hay sitio de Hosting); el login con Google de la web (T-160) lo confirma.
 
 ### [x] T-026 · Esquema D1 y datos semilla
 - **Docs:** `esquema-d1.sql` · **Depende de:** T-020
