@@ -64,6 +64,17 @@ interface OutboxDao {
 
     @Query("SELECT count(*) FROM outbox")
     suspend fun count(): Int
+
+    /** A local change of that row is waiting to be pushed (04 §6.4). */
+    @Query("SELECT EXISTS (SELECT 1 FROM outbox WHERE table_name = :tableName AND row_id = :rowId)")
+    suspend fun contains(
+        tableName: String,
+        rowId: String,
+    ): Boolean
+
+    /** Drops entries for good: a row that no longer exists locally or one the server rejected on its own. */
+    @Query("DELETE FROM outbox WHERE seq IN (:seqs)")
+    suspend fun remove(seqs: List<Long>)
 }
 
 @Dao

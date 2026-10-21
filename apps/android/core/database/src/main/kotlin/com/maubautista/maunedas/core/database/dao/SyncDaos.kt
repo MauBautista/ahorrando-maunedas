@@ -50,6 +50,9 @@ interface ProductDao : SyncDao<ProductEntity> {
 interface VariantDao : SyncDao<VariantEntity> {
     @Query("SELECT * FROM variants WHERE id = :id")
     suspend fun byId(id: String): VariantEntity?
+
+    @Query("SELECT * FROM variants WHERE product_id IN (:productIds) AND deleted_at IS NULL")
+    suspend fun liveOfProducts(productIds: List<String>): List<VariantEntity>
 }
 
 @Dao
@@ -62,18 +65,31 @@ interface ProductTagDao : SyncDao<ProductTagEntity> {
 interface BarcodeDao : SyncDao<BarcodeEntity> {
     @Query("SELECT * FROM barcodes WHERE id = :id")
     suspend fun byId(id: String): BarcodeEntity?
+
+    @Query("SELECT * FROM barcodes WHERE variant_id IN (:variantIds) AND deleted_at IS NULL")
+    suspend fun liveOfVariants(variantIds: List<String>): List<BarcodeEntity>
 }
 
 @Dao
 interface ImageDao : SyncDao<ImageEntity> {
     @Query("SELECT * FROM images WHERE id = :id")
     suspend fun byId(id: String): ImageEntity?
+
+    @Query("SELECT * FROM images WHERE owner_type = :ownerType AND owner_id = :ownerId AND role = :role AND deleted_at IS NULL")
+    suspend fun liveOf(
+        ownerType: String,
+        ownerId: String,
+        role: String,
+    ): List<ImageEntity>
 }
 
 @Dao
 interface ListingDao : SyncDao<ListingEntity> {
     @Query("SELECT * FROM listings WHERE id = :id")
     suspend fun byId(id: String): ListingEntity?
+
+    @Query("SELECT * FROM listings WHERE variant_id IN (:variantIds) AND deleted_at IS NULL")
+    suspend fun liveOfVariants(variantIds: List<String>): List<ListingEntity>
 }
 
 @Dao
@@ -98,6 +114,9 @@ interface ImageRenditionDao : SyncDao<ImageRenditionEntity> {
 interface PurchaseItemDao : SyncDao<PurchaseItemEntity> {
     @Query("SELECT * FROM purchase_items WHERE id = :id")
     suspend fun byId(id: String): PurchaseItemEntity?
+
+    @Query("SELECT * FROM purchase_items WHERE purchase_id = :purchaseId AND deleted_at IS NULL")
+    suspend fun liveOfPurchase(purchaseId: String): List<PurchaseItemEntity>
 }
 
 @Dao
@@ -116,6 +135,9 @@ interface PriceObservationDao : SyncDao<PriceObservationEntity> {
 interface AlertRuleDao : SyncDao<AlertRuleEntity> {
     @Query("SELECT * FROM alert_rules WHERE id = :id")
     suspend fun byId(id: String): AlertRuleEntity?
+
+    @Query("SELECT * FROM alert_rules WHERE variant_id IN (:variantIds) AND deleted_at IS NULL")
+    suspend fun liveOfVariants(variantIds: List<String>): List<AlertRuleEntity>
 }
 
 @Dao
@@ -128,4 +150,13 @@ interface AlertEventDao : SyncDao<AlertEventEntity> {
 interface PromotionDao : SyncDao<PromotionEntity> {
     @Query("SELECT * FROM promotions WHERE id = :id")
     suspend fun byId(id: String): PromotionEntity?
+
+    /** Live promotions of a purchase or of any of its lines (cascade, 04 §6.2). */
+    @Query(
+        "SELECT * FROM promotions WHERE deleted_at IS NULL AND (purchase_id = :purchaseId OR purchase_item_id IN (:itemIds))",
+    )
+    suspend fun liveOfPurchaseOrItems(
+        purchaseId: String?,
+        itemIds: List<String>,
+    ): List<PromotionEntity>
 }

@@ -24,7 +24,7 @@ object NetworkModule {
     fun okHttp(
         auth: AuthInterceptor,
         authenticator: TokenAuthenticator,
-    ): OkHttpClient = buildOkHttp(auth, authenticator)
+    ): OkHttpClient = createOkHttpClient(auth, authenticator)
 
     @Provides
     @Singleton
@@ -32,10 +32,11 @@ object NetworkModule {
         config: ApiConfig,
         client: OkHttpClient,
         json: Json,
-    ): MaunedasApi = buildApi(config, client, json)
+    ): MaunedasApi = createMaunedasApi(config, client, json)
 }
 
-internal fun buildOkHttp(
+/** The API client of 03 §1: token interceptor, authenticator and timeouts. */
+fun createOkHttpClient(
     auth: AuthInterceptor,
     authenticator: TokenAuthenticator,
 ): OkHttpClient =
@@ -48,7 +49,7 @@ internal fun buildOkHttp(
         .readTimeout(60, TimeUnit.SECONDS)
         .build()
 
-internal fun buildApi(
+fun createMaunedasApi(
     config: ApiConfig,
     client: OkHttpClient,
     json: Json,

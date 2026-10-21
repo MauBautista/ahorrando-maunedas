@@ -397,6 +397,13 @@ class SyncWorker @AssistedInject constructor(
 
 `removeIfUnchanged`: si el usuario editó la fila mientras se subía, la entrada del outbox tiene otro `enqueued_at` y no se borra; se sube en la siguiente vuelta.
 
+Implementación (T-104, `core:sync`):
+- **`SyncEngine` y `SyncWorker`:** la lógica de push y pull vive en `SyncEngine`, que se prueba con Room en memoria y MockWebServer; `SyncWorker` solo la llama y traduce el resultado: sin sesión → éxito sin red; `IOException`, 5xx o 429 → `retry`; otro 4xx → `failure`; 426 → éxito con `SyncStatus.UpgradeRequired`.
+- **Push:** un lote rechazado completo se divide también ante `413 PAYLOAD_TOO_LARGE` (filas grandes que no caben en 512 KB). Una fila que se queda sola y sigue rechazada pasa a `sync_issues` y sale del outbox. Las filas viajan sin `version`, y una entrada cuya fila ya no existe se descarta.
+- **Pull:** usa `limit = 100` (T40), no 500.
+- **Estado y avisos:** `SyncStatusStore` expone el estado y los avisos de `STALE` en memoria.
+- **Pendiente para T-110:** registrar `ForegroundSync` en `ProcessLifecycleOwner` y configurar `HiltWorkerFactory` en la app, cuando existan `IdTokenProvider` y `CurrentUser`.
+
 ### 6.4 Aplicar filas del pull
 
 ```kotlin

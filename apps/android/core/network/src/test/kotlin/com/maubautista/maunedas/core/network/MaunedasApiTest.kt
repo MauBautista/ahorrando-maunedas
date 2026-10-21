@@ -45,8 +45,8 @@ class MaunedasApiTest {
     fun start() {
         server.start()
         val client = ClientInfo(schema = 1, appVersion = "0.0.1-dev")
-        val http = buildOkHttp(AuthInterceptor(tokens, client), TokenAuthenticator(tokens))
-        api = buildApi(ApiConfig(server.url("/").toString().removeSuffix("/")), http, MaunedasJson)
+        val http = createOkHttpClient(AuthInterceptor(tokens, client), TokenAuthenticator(tokens))
+        api = createMaunedasApi(ApiConfig(server.url("/").toString().removeSuffix("/")), http, MaunedasJson)
     }
 
     @After
