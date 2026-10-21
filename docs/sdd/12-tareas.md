@@ -202,9 +202,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** Kotlin pasa **todos** los fixtures (tarea de Gradle que los copia a recursos de prueba).
 - **Resultado (2026-10-21):** las reglas de 05 §6 en Kotlin pasan los seis fixtures (incluido `prorrateo_ticket`) con la tarea `copyFixtures`; 24 pruebas en 9 suites. Nueve mutaciones (redondeo a par, `nxm`, normalización de tickets, bits de v5, tope del cupón, acentos, NFKC, detección, coma decimal) hacen fallar una prueba; la de NFKC necesitó una prueba propia porque `usuarios.json` no la cubre.
 
-### [ ] T-102 · `core:database`
+### [x] T-102 · `core:database`
 - **Docs:** 04 §6.1 · **Depende de:** T-100, T-030
 - **Hecho cuando:** entidades espejo de las tablas sync/down, tablas locales, vista `v_price_points`, DAOs; test que compara nombres de columna con el registro de sync; esquema de Room exportado. La vista de Room pasa `normalizacion.json` → `prorrateo_ticket`, como la de D1 (T41).
+- **Resultado (2026-10-21):** 21 entidades espejo + `outbox`, `pending_uploads`, `sync_cursors`, `sync_issues`; `v_price_points`; DAOs; esquema exportado. Contrato `packages/shared/sync-schema.json` (registro + `esquema-d1.sql`) y 8 pruebas con Robolectric: columnas, tipos y nulabilidad contra el contrato, SQL de la vista idéntico al de D1, fixture de prorrateo y orden del outbox (T48).
 
 ### [ ] T-103 · `core:network`
 - **Docs:** 02 §6.3, 03 §1 · **Depende de:** T-100
