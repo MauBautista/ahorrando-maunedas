@@ -10,4 +10,7 @@ import dagger.hilt.components.SingletonComponent
 abstract class SyncModule {
     @Binds
     abstract fun requester(scheduler: SyncScheduler): SyncRequester
+
+    @Binds
+    abstract fun uploads(scheduler: SyncScheduler): UploadRequester
 }

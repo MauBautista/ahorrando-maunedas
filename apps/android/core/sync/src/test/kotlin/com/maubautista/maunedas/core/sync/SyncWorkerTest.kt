@@ -20,6 +20,7 @@ import org.robolectric.RobolectricTestRunner
 class SyncWorkerTest {
     private val server = MockWebServer()
     private lateinit var env: TestEnv
+    private var uploadRequests = 0
 
     @Before
     fun start() {
@@ -40,7 +41,7 @@ class SyncWorkerTest {
                     appContext: Context,
                     workerClassName: String,
                     workerParameters: WorkerParameters,
-                ) = SyncWorker(appContext, workerParameters, env.user, env.engine!!, env.status, env.clock)
+                ) = SyncWorker(appContext, workerParameters, env.user, env.engine!!, env.status, env.clock) { uploadRequests++ }
             }
         return TestListenableWorkerBuilder<SyncWorker>(env.context).setWorkerFactory(factory).build().doWork()
     }
@@ -59,6 +60,8 @@ class SyncWorkerTest {
             server.enqueue(json(200, EMPTY_PULL))
             assertEquals(ListenableWorker.Result.success(), run())
             assertTrue(env.status.status.value is SyncStatus.Synced)
+            // Rows are on the server: their binaries may go now (04 §6.6).
+            assertEquals(1, uploadRequests)
         }
 
     @Test

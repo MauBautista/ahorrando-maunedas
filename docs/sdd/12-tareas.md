@@ -217,9 +217,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** `LocalWriter`, `SyncWorker`, `PullApplier`, `ConflictHandler` y la programación de 04 §6.6; casos de Android de 04 §8 pasan.
 - **Resultado (2026-10-22):** `SyncTables` (contra el contrato), `LocalWriter` con las cascadas de 04 §6.2, `SyncEngine` (push en lotes de 100, padres primero, división ante `BATCH_REJECTED`/413, pull por páginas), `PullApplier`, `ConflictHandler`, `SyncWorker`, `SyncScheduler`, `ForegroundSync`; 22 pruebas con Robolectric y MockWebServer, incluidos los tres casos de Android de 04 §8 (T50). La app conecta WorkManager con Hilt en T-110.
 
-### [ ] T-105 · `UploadWorker`
+### [x] T-105 · `UploadWorker`
 - **Docs:** 10 §4.2 · **Depende de:** T-104, T-037
 - **Hecho cuando:** caso de `UploadWorker` de 10 §7 pasa.
+- **Resultado (2026-10-22):** `UploadEngine`, `UploadQueue`, `UploadWorker` y su programación; el caso de 10 §7 (espera a que la fila salga del outbox, 409 reintenta, 201 limpia) más 413/415, importaciones, archivo faltante y sesión vencida; 10 pruebas nuevas (T51).
 
 ### [ ] T-106 · Sistema de diseño
 - **Docs:** 05 §7 · **Depende de:** T-007, T-100
