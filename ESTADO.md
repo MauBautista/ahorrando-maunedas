@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-027, T-030 a T-038, T-041, T-101 a T-103 y spikes B, D y E hechos (T-100 sin el sabor prod); faltan OpenRouter, Firebase prod y los spikes A y C.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-027, T-030 a T-038, T-041, T-101 a T-104 y spikes B, D y E hechos (T-100 sin el sabor prod); faltan OpenRouter, Firebase prod y los spikes A y C.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -37,13 +37,14 @@
 - **T-101 (2026-10-21):** reglas compartidas en Kotlin (`core:model` y `core:pricing`): precio por unidad, prorrateo, promociones, búsqueda, texto de ticket, cantidades, usuarios e ids; pasan los mismos fixtures que TypeScript, copiados en cada build.
 - **T-102 (2026-10-21):** base local de Android en Room: espejo exacto de las 21 tablas que sincronizan, cola de cambios (outbox), subidas pendientes, cursores y conflictos, y la vista de precios; un contrato generado desde el registro y el esquema de D1 impide que Room se desvíe.
 - **T-103 (2026-10-21):** red de Android: cliente de la API con el token de Firebase (se renueva y reintenta una vez ante 401), cabeceras de versión, errores de la API con su código y la forma de los datos de sync; 12 pruebas sin red.
+- **T-104 (2026-10-22):** sincronización de Android: escribir local y encolar en una transacción (con los borrados en cascada), subir en lotes de 100 aislando la fila que el servidor rechace, bajar por páginas sin pisar cambios locales más nuevos, resolver conflictos y programar con WorkManager; 22 pruebas, incluidos los casos de 04 §8.
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-104 (`core:sync`: `LocalWriter`, `SyncWorker`, aplicar el pull, conflictos) y luego T-105/T-106; Firebase prod cuando se prepare el primer despliegue a producción;
+1. T-105 (`UploadWorker`: subir fotos pendientes) y T-106 (sistema de diseño); después T-110 (login en Android, que conecta Firebase, WorkManager y la sesión); Firebase prod cuando se prepare el primer despliegue a producción;
 2. T-101 (`core:model` y `core:pricing` en Kotlin con los fixtures compartidos) y T-102 (Room), que no dependen de Firebase; spike A en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 
@@ -100,6 +101,7 @@
 | T47 | **Correo sintético `@maunedas.local` (antes D9).** Es el `SYNTHETIC_EMAIL_DOMAIN` de Worker, web y Android | Spike E: Firebase lo acepta en alta, login REST y JS, contraseña y `disableUser`; nunca puede recibir correo. Falta confirmarlo en Android (T-110) |
 | T48 | **Contrato de esquema para Room.** `packages/shared/sync-schema.json` (registro + `esquema-d1.sql`) es la fuente de las entidades de Room, verificada en ambos lados; booleanos `Int`; sin índices únicos parciales en Room; el outbox sale en el `order` del registro | Un solo origen de verdad sin copiar tablas a mano: D1 ↔ registro (api), registro + esquema ↔ contrato (shared), contrato ↔ Room (Android). Room no expresa índices parciales y el servidor ya resuelve la unicidad (04 §3.2); el orden evita `MISSING_PARENT` entre lotes |
 | T49 | **Red de Android.** El token llega por `IdTokenProvider` (Firebase en `core:auth`, T-110); los errores se convierten en `ApiException` en un `CallAdapter` de Retrofit, no en un interceptor; `encodeDefaults = true`; un cuerpo que no es del Worker es `HTTP_ERROR` y una falla de red sigue siendo `IOException` | Probar sin Firebase; un interceptor de OkHttp solo puede lanzar `IOException` y el `SyncWorker` reintenta ante `IOException`, así que los errores de la API no deben parecer fallas de red; sin `encodeDefaults` el push no podría borrar un valor |
+| T50 | **Sync de Android probado sin WorkManager.** La lógica vive en `SyncEngine` y `SyncWorker` solo traduce resultados (sin sesión → nada; red/5xx/429 → reintento; otro 4xx → falla; 426 → espera actualización); el lote también se divide ante `413`; el pull pide 100 filas; conectar WorkManager y Firebase en la app queda para T-110 | Los casos de 04 §8 se prueban con Room en memoria y MockWebServer; un lote de 100 filas grandes puede pasar de 512 KB; T40 fijó 100 filas; sin `IdTokenProvider` real no tiene caso arrancar los workers |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -192,3 +194,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-21** — T-101: reglas compartidas en Kotlin con los fixtures.
 - **2026-10-21** — T-102: Room con contrato de esquema (T48).
 - **2026-10-21** — T-103: red de Android con MockWebServer (T49).
+- **2026-10-22** — T-104: sincronización de Android (T50).

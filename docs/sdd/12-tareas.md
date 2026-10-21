@@ -212,9 +212,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** Retrofit con los DTOs de E1, `AuthInterceptor`, `TokenAuthenticator`, errores mapeados a `ApiException(code)`; tests con MockWebServer (401 → refresco → reintento una vez).
 - **Resultado (2026-10-21):** `MaunedasApi` (me, devices, push, pull, códigos, subida e importación de imágenes; los de tickets llegan con T-040), `MaunedasJson`, `AuthInterceptor`/`TokenAuthenticator` sobre `IdTokenProvider`, errores por `CallAdapter` (`ApiException`, `UpgradeRequiredException`, `HTTP_ERROR` si el cuerpo no es del Worker; la red caída sigue siendo `IOException`); 12 pruebas con MockWebServer (T49).
 
-### [ ] T-104 · `core:sync`
+### [x] T-104 · `core:sync`
 - **Docs:** 04 §6 · **Depende de:** T-102, T-103, T-031, T-032
 - **Hecho cuando:** `LocalWriter`, `SyncWorker`, `PullApplier`, `ConflictHandler` y la programación de 04 §6.6; casos de Android de 04 §8 pasan.
+- **Resultado (2026-10-22):** `SyncTables` (contra el contrato), `LocalWriter` con las cascadas de 04 §6.2, `SyncEngine` (push en lotes de 100, padres primero, división ante `BATCH_REJECTED`/413, pull por páginas), `PullApplier`, `ConflictHandler`, `SyncWorker`, `SyncScheduler`, `ForegroundSync`; 22 pruebas con Robolectric y MockWebServer, incluidos los tres casos de Android de 04 §8 (T50). La app conecta WorkManager con Hilt en T-110.
 
 ### [ ] T-105 · `UploadWorker`
 - **Docs:** 10 §4.2 · **Depende de:** T-104, T-037
@@ -226,7 +227,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-110 · Login y sesión
 - **Docs:** 02 §6 · **Depende de:** T-103, T-021, T-027
-- **Hecho cuando:** usuario/contraseña y Google funcionan contra dev; mensajes de 02 §8; sesión offline; cierre de sesión con advertencia de pendientes. Incluye confirmar el correo sintético `@maunedas.local` con el SDK de Android (pendiente del spike E).
+- **Hecho cuando:** usuario/contraseña y Google funcionan contra dev; mensajes de 02 §8; sesión offline; cierre de sesión con advertencia de pendientes. Incluye confirmar el correo sintético `@maunedas.local` con el SDK de Android (pendiente del spike E), y conectar en la app `IdTokenProvider` y `CurrentUser` (Firebase), `ApiConfig`/`ClientInfo`, `HiltWorkerFactory` para WorkManager, `ForegroundSync` y `schedulePeriodic` al iniciar sesión (T-103, T-104).
 
 ### [ ] T-111 · Inicio (S-02)
 - **Depende de:** T-110, T-104

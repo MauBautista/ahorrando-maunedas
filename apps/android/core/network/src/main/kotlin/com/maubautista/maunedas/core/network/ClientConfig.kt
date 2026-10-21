@@ -20,6 +20,6 @@ data class ClientInfo(val schema: Int, val appVersion: String)
  * The signed-in user's Firebase ID token, or null when nobody is signed in. `core:auth` implements it with
  * FirebaseAuth (T-110). Blocking: OkHttp calls it on its own threads.
  */
-interface IdTokenProvider {
+fun interface IdTokenProvider {
     fun idToken(forceRefresh: Boolean): String?
 }
