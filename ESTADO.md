@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-023, T-030 a T-038, T-041 y spikes B y D hechos (T-024 sin el admin real, T-100 sin los datos de Firebase); faltan Firebase, OpenRouter y los spikes A, C y E.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-022, T-026, T-027, T-023, T-030 a T-038, T-041 y spikes B, D y E hechos (T-024 sin el admin real, T-100 sin los datos de Firebase); faltan OpenRouter, Firebase prod y los spikes A y C.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -32,7 +32,8 @@
 - **T-023 (2026-10-19):** administración de usuarios (solo admin): lista, alta con contraseña y/o correo de Google, edición (nombre, rol, activo, correo de Google) y cambio de contraseña, con Identity Toolkit simulado; nunca deja la casa sin admin activo; 18 pruebas. Falta probar contra Firebase real (T-004).
 - **T-024 (código, 2026-10-19):** `POST /v1/bootstrap` para crear el primer admin una sola vez, protegido con `BOOTSTRAP_TOKEN`; si dos llegan a la vez solo uno gana; 6 pruebas. Falta crear el admin real en dev (necesita T-004).
 - **T-100 (2026-10-20, sin Firebase):** proyecto Android con los 20 módulos del SDD, reglas de dependencias verificadas en el build, catálogo de versiones, Hilt y Compose, sabores `dev`/`prod`; CI corre reglas, pruebas y lint. Faltan los archivos y valores de Firebase (T-004).
-- **T-004 dev (parcial, 2026-10-20):** proyecto Firebase `maunedas-dev` con apps web y Android; el Worker de dev ya verifica tokens de ese proyecto, la web de dev y Android tienen su configuración. Faltan la cuenta de servicio, el cliente OAuth de Android en `google-services.json` y el proyecto de prod.
+- **T-004 dev (parcial, 2026-10-20/21):** proyecto Firebase `maunedas-dev` con apps web y Android; el Worker de dev verifica tokens de ese proyecto y tiene la cuenta de servicio (funciona contra Identity Toolkit). Faltan el cliente OAuth de Android en `google-services.json`, el secreto de CI y el proyecto de prod.
+- **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
 - Mauricio: Firebase dev (cuenta de servicio, cliente web y `google-services.json` con el cliente de Android) y luego prod (T-004); OpenRouter (T-005); 10 fotos para el spike A.
@@ -92,6 +93,7 @@
 | T44 | **Fusión: también fotos y filas borradas.** El destino recibe las imágenes del origen y, si no tenía, su foto principal; se mueven también las filas ya borradas que apuntaban al origen; un id inexistente responde `404` | El SDD no decía qué pasaba con las fotos (quedarían en un registro borrado) ni con los tombstones; moverlos evita referencias a una variante muerta si alguien revive una fila |
 | T45 | **Usuarios: Firebase primero y reversión.** Activar o desactivar cambia cada cuenta de Firebase antes de D1 y las regresa si algo falla; `google_email` en minúsculas (cambiar solo mayúsculas no borra identidades); una carrera de `UNIQUE` tras crear la cuenta compensa y responde `409`; contraseña a un usuario inactivo crea la cuenta desactivada | El SDD fijaba la compensación del alta pero no el orden ni las fallas a medias de la activación; así ninguna cuenta queda activa en Firebase con el usuario inactivo en D1, ni al revés |
 | T46 | **Android: convenciones y Firebase opcional.** Plugins de convención en `build-logic` (SDK, Java 17, `namespace` por ruta, `unitTests`, `checkModuleDependencies`); `google-services` solo se aplica si existe el JSON del sabor; versiones estables con dos semanas o más (Kotlin 2.4.20 aunque exista 2.4.21) | Veinte módulos sin repetir configuración; el proyecto compila y CI corre antes de T-004; las reglas de 05 §2 se vuelven verificables. Mismo criterio de antigüedad que pnpm |
+| T47 | **Correo sintético `@maunedas.local` (antes D9).** Es el `SYNTHETIC_EMAIL_DOMAIN` de Worker, web y Android | Spike E: Firebase lo acepta en alta, login REST y JS, contraseña y `disableUser`; nunca puede recibir correo. Falta confirmarlo en Android (T-110) |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -99,7 +101,6 @@
 |---|---|---|---|
 | D2 | Extracción de tickets | Modelo de visión vía OpenRouter desde el Worker **desde la etapa 1**; OCR local queda como experimento en la etapa 3 | Spike C (exactitud y costo real) |
 | D5 | Modelo de rembg | El más ligero que dé calidad aceptable en el A8-7410 | Spike A |
-| D9 | Dominio del correo sintético | `maunedas.local`; si Firebase lo rechaza, un dominio con TLD real que nunca recibe correo | Spike E |
 
 ## Riesgos
 
@@ -149,6 +150,9 @@ Código real en `maunedas-dev` (plan Free) con rutas temporales y `wrangler tail
 
 Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se aplicó. D3 → Free (T40).
 
+### Spike E · Correo sintético (T-014) — 2026-10-21
+Worker local con el código real (bootstrap, admin de usuarios) contra el proyecto `maunedas-dev`; detalle en `docs/spikes/spike-e-correo.md`. `maunedas.local`, `maunedas.test`, `maunedas.invalid` y `users.maunedas.workers.dev`: alta, login REST, `/v1/me`, `USER_DISABLED` al desactivar y contraseña nueva, todo OK; login con Firebase JS OK en `maunedas.local` con el `Referer` del host permitido (la API key está restringida). Cuentas de prueba borradas (0 en el proyecto). D9 → `maunedas.local`.
+
 ## Bitácora
 - **2026-09-30** — Requisitos cerrados. Implementación cambia a Cloudflare como núcleo. Documentos base v0, esquema validado y fixtures de normalización creados.
 - **2026-09-30** — Auth dual (usuario/contraseña + Google), dominio `workers.dev`, CP 72750. SDD v1 escrito.
@@ -175,3 +179,4 @@ Ninguna petición cortada (0 `exceededCpu`); el límite de 50 consultas no se ap
 - **2026-10-19** — T-024: bootstrap del primer admin (falta el admin real en dev, con Firebase).
 - **2026-10-20** — T-100: proyecto Android multi-módulo con reglas de dependencias, Hilt, Compose y sabores (T46); faltan los datos de Firebase.
 - **2026-10-20** — T-004 (dev, parcial): configuración pública de `maunedas-dev` en Worker, web y Android.
+- **2026-10-21** — Spike E: `@maunedas.local` funciona en Firebase (D9 cerrada, T47); cuenta de servicio de dev cargada.
