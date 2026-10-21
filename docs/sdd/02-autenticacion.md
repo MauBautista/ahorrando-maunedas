@@ -75,7 +75,7 @@ export function syntheticEmail(username: string, domain = SYNTHETIC_EMAIL_DOMAIN
 
 - El usuario no se puede cambiar después del alta (cambiaría el correo sintético). El nombre visible sí.
 - Contraseña: mínimo 8 caracteres (Firebase exige 6; nosotros validamos 8 antes de llamar).
-- **Spike E (T-014):** confirmar que Firebase acepta `@maunedas.local`. Si no, usar un dominio con TLD real que nunca reciba correo y registrar la decisión D9.
+- **Spike E (T-014, 2026-10-21):** Firebase acepta `@maunedas.local` (también `.test`, `.invalid` y `users.<subdominio>.workers.dev`) en alta, login REST y Firebase JS, cambio de contraseña y `disableUser`. D9 cerrada: `maunedas.local` (`docs/spikes/spike-e-correo.md`).
 
 ## 4. Datos
 

@@ -46,7 +46,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Depende de:** T-003 (para conocer el dominio)
 - **Hacer:** dos proyectos (dev y prod, decisión T25), 02 §2.
 - **Hecho cuando:** en cada proyecto: Email/Password y Google habilitados (sin bloquear el registro); dominio autorizado y URI de redirección `/__/auth/handler` del host de su Worker; apps Android (`.dev` en dev) con SHA-1/256 de debug; secreto `GOOGLE_SERVICE_ACCOUNT` del proyecto de dev cargado en `maunedas-dev`.
-- **Avance (2026-10-20):** proyecto `maunedas-dev` con app web y app Android (`com.maubautista.maunedas.dev`, SHA del keystore de debug del servidor); `FIREBASE_PROJECT_ID` en `maunedas-dev`, `.env.development`/`.env.dev` de la web y Web client ID en `gradle.properties`. Faltan en dev: cuenta de servicio (`GOOGLE_SERVICE_ACCOUNT`), confirmar orígenes y URI de redirección del cliente web, *branding*, y volver a descargar `google-services.json` con el cliente OAuth de Android; después, el proyecto de prod.
+- **Avance (2026-10-20):** proyecto `maunedas-dev` con app web y app Android (`com.maubautista.maunedas.dev`, SHA del keystore de debug del servidor); `FIREBASE_PROJECT_ID` en `maunedas-dev`, `.env.development`/`.env.dev` de la web y Web client ID en `gradle.properties`; `GOOGLE_SERVICE_ACCOUNT` en `maunedas-dev` (2026-10-21, probada contra Identity Toolkit en el spike E). Faltan en dev: confirmar orígenes y URI de redirección del cliente web, *branding*, y volver a descargar `google-services.json` con el cliente OAuth de Android; después, el proyecto de prod.
 
 ### [ ] T-005 · OpenRouter
 - **Docs:** 09 §2
@@ -75,8 +75,9 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [x] T-013 · Spike D: CPU del Worker
 - **Docs:** 11 §7 · **Depende de:** T-021, T-022, T-031 (versiones mínimas) · **Decide:** D3 · **Nota:** se ejecuta en la Etapa 1, justo después de T-031
 - **Resultado (2026-10-19):** `docs/spikes/spike-d-cpu.md`. Token y firma de Google caben (p95 ≤ 4 ms); push p95 21–26 ms, pull p95 23 ms (13 ms con páginas de 100), vinculación ingenua p95 65 ms; ninguna petición cortada y el límite de 50 consultas no se aplicó. D3 → se queda en Free (T40).
-### [ ] T-014 · Spike E: correo sintético
+### [x] T-014 · Spike E: correo sintético
 - **Docs:** 02 §3, 11 §7 · **Depende de:** T-004 · **Decide:** D9
+- **Resultado (2026-10-21):** `docs/spikes/spike-e-correo.md`. Los cuatro dominios funcionan; D9 → `maunedas.local` (T47). El login en Android se confirma en T-110.
 ### [ ] T-015 · Cerrar decisiones
 - **Depende de:** T-010 a T-014
 - **Hecho cuando:** D2, D5 y D9 están en "Decisiones tomadas" de `ESTADO.md` con resultados de los spikes. D3 se cierra en T-013.
@@ -221,7 +222,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ### [ ] T-110 · Login y sesión
 - **Docs:** 02 §6 · **Depende de:** T-103, T-021, T-027
-- **Hecho cuando:** usuario/contraseña y Google funcionan contra dev; mensajes de 02 §8; sesión offline; cierre de sesión con advertencia de pendientes.
+- **Hecho cuando:** usuario/contraseña y Google funcionan contra dev; mensajes de 02 §8; sesión offline; cierre de sesión con advertencia de pendientes. Incluye confirmar el correo sintético `@maunedas.local` con el SDK de Android (pendiente del spike E).
 
 ### [ ] T-111 · Inicio (S-02)
 - **Depende de:** T-110, T-104
