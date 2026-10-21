@@ -1,7 +1,7 @@
 # ESTADO — Ahorrando Maunedas
 
 **Última actualización:** 2026-10-19
-**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-027, T-030 a T-038, T-041 y spikes B, D y E hechos (T-100 sin el sabor prod); faltan OpenRouter, Firebase prod y los spikes A y C.
+**Etapa actual:** 0 — Fundaciones (con el backend de la Etapa 1 avanzando). Hito 1, SDD v1.1, T-003, T-020 a T-027, T-030 a T-038, T-041, T-101 y spikes B, D y E hechos (T-100 sin el sabor prod); faltan OpenRouter, Firebase prod y los spikes A y C.
 
 ## Hecho
 - Requisitos cerrados (sesiones de preguntas del 2026-09-30).
@@ -34,13 +34,14 @@
 - **T-100 (2026-10-20, sin Firebase):** proyecto Android con los 20 módulos del SDD, reglas de dependencias verificadas en el build, catálogo de versiones, Hilt y Compose, sabores `dev`/`prod`; CI corre reglas, pruebas y lint. Faltan los archivos y valores de Firebase (T-004).
 - **T-004 dev (2026-10-20/21):** proyecto Firebase `maunedas-dev` completo: verificado por API (proveedores, dominio, redirección, SHA, APIs, restricción de la key, `google-services.json`, secreto de CI) y lo demás confirmado por Mauricio (orígenes, *branding*, APIs de la key, llave vieja borrada). Falta el proyecto de prod.
 - **T-025 (2026-10-21):** proxy de `/__/auth/*` y `/__/firebase/*` hacia `maunedas-dev.firebaseapp.com`, para que el login con Google de la web funcione en Safari; en dev `/__/auth/handler` responde igual que Firebase; 6 pruebas.
+- **T-101 (2026-10-21):** reglas compartidas en Kotlin (`core:model` y `core:pricing`): precio por unidad, prorrateo, promociones, búsqueda, texto de ticket, cantidades, usuarios e ids; pasan los mismos fixtures que TypeScript, copiados en cada build.
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. T-101 (`core:model` y `core:pricing` en Kotlin) y T-102 (Room); Firebase prod cuando se prepare el primer despliegue a producción;
+1. T-102 (`core:database`: Room con las entidades del registro de sync y la vista `v_price_points`) y T-103 (red); Firebase prod cuando se prepare el primer despliegue a producción;
 2. T-101 (`core:model` y `core:pricing` en Kotlin con los fixtures compartidos) y T-102 (Room), que no dependen de Firebase; spike A en cuanto estén las 10 fotos; T-005.
 3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
 
@@ -184,3 +185,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-21** — Spike E: `@maunedas.local` funciona en Firebase (D9 cerrada, T47); cuenta de servicio de dev cargada.
 - **2026-10-21** — T-024 cerrada: admin real en dev; Firebase dev verificado por API; script de bootstrap.
 - **2026-10-21** — T-025: proxy de auth de Firebase; Firebase dev completo. Worker de la Etapa 1 (T-020 a T-027) terminado.
+- **2026-10-21** — T-101: reglas compartidas en Kotlin con los fixtures.

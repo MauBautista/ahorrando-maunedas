@@ -24,6 +24,10 @@ gradlePlugin {
             id = "maunedas.android.feature"
             implementationClass = "AndroidFeatureConventionPlugin"
         }
+        register("fixtures") {
+            id = "maunedas.fixtures"
+            implementationClass = "FixturesConventionPlugin"
+        }
         register("hilt") {
             id = "maunedas.hilt"
             implementationClass = "HiltConventionPlugin"

@@ -1,7 +1,8 @@
 plugins {
     id("maunedas.android.library")
+    id("maunedas.fixtures")
 }
 
 dependencies {
-    implementation(project(":core:model"))
+    api(project(":core:model"))
 }

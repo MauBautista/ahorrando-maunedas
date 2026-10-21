@@ -197,9 +197,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** módulos creados con dependencias permitidas, catálogo de versiones, Hilt, sabores `dev`/`prod` con `API_BASE_URL`, `GOOGLE_WEB_CLIENT_ID` y `SYNTHETIC_EMAIL_DOMAIN`, `google-services.json` por sabor (escrito en CI desde `GOOGLE_SERVICES_JSON_DEV`), build en CI.
 - **Avance (2026-10-20):** los 20 módulos de 05 §2 con plugins de convención, `checkModuleDependencies` (probado con tres dependencias prohibidas), catálogo completo, Hilt + Compose en la app, sabores con los tres `BuildConfig` y el paso de CI que escribe `google-services.json` si existe el secreto (el plugin se probó con un archivo falso). Dev completo (2026-10-21): `google-services.json`, secreto de CI y Web client ID. Falta el sabor `prod` (su `google-services.json` y su Web client ID) cuando exista el proyecto de prod.
 
-### [ ] T-101 · `core:model` y `core:pricing`
+### [x] T-101 · `core:model` y `core:pricing`
 - **Docs:** 05 §6 · **Depende de:** T-100, T-006
 - **Hecho cuando:** Kotlin pasa **todos** los fixtures (tarea de Gradle que los copia a recursos de prueba).
+- **Resultado (2026-10-21):** las reglas de 05 §6 en Kotlin pasan los seis fixtures (incluido `prorrateo_ticket`) con la tarea `copyFixtures`; 24 pruebas en 9 suites. Nueve mutaciones (redondeo a par, `nxm`, normalización de tickets, bits de v5, tope del cupón, acentos, NFKC, detección, coma decimal) hacen fallar una prueba; la de NFKC necesitó una prueba propia porque `usuarios.json` no la cubre.
 
 ### [ ] T-102 · `core:database`
 - **Docs:** 04 §6.1 · **Depende de:** T-100, T-030
