@@ -5,6 +5,7 @@ import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -12,18 +13,15 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.text.KeyboardOptions
-import androidx.compose.material3.ExperimentalMaterial3Api
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -36,7 +34,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
-import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.unit.dp
@@ -61,11 +58,13 @@ data class CatalogActions(
     val onCategory: (CategoryNode?) -> Unit = {},
     val onTag: (TagItem?) -> Unit = {},
     val onOpenProduct: (String) -> Unit = {},
+    val onNewProduct: () -> Unit = {},
 )
 
 @Composable
 fun CatalogRoute(
     onOpenProduct: (String) -> Unit,
+    onNewProduct: () -> Unit,
     viewModel: CatalogViewModel = hiltViewModel(),
 ) {
     val filters by viewModel.filters.collectAsStateWithLifecycle()
@@ -79,7 +78,7 @@ fun CatalogRoute(
         tags = tags,
         hasProducts = hasProducts,
         now = viewModel.now(),
-        actions = CatalogActions(viewModel::onQueryChange, viewModel::onCategory, viewModel::onTag, onOpenProduct),
+        actions = CatalogActions(viewModel::onQueryChange, viewModel::onCategory, viewModel::onTag, onOpenProduct, onNewProduct),
     )
 }
 
@@ -97,44 +96,51 @@ fun CatalogScreen(
     actions: CatalogActions,
 ) {
     var sheet by rememberSaveable { mutableStateOf<Sheet?>(null) }
-    Column(Modifier.fillMaxSize()) {
-        OutlinedTextField(
-            value = filters.query,
-            onValueChange = actions.onQueryChange,
-            label = { Text(stringResource(R.string.catalog_search)) },
-            leadingIcon = { Icon(painterResource(DesignR.drawable.ic_search), contentDescription = null) },
-            trailingIcon = {
-                if (filters.query.isNotEmpty()) {
-                    IconButton(onClick = { actions.onQueryChange("") }) {
-                        Icon(painterResource(DesignR.drawable.ic_close), contentDescription = stringResource(R.string.catalog_clear_search))
-                    }
-                }
-            },
-            singleLine = true,
-            keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
-            modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg, vertical = Spacing.sm),
-        )
-        Row(
-            Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = Spacing.lg),
-            horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
-        ) {
-            FilterButton(filters.category?.name ?: stringResource(R.string.catalog_category), filters.category != null) { sheet = Sheet.CATEGORY }
-            FilterButton(filters.tag?.name ?: stringResource(R.string.catalog_tag), filters.tag != null) { sheet = Sheet.TAG }
-        }
-        val loaded = products.loadState.refresh is LoadState.NotLoading
-        when {
-            hasProducts == false -> Message(stringResource(R.string.catalog_empty))
-            hasProducts == true && loaded && products.itemCount == 0 -> Message(stringResource(R.string.catalog_no_match))
-            else ->
-                LazyColumn(Modifier.fillMaxSize()) {
-                    items(products.itemCount, key = products.itemKey { it.id }) { i ->
-                        products[i]?.let { item ->
-                            if (i > 0) HorizontalDivider(Modifier.padding(horizontal = Spacing.lg))
-                            ProductCard(item, now) { actions.onOpenProduct(item.id) }
+    Box(Modifier.fillMaxSize()) {
+        Column(Modifier.fillMaxSize()) {
+            OutlinedTextField(
+                value = filters.query,
+                onValueChange = actions.onQueryChange,
+                label = { Text(stringResource(R.string.catalog_search)) },
+                leadingIcon = { Icon(painterResource(DesignR.drawable.ic_search), contentDescription = null) },
+                trailingIcon = {
+                    if (filters.query.isNotEmpty()) {
+                        IconButton(onClick = { actions.onQueryChange("") }) {
+                            Icon(painterResource(DesignR.drawable.ic_close), contentDescription = stringResource(R.string.catalog_clear_search))
                         }
                     }
-                }
+                },
+                singleLine = true,
+                keyboardOptions = KeyboardOptions(imeAction = ImeAction.Search),
+                modifier = Modifier.fillMaxWidth().padding(horizontal = Spacing.lg, vertical = Spacing.sm),
+            )
+            Row(
+                Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = Spacing.lg),
+                horizontalArrangement = Arrangement.spacedBy(Spacing.sm),
+            ) {
+                FilterButton(filters.category?.name ?: stringResource(R.string.catalog_category), filters.category != null) { sheet = Sheet.CATEGORY }
+                FilterButton(filters.tag?.name ?: stringResource(R.string.catalog_tag), filters.tag != null) { sheet = Sheet.TAG }
+            }
+            val loaded = products.loadState.refresh is LoadState.NotLoading
+            when {
+                hasProducts == false -> Message(stringResource(R.string.catalog_empty))
+                hasProducts == true && loaded && products.itemCount == 0 -> Message(stringResource(R.string.catalog_no_match))
+                else ->
+                    // Room at the bottom so the button does not cover the last card.
+                    LazyColumn(Modifier.fillMaxSize(), contentPadding = PaddingValues(bottom = 96.dp)) {
+                        items(products.itemCount, key = products.itemKey { it.id }) { i ->
+                            products[i]?.let { item ->
+                                if (i > 0) HorizontalDivider(Modifier.padding(horizontal = Spacing.lg))
+                                ProductCard(item, now) { actions.onOpenProduct(item.id) }
+                            }
+                        }
+                    }
+            }
         }
+        ExtendedFloatingActionButton(
+            onClick = actions.onNewProduct,
+            modifier = Modifier.align(Alignment.BottomEnd).padding(Spacing.lg),
+        ) { Text(stringResource(R.string.catalog_new_product)) }
     }
     when (sheet) {
         Sheet.CATEGORY ->
@@ -224,52 +230,5 @@ private fun ProductCard(
                 Text(stringResource(R.string.catalog_no_price), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-    }
-}
-
-private data class Choice(
-    val id: String,
-    val label: String,
-    val depth: Int,
-)
-
-/** A single choice with "all" on top; subcategories are indented under their parent. */
-@OptIn(ExperimentalMaterial3Api::class)
-@Composable
-private fun ChoiceSheet(
-    allLabel: String,
-    options: List<Choice>,
-    selected: String?,
-    emptyLabel: String?,
-    onPick: (String?) -> Unit,
-    onDismiss: () -> Unit,
-) {
-    ModalBottomSheet(onDismissRequest = onDismiss) {
-        LazyColumn(Modifier.padding(bottom = Spacing.xl)) {
-            item { ChoiceRow(allLabel, 0, selected == null) { onPick(null) } }
-            if (options.isEmpty() && emptyLabel != null) item { Message(emptyLabel) }
-            items(options, key = { it.id }) { ChoiceRow(it.label, it.depth, it.id == selected) { onPick(it.id) } }
-        }
-    }
-}
-
-@Composable
-private fun ChoiceRow(
-    label: String,
-    depth: Int,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Row(
-        Modifier
-            .fillMaxWidth()
-            .heightIn(min = Spacing.touchTarget)
-            .clickable(role = Role.RadioButton, onClick = onClick)
-            .padding(start = Spacing.lg + Spacing.xl * depth, end = Spacing.lg),
-        verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
-    ) {
-        RadioButton(selected = selected, onClick = null)
-        Text(label, style = MaterialTheme.typography.bodyLarge)
     }
 }

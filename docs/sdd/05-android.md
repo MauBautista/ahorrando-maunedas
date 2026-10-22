@@ -201,6 +201,15 @@ Nombre, marca, categoría (árbol), etiquetas (chips con alta rápida), unidad d
 - "Se vende a granel" (solo masa; fija `unit_amount = 1000`, `pack_count = 1`).
 - Códigos: lista + "Escanear código".
 
+**Implementación (T-113, decisión T56):**
+- **Producto nuevo:** S-09 incluye su primera presentación (S-10) y se guardan juntos. La unidad para comparar sigue la medida de esa presentación (kg, L o pz) hasta que se elige otra.
+- **Producto existente:** S-09 lista sus presentaciones; cada una y "Agregar presentación" abren S-10.
+- **Etiquetas:** con alta rápida se crean al guardar; si el nombre ya existe (sin importar mayúsculas), se usa esa etiqueta.
+- **Etiqueta de la presentación:** sigue a `suggestVariantLabel` hasta que alguien escribe otra; borrarla vuelve a la sugerida. "A granel" se etiqueta "A granel (kg)".
+- **Códigos:** se normalizan quitando espacios y guiones (6 a 14 dígitos). Uno que ya es de otra presentación muestra "Ese código ya es de «Producto · presentación»." y no se agrega. La fusión es del admin y llega con la ficha (T-114); "Escanear código" llega con T-116.
+- **Eliminar** producto o presentación solo aparece para el admin (RF-CAT-08).
+- **Mientras no exista la ficha (T-114):** la tarjeta del catálogo abre S-09, y el catálogo tiene "Nuevo producto".
+
 ### S-11 Escáner
 - Vista de cámara (CameraX `PreviewView` + `ImageAnalysis`) con ML Kit; formatos EAN-13, EAN-8, UPC-A, UPC-E, Code 128.
 - Linterna, vibración y sonido corto al leer. Ignora el mismo código durante 2 s.

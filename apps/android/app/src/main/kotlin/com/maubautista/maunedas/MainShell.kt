@@ -65,6 +65,7 @@ private enum class Tab(
 fun MainShell(
     onSignedOut: () -> Unit,
     onOpenProduct: (String) -> Unit,
+    onNewProduct: () -> Unit,
 ) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
@@ -99,7 +100,7 @@ fun MainShell(
             }
             composable<PurchasesTab> { ComingSoon(stringResource(R.string.tab_purchases)) }
             composable<ScanTab> { ComingSoon(stringResource(R.string.tab_scan)) }
-            composable<CatalogTab> { CatalogRoute(onOpenProduct = onOpenProduct) }
+            composable<CatalogTab> { CatalogRoute(onOpenProduct = onOpenProduct, onNewProduct = onNewProduct) }
             composable<SettingsTab> { SettingsRoute(onSignedOut = onSignedOut) }
         }
     }

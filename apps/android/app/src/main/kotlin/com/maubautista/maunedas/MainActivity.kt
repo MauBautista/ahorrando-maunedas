@@ -18,9 +18,9 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.maubautista.maunedas.core.auth.AuthService
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
-import androidx.compose.ui.res.stringResource
-import com.maubautista.maunedas.core.ui.ComingSoon
 import com.maubautista.maunedas.feature.auth.LoginRoute
+import com.maubautista.maunedas.feature.catalog.ProductEditorRoute
+import com.maubautista.maunedas.feature.catalog.VariantEditorRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
@@ -32,10 +32,17 @@ object LoginDestination
 @Serializable
 object MainDestination
 
-/** S-08, without the bottom bar; T-114 builds it. */
+/** S-09; null [productId] creates one. Until the product page (T-114) exists, catalog cards open it (T56). */
 @Serializable
-data class ProductDestination(
-    val id: String,
+data class ProductEditorDestination(
+    val productId: String? = null,
+)
+
+/** S-10; null [variantId] adds a variant to the product. */
+@Serializable
+data class VariantEditorDestination(
+    val productId: String,
+    val variantId: String? = null,
 )
 
 /** Single activity (05 §4). With a saved session it opens at home without network (RF-AUTH-08). */
@@ -63,10 +70,17 @@ class MainActivity : ComponentActivity() {
                             composable<MainDestination> {
                                 MainShell(
                                     onSignedOut = { nav.navigate(LoginDestination) { popUpTo<MainDestination> { inclusive = true } } },
-                                    onOpenProduct = { nav.navigate(ProductDestination(it)) },
+                                    onOpenProduct = { nav.navigate(ProductEditorDestination(it)) },
+                                    onNewProduct = { nav.navigate(ProductEditorDestination()) },
                                 )
                             }
-                            composable<ProductDestination> { ComingSoon(stringResource(R.string.product_title)) }
+                            composable<ProductEditorDestination> {
+                                ProductEditorRoute(
+                                    onDone = { nav.popBackStack() },
+                                    onOpenVariant = { productId, variantId -> nav.navigate(VariantEditorDestination(productId, variantId)) },
+                                )
+                            }
+                            composable<VariantEditorDestination> { VariantEditorRoute(onDone = { nav.popBackStack() }) }
                         }
                     }
                 }
