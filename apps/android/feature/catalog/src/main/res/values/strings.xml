@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
     <string name="catalog_search">Buscar por nombre, marca o código</string>
     <string name="catalog_clear_search">Borrar búsqueda</string>
     <string name="catalog_category">Categoría</string>
@@ -15,6 +16,7 @@
     <plurals name="catalog_variants">
         <item quantity="one">%1$d presentación</item>
         <item quantity="other">%1$d presentaciones</item>
+        <item quantity="many">%1$d presentaciones</item>
     </plurals>
     <string name="catalog_new_product">Nuevo producto</string>
     <!-- S-09 and S-10 -->
@@ -64,4 +66,43 @@
     <string name="editor_error_amount">Escribe una cantidad mayor que cero, por ejemplo 1.5</string>
     <string name="editor_error_pieces">Las piezas van en números enteros.</string>
     <string name="editor_error_pack">Escribe cuántas unidades trae el paquete (1 o más).</string>
+    <!-- S-08 -->
+    <string name="page_edit">Editar</string>
+    <string name="page_merge">Fusionar con otro producto</string>
+    <string name="page_delete">Eliminar</string>
+    <string name="page_tab_variants">Presentaciones</string>
+    <string name="page_tab_compare">Comparar</string>
+    <string name="page_codes">Códigos: %1$s</string>
+    <string name="page_no_prices">Sin precios registrados.</string>
+    <string name="page_price_at">%1$s · %2$s</string>
+    <string name="page_merge_variant">Fusionar con otra presentación</string>
+    <string name="page_compare_empty">Sin precios en los últimos 90 días.</string>
+    <string name="page_compare_cheapest">Más barato</string>
+    <string name="page_compare_last">Último</string>
+    <string name="page_compare_min">Mínimo</string>
+    <string name="page_compare_avg">Promedio de 90 días</string>
+    <plurals name="page_compare_n">
+        <item quantity="one">%1$d precio</item>
+        <item quantity="other">%1$d precios</item>
+        <item quantity="many">%1$d precios</item>
+    </plurals>
+    <string name="page_compare_other">Otras medidas (no se comparan)</string>
+    <string name="page_row_title">%1$s · %2$s</string>
+    <!-- RF-CAT-03, RF-CAT-07 -->
+    <string name="merge_product_title">Fusionar «%1$s» con…</string>
+    <string name="merge_variant_title">Fusionar la presentación «%1$s» con…</string>
+    <string name="merge_search">Buscar</string>
+    <string name="merge_none">No hay con qué fusionar.</string>
+    <string name="merge_product_confirm">¿Fusionar «%1$s» en «%2$s»? Sus presentaciones, fotos y etiquetas pasan a «%2$s», y «%1$s» se elimina. No se puede deshacer.</string>
+    <string name="merge_variant_confirm">¿Fusionar «%1$s» en «%2$s»? Sus códigos, compras y precios pasan a «%2$s», y «%1$s» se elimina. Fusiona solo presentaciones iguales: los precios por unidad se recalculan con el contenido de «%2$s». No se puede deshacer.</string>
+    <string name="merge_confirm">Fusionar</string>
+    <string name="merge_code_owner">Fusionar esta presentación con «%1$s»</string>
+    <string name="merge_done">Listo: se fusionaron. Los cambios llegan con la siguiente sincronización.</string>
+    <string name="merge_pending">Primero deben subirse tus cambios pendientes. Ya se están sincronizando; intenta de nuevo en un momento.</string>
+    <string name="merge_no_network">Necesitas internet para fusionar.</string>
+    <string name="merge_measure">No se pueden fusionar presentaciones de distinta medida.</string>
+    <string name="merge_deleted">Uno de los dos ya se eliminó. Espera a que se sincronice e intenta de nuevo.</string>
+    <string name="merge_forbidden">Solo el administrador puede fusionar.</string>
+    <string name="merge_failed">No se pudo fusionar. Intenta de nuevo.</string>
+    <string name="merge_ok">Entendido</string>
 </resources>

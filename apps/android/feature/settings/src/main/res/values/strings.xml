@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
     <string name="settings_title">Ajustes</string>
     <string name="settings_account">Cuenta: %1$s (%2$s)</string>
     <string name="settings_sync_idle">Sin sincronizar todavía</string>
@@ -11,6 +12,7 @@
     <plurals name="settings_sign_out_pending">
         <item quantity="one">Tienes %1$d cambio sin sincronizar. Si sales, se perderá.</item>
         <item quantity="other">Tienes %1$d cambios sin sincronizar. Si sales, se perderán.</item>
+        <item quantity="many">Tienes %1$d cambios sin sincronizar. Si sales, se perderán.</item>
     </plurals>
     <string name="settings_sign_out_confirm">Salir</string>
     <string name="settings_cancel">Cancelar</string>

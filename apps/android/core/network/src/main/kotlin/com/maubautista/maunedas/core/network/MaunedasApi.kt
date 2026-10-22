@@ -5,6 +5,8 @@ import com.maubautista.maunedas.core.network.dto.BlobResponse
 import com.maubautista.maunedas.core.network.dto.DeviceRegistration
 import com.maubautista.maunedas.core.network.dto.ImportImageRequest
 import com.maubautista.maunedas.core.network.dto.MeResponse
+import com.maubautista.maunedas.core.network.dto.MergeRequest
+import com.maubautista.maunedas.core.network.dto.MergeResponse
 import com.maubautista.maunedas.core.network.dto.PullRequest
 import com.maubautista.maunedas.core.network.dto.PullResponse
 import com.maubautista.maunedas.core.network.dto.PushRequest
@@ -18,8 +20,9 @@ import retrofit2.http.PUT
 import retrofit2.http.Path
 
 /**
- * The Worker routes Android uses in E1 (03). Only WorkManager workers and the login call them (05 §1,
- * CLAUDE.md rule 12); errors arrive as [ApiException]. Receipt extraction joins with T-040.
+ * The Worker routes Android uses in E1 (03). WorkManager workers call them, and so do the few screens that need
+ * the server at once: login, barcode lookup and the admin merge (05 §3, CLAUDE.md rule 12). Errors arrive as
+ * [ApiException]. Receipt extraction joins with T-040.
  */
 interface MaunedasApi {
     @GET("v1/me")
@@ -63,4 +66,10 @@ interface MaunedasApi {
         @Path("imageId") imageId: String,
         @Body body: ImportImageRequest,
     ): BlobResponse
+
+    /** Admin only; the moved rows arrive by pull afterwards (04 §3.4). */
+    @POST("v1/admin/merge")
+    suspend fun merge(
+        @Body body: MergeRequest,
+    ): MergeResponse
 }

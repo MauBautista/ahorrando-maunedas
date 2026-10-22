@@ -1,11 +1,14 @@
 package com.maubautista.maunedas.feature.catalog
 
+import androidx.annotation.StringRes
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.maubautista.maunedas.core.auth.SessionStore
 import com.maubautista.maunedas.core.data.BarcodeTakenException
 import com.maubautista.maunedas.core.data.CatalogEditor
+import com.maubautista.maunedas.core.data.CatalogMerger
+import com.maubautista.maunedas.core.data.MergeResult
 import com.maubautista.maunedas.core.data.CatalogRepository
 import com.maubautista.maunedas.core.data.CategoryNode
 import com.maubautista.maunedas.core.data.TagItem
@@ -104,7 +107,7 @@ class ProductEditorViewModel
                     editor.saveProduct(product, variant)
                     results.send(EditorResult.SAVED)
                 } catch (e: BarcodeTakenException) {
-                    ui.update { it.copy(firstVariant = it.firstVariant?.withCodeProblem(R.string.editor_code_taken, e.owner.let { o -> "${o.productName} · ${o.variantLabel}" })) }
+                    ui.update { it.copy(firstVariant = it.firstVariant?.withCodeProblem(R.string.editor_code_taken, "${e.owner.productName} · ${e.owner.variantLabel}", e.owner.variantId)) }
                 } finally {
                     ui.update { it.copy(busy = false) }
                 }
@@ -130,6 +133,9 @@ data class VariantEditorState(
     val variant: VariantForm = VariantForm(),
     val busy: Boolean = false,
     val confirmDelete: Boolean = false,
+    /** RF-CAT-03: the admin asked to merge this variant into the one that has the typed code. */
+    val confirmMerge: Boolean = false,
+    @StringRes val message: Int? = null,
 )
 
 /** S-10 (05 §5). Route arguments `productId` and `variantId` (null for a new variant of that product). */
@@ -139,6 +145,7 @@ class VariantEditorViewModel
     constructor(
         savedState: SavedStateHandle,
         private val editor: CatalogEditor,
+        private val merger: CatalogMerger,
         session: SessionStore,
     ) : ViewModel() {
         private val productId: String = checkNotNull(savedState["productId"])
@@ -178,7 +185,7 @@ class VariantEditorViewModel
                     editor.saveVariant(productId, draft)
                     results.send(EditorResult.SAVED)
                 } catch (e: BarcodeTakenException) {
-                    ui.update { it.copy(variant = it.variant.withCodeProblem(R.string.editor_code_taken, "${e.owner.productName} · ${e.owner.variantLabel}")) }
+                    ui.update { it.copy(variant = it.variant.withCodeProblem(R.string.editor_code_taken, "${e.owner.productName} · ${e.owner.variantLabel}", e.owner.variantId)) }
                 } finally {
                     ui.update { it.copy(busy = false) }
                 }
@@ -197,6 +204,22 @@ class VariantEditorViewModel
                 results.send(EditorResult.DELETED)
             }
         }
+
+        fun askMerge() = ui.update { it.copy(confirmMerge = true) }
+
+        fun dismissMerge() = ui.update { it.copy(confirmMerge = false, message = null) }
+
+        /** This variant goes into the one that owns the typed code; afterwards it no longer exists here. */
+        fun mergeIntoCodeOwner() {
+            val source = variantId ?: return
+            val target = ui.value.variant.codeOwnerId ?: return
+            ui.update { it.copy(confirmMerge = false, busy = true) }
+            viewModelScope.launch {
+                val result = merger.mergeVariants(source, target)
+                ui.update { it.copy(busy = false, message = result.message()) }
+                if (result == MergeResult.Done) results.send(EditorResult.DELETED)
+            }
+        }
     }
 
 /**
@@ -209,5 +232,5 @@ private suspend fun codeOutcome(
 ): (VariantForm) -> VariantForm {
     val code = form.checkCode().getOrElse { e -> return { it.withCodeProblem((e as VariantForm.CodeProblem).reason) } }
     val owner = editor.barcodeOwner(code, exceptVariant = form.id) ?: return { it.withCode(code) }
-    return { it.withCodeProblem(R.string.editor_code_taken, "${owner.productName} · ${owner.variantLabel}") }
+    return { it.withCodeProblem(R.string.editor_code_taken, "${owner.productName} · ${owner.variantLabel}", owner.variantId) }
 }

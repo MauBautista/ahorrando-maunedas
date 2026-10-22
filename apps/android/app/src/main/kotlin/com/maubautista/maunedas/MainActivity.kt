@@ -20,6 +20,7 @@ import com.maubautista.maunedas.core.auth.AuthService
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
 import com.maubautista.maunedas.feature.auth.LoginRoute
 import com.maubautista.maunedas.feature.catalog.ProductEditorRoute
+import com.maubautista.maunedas.feature.catalog.ProductPageRoute
 import com.maubautista.maunedas.feature.catalog.VariantEditorRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
@@ -32,7 +33,13 @@ object LoginDestination
 @Serializable
 object MainDestination
 
-/** S-09; null [productId] creates one. Until the product page (T-114) exists, catalog cards open it (T56). */
+/** S-08, the product page; catalog cards open it. */
+@Serializable
+data class ProductDestination(
+    val productId: String,
+)
+
+/** S-09; null [productId] creates one. */
 @Serializable
 data class ProductEditorDestination(
     val productId: String? = null,
@@ -70,8 +77,17 @@ class MainActivity : ComponentActivity() {
                             composable<MainDestination> {
                                 MainShell(
                                     onSignedOut = { nav.navigate(LoginDestination) { popUpTo<MainDestination> { inclusive = true } } },
-                                    onOpenProduct = { nav.navigate(ProductEditorDestination(it)) },
+                                    onOpenProduct = { nav.navigate(ProductDestination(it)) },
                                     onNewProduct = { nav.navigate(ProductEditorDestination()) },
+                                )
+                            }
+                            composable<ProductDestination> {
+                                ProductPageRoute(
+                                    onBack = { nav.popBackStack() },
+                                    onEdit = { nav.navigate(ProductEditorDestination(it)) },
+                                    onOpenVariant = { productId, variantId -> nav.navigate(VariantEditorDestination(productId, variantId)) },
+                                    // Merged into another product: its page replaces this one.
+                                    onMoved = { nav.navigate(ProductDestination(it)) { popUpTo<ProductDestination> { inclusive = true } } },
                                 )
                             }
                             composable<ProductEditorDestination> {

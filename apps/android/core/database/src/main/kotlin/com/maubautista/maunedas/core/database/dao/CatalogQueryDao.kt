@@ -40,6 +40,7 @@ data class CatalogPointRow(
     @ColumnInfo(name = "store_name") val storeName: String?,
     @ColumnInfo(name = "observed_at") val observedAt: Long,
     @ColumnInfo(name = "cents_per_base") val centsPerBase: Double,
+    @ColumnInfo(name = "effective_unit_cents") val effectiveUnitCents: Long?,
 )
 
 /**
@@ -106,7 +107,7 @@ interface CatalogQueryDao {
     @Query(
         """
         SELECT pp.point_id, pp.source, pp.variant_id, v.label AS variant_label, v.measure, pp.store_id,
-               s.name AS store_name, pp.observed_at, pp.cents_per_base
+               s.name AS store_name, pp.observed_at, pp.cents_per_base, pp.effective_unit_cents
         FROM v_price_points pp
         JOIN variants v ON v.id = pp.variant_id
         LEFT JOIN stores s ON s.id = pp.store_id
@@ -117,6 +118,19 @@ interface CatalogQueryDao {
         productId: String,
         since: Long,
     ): List<CatalogPointRow>
+
+    /** Every point of the product's live variants, observed: the product page follows new prices (S-08). */
+    @Query(
+        """
+        SELECT pp.point_id, pp.source, pp.variant_id, v.label AS variant_label, v.measure, pp.store_id,
+               s.name AS store_name, pp.observed_at, pp.cents_per_base, pp.effective_unit_cents
+        FROM v_price_points pp
+        JOIN variants v ON v.id = pp.variant_id
+        LEFT JOIN stores s ON s.id = pp.store_id
+        WHERE v.product_id = :productId AND v.deleted_at IS NULL AND pp.cents_per_base IS NOT NULL
+        """,
+    )
+    fun allPricePoints(productId: String): Flow<List<CatalogPointRow>>
 
     @Query("SELECT EXISTS (SELECT 1 FROM products WHERE deleted_at IS NULL)")
     fun hasProducts(): Flow<Boolean>

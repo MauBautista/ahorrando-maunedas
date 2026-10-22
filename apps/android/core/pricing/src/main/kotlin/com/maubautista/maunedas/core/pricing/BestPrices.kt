@@ -14,6 +14,8 @@ data class PricePoint(
     val storeName: String?,
     val observedAt: Long,
     val centsPerBase: Double,
+    /** What one unit of the variant cost after promotions (`effective_unit_cents`). */
+    val effectiveUnitCents: Long? = null,
 )
 
 /** The "best price" rule (03 §3), as `pickBest` in `apps/api/src/db/queries/prices.ts`. */
@@ -22,7 +24,7 @@ object BestPrices {
     const val WINDOW_MS = 90L * 86_400_000
 
     /** Newer point first; equal times go to the greatest point id, so the result is deterministic. */
-    private fun PricePoint.isNewerThan(other: PricePoint) =
+    internal fun PricePoint.isNewerThan(other: PricePoint) =
         observedAt > other.observedAt || (observedAt == other.observedAt && pointId > other.pointId)
 
     /**
