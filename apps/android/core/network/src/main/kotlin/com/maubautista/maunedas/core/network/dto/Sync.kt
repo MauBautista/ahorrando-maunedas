@@ -1,5 +1,7 @@
 package com.maubautista.maunedas.core.network.dto
 
+import kotlinx.serialization.EncodeDefault
+import kotlinx.serialization.ExperimentalSerializationApi
 import kotlinx.serialization.KSerializer
 import kotlinx.serialization.Serializable
 import kotlinx.serialization.descriptors.SerialDescriptor
@@ -61,11 +63,13 @@ object PullCursorSerializer : KSerializer<PullCursor> {
 }
 
 /** `POST /v1/sync/pull`: 100 rows per table by default, at most 500 (spike D, T40). */
+@OptIn(ExperimentalSerializationApi::class)
 @Serializable
 data class PullRequest(
     val cursors: Map<String, PullCursor>,
     val limit: Int = 100,
-    val tables: List<String>? = null,
+    /** All tables when absent. The Worker accepts a missing key or a list, never `null` (PullRequestSchema). */
+    @EncodeDefault(EncodeDefault.Mode.NEVER) val tables: List<String>? = null,
 )
 
 @Serializable

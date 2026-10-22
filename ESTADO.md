@@ -203,3 +203,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-22** — T-105: subida de fotos en Android (T51).
 - **2026-10-22** — T-106: sistema de diseño de Android (T52).
 - **2026-10-22** — T-110: login y sesión en Android (código y pruebas); falta la prueba en teléfono.
+- **2026-10-22** — Prueba de T-110 en un Pixel 8 Pro (Android 17): login con `mau@maunedas.local` correcto; el pull fallaba con 400 porque el cliente mandaba `"tables": null` y el Worker solo acepta la clave ausente o una lista (la prueba con MockWebServer esperaba el null). Corregido; el sync termina en 200.
