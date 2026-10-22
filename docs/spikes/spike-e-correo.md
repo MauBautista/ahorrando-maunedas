@@ -24,4 +24,4 @@
 
 - Firebase acepta los cuatro dominios, incluidos TLD reservados (`.local`, `.test`, `.invalid`); se queda el primero, `maunedas.local`, que ya es el valor por omisión (`SYNTHETIC_EMAIL_DOMAIN`, 02 §3).
 - Desactivar en el Worker bloquea las dos puertas: Firebase niega tokens nuevos y el Worker rechaza los vigentes (`USER_DISABLED`).
-- Pendiente: confirmar el login en Android con el SDK de Firebase al hacer T-110.
+- Confirmado en T-110 (2026-10-22): el SDK de Firebase para Android inicia sesión con `mau@maunedas.local` en un Pixel 8 Pro con Android 17.

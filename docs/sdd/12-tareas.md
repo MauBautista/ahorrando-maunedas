@@ -77,7 +77,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Resultado (2026-10-19):** `docs/spikes/spike-d-cpu.md`. Token y firma de Google caben (p95 ≤ 4 ms); push p95 21–26 ms, pull p95 23 ms (13 ms con páginas de 100), vinculación ingenua p95 65 ms; ninguna petición cortada y el límite de 50 consultas no se aplicó. D3 → se queda en Free (T40).
 ### [x] T-014 · Spike E: correo sintético
 - **Docs:** 02 §3, 11 §7 · **Depende de:** T-004 · **Decide:** D9
-- **Resultado (2026-10-21):** `docs/spikes/spike-e-correo.md`. Los cuatro dominios funcionan; D9 → `maunedas.local` (T47). El login en Android se confirma en T-110.
+- **Resultado (2026-10-21):** `docs/spikes/spike-e-correo.md`. Los cuatro dominios funcionan; D9 → `maunedas.local` (T47). El login en Android quedó confirmado en T-110.
 ### [ ] T-015 · Cerrar decisiones
 - **Depende de:** T-010 a T-014
 - **Hecho cuando:** D2, D5 y D9 están en "Decisiones tomadas" de `ESTADO.md` con resultados de los spikes. D3 se cierra en T-013.
@@ -227,10 +227,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** tema claro/oscuro desde tokens; `MoneyField`, `QuantityField`, `StorePicker`, `VariantSearchField`, `PriceText` (con precio por unidad) con previews y prueba de fuente al 200 %.
 - **Resultado (2026-10-22):** tema y colores extendidos desde tokens (más `tokens_colors.xml` generado), los cinco componentes con previews, `Money`/`Quantities` en `core:model`, ícono adaptativo y tema de ventana claro/oscuro; 5 pruebas de Compose con Robolectric (incluida la de fuente al 200 % que detecta textos cortados) y 4 de dinero; lint sin avisos (T52).
 
-### [~] T-110 · Login y sesión
+### [x] T-110 · Login y sesión
 - **Docs:** 02 §6 · **Depende de:** T-103, T-021, T-027
 - **Hecho cuando:** usuario/contraseña y Google funcionan contra dev; mensajes de 02 §8; sesión offline; cierre de sesión con advertencia de pendientes. Incluye confirmar el correo sintético `@maunedas.local` con el SDK de Android (pendiente del spike E), y conectar en la app `IdTokenProvider` y `CurrentUser` (Firebase), `ApiConfig`/`ClientInfo`, `HiltWorkerFactory` para WorkManager, `ForegroundSync` y `schedulePeriodic` al iniciar sesión (T-103, T-104).
-- **Avance (2026-10-22):** `core:auth`, pantalla S-01, Inicio provisional con cierre de sesión, app conectada (Firebase, WorkManager con Hilt, sync al entrar); APK de dev construido; 10 pruebas (ViewModel con mensajes de 02 §8, `LoginFinisher` con MockWebServer, cierre de sesión que borra todo, sesión). Falta probar en un teléfono: usuario/contraseña con `@maunedas.local` (cierra lo pendiente del spike E), Google y cierre de sesión.
+- **Resultado (2026-10-22):** `core:auth`, pantalla S-01, Inicio provisional con cierre de sesión, app conectada (Firebase, WorkManager con Hilt, sync al entrar); 10 pruebas (ViewModel con mensajes de 02 §8, `LoginFinisher` con MockWebServer, cierre de sesión que borra todo, sesión). Probado en un Pixel 8 Pro (Android 17) contra dev: contraseña incorrecta, login con `mau@maunedas.local` (cierra el spike E), arranque sin red, cierre de sesión (borra el dispositivo) y Google; el sync quedó en 200 cada 60 s en primer plano. La prueba encontró que el pull mandaba `"tables": null` y el Worker respondía 400 (PR #40, T53).
 
 ### [ ] T-111 · Inicio (S-02)
 - **Depende de:** T-110, T-104

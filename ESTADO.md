@@ -40,16 +40,16 @@
 - **T-104 (2026-10-22):** sincronización de Android: escribir local y encolar en una transacción (con los borrados en cascada), subir en lotes de 100 aislando la fila que el servidor rechace, bajar por páginas sin pisar cambios locales más nuevos, resolver conflictos y programar con WorkManager; 22 pruebas, incluidos los casos de 04 §8.
 - **T-105 (2026-10-22):** subida de fotos en Android: cada foto espera a que su registro llegue al servidor, se reintenta si el servidor aún no la conoce, se descarta con aviso si es demasiado grande o de un tipo no permitido, y el archivo local se conserva; también importa fotos del catálogo abierto pendientes.
 - **T-106 (2026-10-22):** sistema de diseño de Android: tema claro y oscuro desde los tokens, ícono de la app, campos de precio y cantidad (aceptan "28.5" y "28,5"), selector de tienda, búsqueda de producto y precio con su precio por unidad y su fuente; probado con la fuente al 200 % sin textos cortados.
-- **T-110 (código, 2026-10-22):** login en Android con usuario/contraseña o Google, mensajes del SDD, sesión que abre sin red, cierre de sesión que avisa si hay cambios sin subir; la app ya arranca el sync con WorkManager. Falta la prueba en un teléfono.
+- **T-110 (2026-10-22):** login en Android con usuario/contraseña o Google, mensajes del SDD, sesión que abre sin red, cierre de sesión que avisa si hay cambios sin subir; la app sincroniza con WorkManager. Probado en un Pixel 8 Pro contra dev: los cinco casos funcionan y el sync responde 200.
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Probar T-110 en un teléfono (Mauricio instala el APK de dev); después las pantallas (T-111 en adelante);
-2. T-101 (`core:model` y `core:pricing` en Kotlin con los fixtures compartidos) y T-102 (Room), que no dependen de Firebase; spike A en cuanto estén las 10 fotos; T-005.
-3. Hito 3: T-004, spike E (primero de los que dependen de Firebase) y spike C (tickets).
+1. Pantallas de Android: T-111 (Inicio, S-02), luego catálogo y fichas (T-112 en adelante).
+2. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
+3. Antes del primer despliegue a producción: T-004 (Firebase prod) y la decisión pendiente de T41.
 
 ## Decisiones tomadas
 
@@ -107,6 +107,7 @@
 | T50 | **Sync de Android probado sin WorkManager.** La lógica vive en `SyncEngine` y `SyncWorker` solo traduce resultados (sin sesión → nada; red/5xx/429 → reintento; otro 4xx → falla; 426 → espera actualización); el lote también se divide ante `413`; el pull pide 100 filas; conectar WorkManager y Firebase en la app queda para T-110 | Los casos de 04 §8 se prueban con Room en memoria y MockWebServer; un lote de 100 filas grandes puede pasar de 512 KB; T40 fijó 100 filas; sin `IdTokenProvider` real no tiene caso arrancar los workers |
 | T51 | **Subidas: qué se reintenta y qué se descarta.** `IMAGE_NOT_FOUND`, 5xx, 401, 403 y 429 se reintentan; los demás 4xx y un archivo local faltante pasan a `sync_issues`; una rendition espera también a su propia fila | El SDD solo nombraba 409 y 413/415; perder una foto por un token vencido no tiene sentido, y la rendition se valida contra su propia fila en el Worker (10 §4.1) |
 | T52 | **Diseño de Android.** `Money`/`Quantities` en `core:model` (regla de separadores: uno solo es decimal, repetido agrupa, con ambos manda el de la derecha); colores XML generados desde los tokens; la prueba del 200 % usa Robolectric con gráficos nativos, una ventana de 360 × 800 dp desplazable y cuenta la elipsis como corte | `core:designsystem` no puede depender de `core:ui` (ciclo); los colores no se copian a mano; con gráficos heredados Robolectric no mide texto y la prueba daba falsos positivos |
+| T53 | **Login de Android y cuerpos de petición.** La pantalla habla con `AuthService` (falso en pruebas); `GET /v1/me` decide quién entra y, ante 403 o sin red, se cierra Firebase; la sesión vive en DataStore y permite abrir sin red; cerrar sesión borra Room, fotos locales, sesión y `device_id`. Un campo opcional en `null` se omite del JSON (`@EncodeDefault(NEVER)`) | Zod `.optional()` rechaza `null` y `MaunedasJson` usa `explicitNulls`: el pull mandaba `"tables": null` y recibía 400, y la prueba esperaba ese null. Lo detectó la prueba en teléfono, no las pruebas unitarias |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -204,3 +205,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-22** — T-106: sistema de diseño de Android (T52).
 - **2026-10-22** — T-110: login y sesión en Android (código y pruebas); falta la prueba en teléfono.
 - **2026-10-22** — Prueba de T-110 en un Pixel 8 Pro (Android 17): login con `mau@maunedas.local` correcto; el pull fallaba con 400 porque el cliente mandaba `"tables": null` y el Worker solo acepta la clave ausente o una lista (la prueba con MockWebServer esperaba el null). Corregido; el sync termina en 200.
+- **2026-10-22** — T-110 cerrada: Mauricio probó en el teléfono contraseña incorrecta, login, arranque sin red, cierre de sesión y Google; los logs del Worker coinciden (`/v1/me` 200, dispositivo registrado y borrado con 204, pulls en 200).
