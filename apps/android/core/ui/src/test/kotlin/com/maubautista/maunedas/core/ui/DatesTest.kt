@@ -48,6 +48,15 @@ class DatesTest {
     }
 
     @Test
+    fun shortDatesAddTheYearOnlyForPastYears() {
+        assertEquals("20 oct", Dates.shortDate(at("2026-10-20T20:00:00Z"), now))
+        assertEquals("31 dic 2025", Dates.shortDate(at("2026-01-01T05:00:00Z"), now))
+        // Day 20746 is 2026-10-20.
+        assertEquals("20 oct", Dates.shortDateOfDay(20_746, now))
+        assertEquals(20_746L, com.maubautista.maunedas.core.model.HouseholdTime.epochDay(at("2026-10-21T05:59:00Z")))
+    }
+
+    @Test
     fun aTwelveHourClockSaysAmOrPmLikeMexicanSpanish() {
         // Midnight and noon are 12, not 0.
         assertEquals("12:05 a.m.", Dates.time(at("2026-10-22T06:05:00Z"), clock24h = false))

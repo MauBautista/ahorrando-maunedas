@@ -201,7 +201,12 @@ Pestañas:
     - Necesita red y que no haya cambios por subir; después pide un sync.
     - Al fusionar el producto, la ficha del destino reemplaza a la actual.
     - En S-10, un código que ya es de otra presentación ofrece al admin "Fusionar esta presentación con «…»" (RF-CAT-03).
-  - **Pendientes:** el historial llega con T-115, la foto con T-117 y el precio de anaquel con T-125.
+  - **Pendientes:** la foto llega con T-117 y el precio de anaquel con T-125.
+- **Historial (T-115, decisión T58):**
+  - `VariantHistoryRepository` (`core:data`) aplica en Room las reglas de `GET /v1/variants/:id/history`: compras confirmadas con el cupón prorrateado (la vista), rango inclusivo, orden por fecha y la unidad de su medida si no corresponde a la del producto.
+  - **Filtros:** presentación, fuentes (Pagado, Anaquel, Web), periodo (3 meses, 1 año por omisión como la API, todo) y tienda.
+  - **Gráfica (Vico):** una serie por fuente con su color y solo puntos (una línea entre dos precios sugeriría precios que nadie vio); x es el día en la Ciudad de México y y el precio por unidad. La serie web en escalones llega con T-222.
+  - **Lista y accesibilidad:** debajo va la lista de precios, del más nuevo al más viejo, con "Con promoción". La gráfica lleva una descripción para lectores de pantalla (cuántos precios, de cuándo a cuándo, el más bajo y el más alto).
 
 ### S-09 Editor de producto
 Nombre, marca, categoría (árbol), etiquetas (chips con alta rápida), unidad de despliegue (sugerida por la medida de la primera variante), notas.

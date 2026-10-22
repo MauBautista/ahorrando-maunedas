@@ -105,4 +105,15 @@
     <string name="merge_forbidden">Solo el administrador puede fusionar.</string>
     <string name="merge_failed">No se pudo fusionar. Intenta de nuevo.</string>
     <string name="merge_ok">Entendido</string>
+    <!-- S-08, Historial (RF-PRE-02) -->
+    <string name="page_tab_history">Historial</string>
+    <string name="history_period_3m">3 meses</string>
+    <string name="history_period_year">1 año</string>
+    <string name="history_period_all">Todo</string>
+    <string name="history_all_stores">Todas las tiendas</string>
+    <string name="history_empty">Sin precios con estos filtros.</string>
+    <string name="history_prices">Precios</string>
+    <string name="history_promo">Con promoción</string>
+    <string name="history_chart">Gráfica de %1$d precios por %2$s, del %3$s al %4$s. El más bajo: %5$s; el más alto: %6$s.</string>
+    <string name="history_point">%1$s · %2$s</string>
 </resources>

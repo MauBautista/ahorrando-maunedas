@@ -77,6 +77,9 @@ fun ProductPageRoute(
     val candidates by viewModel.candidates.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val confirmDelete by viewModel.confirmDelete.collectAsStateWithLifecycle()
+    val historyVariantId by viewModel.historyVariantId.collectAsStateWithLifecycle()
+    val historyFilter by viewModel.historyFilter.collectAsStateWithLifecycle()
+    val history by viewModel.history.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) {
         viewModel.navigation.collect {
             when (it) {
@@ -102,6 +105,7 @@ fun ProductPageRoute(
                 onMergeVariant = viewModel::startVariantMerge,
                 onDelete = viewModel::askDelete,
             ),
+        history = HistoryTabState(historyVariantId, historyFilter, history, viewModel::pickHistoryVariant, viewModel::onHistoryFilter),
     )
     merge?.let { MergeSheet(it, candidates, viewModel::onMergeQuery, viewModel::pickTarget, viewModel::confirmMerge, viewModel::cancelMerge) }
     message?.let { MergeMessage(it, viewModel::dismissMessage) }
@@ -116,8 +120,8 @@ fun ProductPageRoute(
 }
 
 /**
- * S-08 (05 §5): the variants with their latest prices, and the comparator variant × store (RF-PRE-04). The
- * history tab arrives with T-115; photos with T-117 and shelf prices with T-125.
+ * S-08 (05 §5): the variants with their latest prices, the comparator variant × store (RF-PRE-04) and the price
+ * history (RF-PRE-02). Photos arrive with T-117 and shelf prices with T-125.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
@@ -126,6 +130,7 @@ fun ProductPageScreen(
     isAdmin: Boolean,
     now: Long,
     actions: ProductPageActions,
+    history: HistoryTabState = HistoryTabState(),
 ) {
     var tab by rememberSaveable { mutableIntStateOf(0) }
     LazyColumn(Modifier.fillMaxSize(), verticalArrangement = Arrangement.spacedBy(Spacing.md)) {
@@ -161,13 +166,15 @@ fun ProductPageScreen(
         }
         item {
             PrimaryTabRow(selectedTabIndex = tab) {
-                listOf(R.string.page_tab_variants, R.string.page_tab_compare).forEachIndexed { i, label ->
+                listOf(R.string.page_tab_variants, R.string.page_tab_compare, R.string.page_tab_history).forEachIndexed { i, label ->
                     Tab(selected = tab == i, onClick = { tab = i }, text = { Text(stringResource(label)) })
                 }
             }
         }
         if (tab == 0) {
             items(page.variants, key = { it.id }) { VariantCard(it, isAdmin, now, actions) }
+        } else if (tab == 2) {
+            historyTab(page.variants, history, now)
         } else {
             val (comparable, others) = page.comparison.partition { it.comparable }
             if (page.comparison.isEmpty()) item { Text(stringResource(R.string.page_compare_empty), modifier = Modifier.padding(horizontal = Spacing.lg)) }
