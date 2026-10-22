@@ -248,14 +248,22 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - Con los datos de `apps/api/test/catalog.test.ts` da los mismos resultados que la API.
   - 19 pruebas: regla del mejor precio, repositorio con los datos de la API, pantalla (incluida la fuente al 200 %), antigüedad y `UnitPriceText`.
   - Miniatura pospuesta a T-117 (T55).
-### [ ] T-113 · Editor de producto y variante (S-09, S-10)
+### [x] T-113 · Editor de producto y variante (S-09, S-10)
 - **Depende de:** T-112 · **Hecho cuando:** asistente de contenido guarda unidades base correctas; códigos múltiples; borrado solo para admin.
+- **Resultado (2026-10-22):**
+  - `CatalogEditor` (`core:data`) guarda producto, etiquetas (alta rápida; las que ya existen se reutilizan sin importar mayúsculas), `product_tags` con UUIDv5 (quitar y volver a poner revive la misma fila), presentación y códigos en una transacción con `LocalWriter`.
+  - Un código que ya es de otra presentación no deja guardar nada y dice de cuál es.
+  - Asistente `[paquete] × [cantidad] [unidad]` a unidades base (`Content`, `core:pricing`); etiqueta sugerida con `suggestVariantLabel` que sigue al contenido hasta que se escribe otra; "a granel" solo con masa (1 kg, paquete de 1).
+  - Eliminar producto o presentación solo para admin, con las cascadas de 04 §6.2.
+  - 25 pruebas: asistente de contenido, repositorio de edición con Room, formularios y pantallas (incluida la fuente al 200 %). Decisiones de flujo en T56.
 ### [ ] T-114 · Ficha: presentaciones y comparador (S-08)
 - **Depende de:** T-113 · **Hecho cuando:** valores iguales a `GET /v1/products/:id/compare` con los mismos datos.
+- **Incluye (T56):** que la tarjeta del catálogo abra la ficha (hoy abre el editor) y, para el admin, la fusión que ofrece RF-CAT-03 cuando un código ya es de otra presentación.
 ### [ ] T-115 · Ficha: historial
 - **Depende de:** T-114 · **Hecho cuando:** gráfica Vico con puntos por fuente y filtros.
 ### [ ] T-116 · Escáner y resultado (S-11, S-12)
 - **Depende de:** T-113, T-036 · **Hecho cuando:** los cuatro caminos de S-12 funcionan, incluido sin red.
+- **Incluye (T56):** el botón "Escanear código" del editor de presentación (S-10); hoy los códigos se escriben a mano (`source = 'manual'`).
 ### [ ] T-117 · Foto de producto e importación del catálogo (S-18)
 - **Depende de:** T-105, T-116
 - **Incluye:** la miniatura de la tarjeta del catálogo (Coil 3 con el `AuthInterceptor`, archivo local primero, prioridad de 10 §1), pospuesta de T-112 (T55).
