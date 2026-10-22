@@ -402,7 +402,8 @@ Implementación (T-104, `core:sync`):
 - **Push:** un lote rechazado completo se divide también ante `413 PAYLOAD_TOO_LARGE` (filas grandes que no caben en 512 KB). Una fila que se queda sola y sigue rechazada pasa a `sync_issues` y sale del outbox. Las filas viajan sin `version`, y una entrada cuya fila ya no existe se descarta.
 - **Pull:** usa `limit = 100` (T40), no 500.
 - **Estado y avisos:** `SyncStatusStore` expone el estado y los avisos de `STALE` en memoria.
-- **Pendiente para T-110:** registrar `ForegroundSync` en `ProcessLifecycleOwner` y configurar `HiltWorkerFactory` en la app, cuando existan `IdTokenProvider` y `CurrentUser`.
+- **Hecho en T-110:** `MaunedasApplication` registra `ForegroundSync` en `ProcessLifecycleOwner` y configura WorkManager con `HiltWorkerFactory`; `IdTokenProvider` y `CurrentUser` vienen de `core:auth`.
+- **Pull completo sin `tables`:** el cliente omite la clave; `PullRequestSchema` la acepta ausente o como lista, nunca `null` (T53).
 
 ### 6.4 Aplicar filas del pull
 
