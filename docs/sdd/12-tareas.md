@@ -240,8 +240,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - `core:data` (`PurchaseRepository`, `SyncHealthRepository`) y `core:ui` (fechas en español, `ComingSoon`).
   - 18 pruebas: consultas de Room, meses de la Ciudad de México, fechas (12 y 24 horas) y pantalla, incluida la de fuente al 200 %, ahora sin el falso positivo de desborde (T54).
   - Revisado en un Pixel 8 Pro: Inicio, pestañas, Atrás a Inicio y la hora en el formato del teléfono.
-### [ ] T-112 · Catálogo (S-07)
+### [x] T-112 · Catálogo (S-07)
 - **Depende de:** T-104, T-106, T-101 · **Hecho cuando:** búsqueda local sin acentos, filtros por categoría (con subcategorías) y etiqueta, mejor precio por unidad por tarjeta.
+- **Resultado (2026-10-22):**
+  - Búsqueda y filtros con la misma sentencia que `GET /v1/products`: palabras con AND y coincidencia parcial, código exacto de 6 a 14 dígitos, subcategorías por CTE recursivo y etiqueta. Paginado con Paging 3 sobre Room.
+  - Mejor precio con `BestPrices` (`core:pricing`), la regla de `pickBest`. Muestra el valor por unidad con el punto de su fuente, la presentación, la tienda y la antigüedad.
+  - Con los datos de `apps/api/test/catalog.test.ts` da los mismos resultados que la API.
+  - 19 pruebas: regla del mejor precio, repositorio con los datos de la API, pantalla (incluida la fuente al 200 %), antigüedad y `UnitPriceText`.
+  - Miniatura pospuesta a T-117 (T55).
 ### [ ] T-113 · Editor de producto y variante (S-09, S-10)
 - **Depende de:** T-112 · **Hecho cuando:** asistente de contenido guarda unidades base correctas; códigos múltiples; borrado solo para admin.
 ### [ ] T-114 · Ficha: presentaciones y comparador (S-08)
@@ -252,6 +258,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Depende de:** T-113, T-036 · **Hecho cuando:** los cuatro caminos de S-12 funcionan, incluido sin red.
 ### [ ] T-117 · Foto de producto e importación del catálogo (S-18)
 - **Depende de:** T-105, T-116
+- **Incluye:** la miniatura de la tarjeta del catálogo (Coil 3 con el `AuthInterceptor`, archivo local primero, prioridad de 10 §1), pospuesta de T-112 (T55).
 ### [ ] T-118 · Recorte en el teléfono (opcional)
 - **Docs:** 10 §5 · **Depende de:** T-117
 

@@ -42,13 +42,14 @@
 - **T-106 (2026-10-22):** sistema de diseño de Android: tema claro y oscuro desde los tokens, ícono de la app, campos de precio y cantidad (aceptan "28.5" y "28,5"), selector de tienda, búsqueda de producto y precio con su precio por unidad y su fuente; probado con la fuente al 200 % sin textos cortados.
 - **T-110 (2026-10-22):** login en Android con usuario/contraseña o Google, mensajes del SDD, sesión que abre sin red, cierre de sesión que avisa si hay cambios sin subir; la app sincroniza con WorkManager. Probado en un Pixel 8 Pro contra dev: los cinco casos funcionan y el sync responde 200.
 - **T-111 (2026-10-22):** Inicio de Android: botones grandes para nueva compra, foto de ticket, precio de anaquel y escanear; cuánto se gastó en el mes; las últimas cinco compras; avisos de borradores y de cambios rechazados, y cuántos cambios faltan por subir. Barra inferior con las cinco secciones (las que aún no existen dicen que llegan pronto).
+- **T-112 (2026-10-22):** catálogo de Android: búsqueda sin acentos (también por código de barras), filtros por categoría con sus subcategorías y por etiqueta, y en cada producto su mejor precio por unidad con tienda, fuente y antigüedad; da los mismos resultados que la API con los mismos datos.
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Pantallas de Android: T-112 (Catálogo, S-07) y las fichas (T-113 a T-115); en paralelo, T-120 (lista de compras) y T-126 (Ajustes).
+1. Pantallas de Android: T-113 (editor de producto y variante), luego la ficha (T-114, T-115); en paralelo, T-120 (lista de compras) y T-126 (Ajustes).
 2. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
 3. Antes del primer despliegue a producción: T-004 (Firebase prod) y la decisión pendiente de T41.
 
@@ -110,6 +111,7 @@
 | T52 | **Diseño de Android.** `Money`/`Quantities` en `core:model` (regla de separadores: uno solo es decimal, repetido agrupa, con ambos manda el de la derecha); colores XML generados desde los tokens; la prueba del 200 % usa Robolectric con gráficos nativos, una ventana de 360 × 800 dp desplazable y cuenta la elipsis como corte | `core:designsystem` no puede depender de `core:ui` (ciclo); los colores no se copian a mano; con gráficos heredados Robolectric no mide texto y la prueba daba falsos positivos |
 | T53 | **Login de Android y cuerpos de petición.** La pantalla habla con `AuthService` (falso en pruebas); `GET /v1/me` decide quién entra y, ante 403 o sin red, se cierra Firebase; la sesión vive en DataStore y permite abrir sin red; cerrar sesión borra Room, fotos locales, sesión y `device_id`. Un campo opcional en `null` se omite del JSON (`@EncodeDefault(NEVER)`) | Zod `.optional()` rechaza `null` y `MaunedasJson` usa `explicitNulls`: el pull mandaba `"tables": null` y recibía 400, y la prueba esperaba ese null. Lo detectó la prueba en teléfono, no las pruebas unitarias |
 | T54 | **Inicio y armazón de Android.** Sin total de ticket, una compra vale Σ líneas vivas − descuento de ticket, nunca menos de cero; el mes es el de la Ciudad de México. Las horas siguen el formato de 12 o 24 horas del teléfono. Íconos de Material Symbols como vectores. La barra inferior existe desde ya: lo que falta muestra "llega pronto" y las acciones de Inicio abren la pestaña que las tendrá. `hiltViewModel` desde `hilt-lifecycle-viewmodel-compose`. La prueba de textos cortados no usa `hasVisualOverflow` | Es la regla de RF-COM-06 y la que verá la web. El teléfono de Mauricio usa 12 horas y la app decía "22:46". La biblioteca de íconos de Compose ya no se actualiza. Sin barra, cada pantalla nueva tendría que rehacer la navegación. `hilt-navigation-compose` quedó obsoleta. La semántica acomoda el párrafo a todo el ancho y marca como desbordado cualquier texto de una línea más angosto que su fila: era el falso positivo de T-106 |
+| T55 | **Catálogo de Android.** Misma sentencia que `GET /v1/products` y misma regla de mejor precio (`BestPrices` = `pickBest`), probadas con los datos de la prueba de la API. Paging 3.5.2 (la 3.5.3 tenía menos de dos semanas). La miniatura de la tarjeta llega con T-117 y hasta entonces se muestra la inicial | Web y Android deben mostrar lo mismo. Sin fotos en dev, Coil y la carga con token no se podrían probar con imágenes reales; T-117 trae la primera foto |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -209,3 +211,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-22** — Prueba de T-110 en un Pixel 8 Pro (Android 17): login con `mau@maunedas.local` correcto; el pull fallaba con 400 porque el cliente mandaba `"tables": null` y el Worker solo acepta la clave ausente o una lista (la prueba con MockWebServer esperaba el null). Corregido; el sync termina en 200.
 - **2026-10-22** — T-110 cerrada: Mauricio probó en el teléfono contraseña incorrecta, login, arranque sin red, cierre de sesión y Google; los logs del Worker coinciden (`/v1/me` 200, dispositivo registrado y borrado con 204, pulls en 200).
 - **2026-10-22** — T-111: Inicio de Android (S-02), barra inferior y Ajustes provisional; la prueba de fuente al 200 % ya no da falsos positivos. Revisado en el teléfono; las horas ahora siguen su formato de 12 horas.
+- **2026-10-22** — T-112: catálogo de Android con búsqueda, filtros y mejor precio por unidad, iguales a los de la API; miniatura pospuesta a T-117 (T55).

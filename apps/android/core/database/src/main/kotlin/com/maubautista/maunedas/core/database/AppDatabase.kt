@@ -77,6 +77,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun purchaseQueries(): PurchaseQueryDao
 
+    abstract fun catalogQueries(): CatalogQueryDao
+
     companion object {
         const val NAME = "maunedas.db"
     }

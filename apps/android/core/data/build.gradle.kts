@@ -10,7 +10,9 @@ dependencies {
     implementation(project(":core:pricing"))
     api(project(":core:model"))
     api(libs.kotlinx.coroutines.android)
+    api(libs.androidx.paging.runtime)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
+    testImplementation(libs.androidx.paging.testing)
 }

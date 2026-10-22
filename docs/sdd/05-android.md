@@ -176,6 +176,12 @@ Acciones:
 ### S-07 Catálogo
 - Buscador (usa `search_key` local) y filtros por categoría (árbol) y etiqueta.
 - Tarjeta: miniatura, nombre, marca, número de presentaciones, **mejor precio por unidad** con tienda y antigüedad ("hace 3 días") (RF-PRE-05).
+- **Implementación (T-112):**
+  - `CatalogQuery.products` (`core:database`) es la sentencia de `GET /v1/products` sin cursor; `CatalogRepository` (`core:data`) pagina con Paging 3 y calcula el mejor precio de cada tarjeta con `BestPrices.pick` (`core:pricing`, la regla de `pickBest`).
+  - Una consulta vacía del todo dice "Aún no hay productos…"; con filtros, "Ningún producto coincide con la búsqueda."
+  - Antigüedad por días de calendario en la Ciudad de México: "hoy", "ayer", "hace N días" (< 14), "hace N semanas" (< 60), "hace N meses".
+  - El precio por unidad lleva el punto de su fuente (`UnitPriceText`).
+  - La miniatura es la inicial del producto hasta T-117 (T55).
 
 ### S-08 Ficha de producto
 Pestañas:

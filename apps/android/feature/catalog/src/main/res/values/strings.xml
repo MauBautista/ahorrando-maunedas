@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="catalog_search">Buscar por nombre, marca o código</string>
+    <string name="catalog_clear_search">Borrar búsqueda</string>
+    <string name="catalog_category">Categoría</string>
+    <string name="catalog_tag">Etiqueta</string>
+    <string name="catalog_all_categories">Todas las categorías</string>
+    <string name="catalog_all_tags">Todas las etiquetas</string>
+    <string name="catalog_no_tags">Aún no hay etiquetas.</string>
+    <string name="catalog_empty">Aún no hay productos. Se agregan al escanear un código o al registrar una compra.</string>
+    <string name="catalog_no_match">Ningún producto coincide con la búsqueda.</string>
+    <string name="catalog_no_price">Sin precios en los últimos 90 días</string>
+    <string name="catalog_best_detail">%1$s en %2$s · %3$s</string>
+    <string name="catalog_unknown_store">tienda sin sincronizar</string>
+    <plurals name="catalog_variants">
+        <item quantity="one">%1$d presentación</item>
+        <item quantity="other">%1$d presentaciones</item>
+    </plurals>
+</resources>
