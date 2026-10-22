@@ -57,6 +57,14 @@ class DatesTest {
     }
 
     @Test
+    fun dayTitlesForLists() {
+        assertEquals("Hoy", Dates.dayTitle(at("2026-10-22T06:00:00Z"), now))
+        assertEquals("Ayer", Dates.dayTitle(at("2026-10-22T05:59:00Z"), now))
+        assertEquals("martes 20 de octubre", Dates.dayTitle(at("2026-10-20T18:00:00Z"), now))
+        assertEquals("31 de diciembre de 2025", Dates.dayTitle(at("2026-01-01T05:00:00Z"), now))
+    }
+
+    @Test
     fun aTwelveHourClockSaysAmOrPmLikeMexicanSpanish() {
         // Midnight and noon are 12, not 0.
         assertEquals("12:05 a.m.", Dates.time(at("2026-10-22T06:05:00Z"), clock24h = false))

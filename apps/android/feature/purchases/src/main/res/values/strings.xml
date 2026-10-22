@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
+    <string name="purchases_new">Nueva compra</string>
+    <string name="purchases_store">Tienda</string>
+    <string name="purchases_all_stores">Todas las tiendas</string>
+    <string name="purchases_dates">Fechas</string>
+    <string name="purchases_all_dates">Todas las fechas</string>
+    <string name="purchases_this_month">Este mes</string>
+    <string name="purchases_last_month">Mes pasado</string>
+    <string name="purchases_last_three_months">Últimos 3 meses</string>
+    <string name="purchases_pick_dates">Elegir fechas…</string>
+    <string name="purchases_custom_dates">%1$s – %2$s</string>
+    <string name="purchases_status">Estado</string>
+    <string name="purchases_all_status">Todas</string>
+    <string name="purchases_drafts">Borradores</string>
+    <string name="purchases_confirmed">Confirmadas</string>
+    <string name="purchases_draft">Borrador</string>
+    <string name="purchases_unknown_store">Tienda sin sincronizar</string>
+    <string name="purchases_empty">Aún no hay compras. Toca + para registrar la primera.</string>
+    <string name="purchases_no_match">Ninguna compra coincide con los filtros.</string>
+    <string name="purchases_ok">Aceptar</string>
+    <string name="purchases_cancel">Cancelar</string>
+    <plurals name="purchases_lines">
+        <item quantity="one">%1$d producto</item>
+        <item quantity="other">%1$d productos</item>
+        <item quantity="many">%1$d productos</item>
+    </plurals>
+</resources>

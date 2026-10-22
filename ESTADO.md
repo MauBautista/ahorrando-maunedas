@@ -46,13 +46,14 @@
 - **T-113 (2026-10-22):** crear y editar productos y presentaciones en Android: nombre, marca, categoría, etiquetas (se pueden crear al vuelo), unidad para comparar precios; el contenido se escribe como "6 × 1 L" y se guarda bien en gramos, mililitros o piezas; varios códigos de barras por presentación (avisa si un código ya es de otro producto); solo el admin puede eliminar.
 - **T-114 (2026-10-22):** ficha del producto en Android: sus presentaciones con el último precio por tienda, y un comparador por presentación y tienda (último, mínimo y promedio de 90 días) que marca la opción más barata; da lo mismo que la web. El admin puede fusionar productos o presentaciones duplicados (necesita internet).
 - **T-115 (2026-10-22):** historial de precios en la ficha: una gráfica con puntos de colores por fuente (pagado, anaquel, web) y la lista de precios debajo; se filtra por presentación, fuente, periodo y tienda. Da lo mismo que la web.
+- **T-120 (2026-10-22):** lista de compras en Android, agrupada por día, con tienda, hora, productos, total y si es borrador; se filtra por tienda, fechas y estado.
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Pantallas de Android: T-120 (lista de compras) y T-121 (editor de compra), T-126 (Ajustes); el escáner (T-116) necesita T-036, ya hecho.
+1. Pantallas de Android: T-121 (editor de compra y de línea), luego T-126 (Ajustes) y el escáner (T-116).
 2. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
 3. Antes del primer despliegue a producción: T-004 (Firebase prod) y la decisión pendiente de T41.
 
@@ -118,6 +119,7 @@
 | T56 | **Editores de producto y presentación.** Un producto nuevo se crea con su primera presentación y la unidad para comparar sigue su medida. Las etiquetas nuevas se crean al guardar y reutilizan la que tenga el mismo nombre. Un código ya usado se rechaza diciendo de quién es; la fusión (admin, con red) va en la ficha (T-114) y "Escanear código" con el escáner (T-116). Hasta que exista la ficha, la tarjeta del catálogo abre el editor | S-09 sugiere la unidad "por la medida de la primera variante", así que esa variante tiene que existir desde el alta. Sin escáner ni ficha todavía, así se puede usar el catálogo de punta a punta desde ya |
 | T57 | **Fusión de admin desde Android con llamada directa** (decisión de Mauricio, 2026-10-22). `POST /v1/admin/merge` se llama desde la pantalla, como el login: es una excepción más de la red de 05 §3 y de la regla 12 de CLAUDE.md. Antes revisa que no haya cambios por subir y después pide un sync | Solo el servidor mueve todas las referencias, y el admin necesita ver al momento si se pudo ("no se pueden fusionar masa con volumen"). Hacerlo en segundo plano daría el error lejos de donde se pidió; dejarlo solo en la web quitaba la fusión del aviso de código repetido (RF-CAT-03) |
 | T58 | **Historial de Android.** Solo puntos por fuente, sin unirlos; periodo elegible (3 meses, 1 año por omisión, todo); lista de precios bajo la gráfica, del más nuevo al más viejo, y una descripción de la gráfica para lectores de pantalla. La serie web se ve como puntos hasta T-222 | RF-PRE-02 pide puntos de compra y anaquel: unirlos inventaría precios intermedios. La API ya acepta `from`/`to` y un año ocultaba lo anterior. Una gráfica no se lee con TalkBack ni con letra al 200 %; la lista sí |
+| T59 | **Lista de compras.** Fechas con atajos (este mes, mes pasado, últimos 3 meses) además de elegir días; la tienda se filtra entre las que tienen compras. "Nueva compra" y tocar una compra ya van a la ruta del editor, que dice "llega pronto" hasta T-121 | S-03 pide "rango de fechas": los atajos cubren lo común con un toque y el selector lo demás. Listar todas las tiendas daría opciones que nunca devuelven nada. Con la ruta lista, T-121 solo cambia la pantalla |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -221,3 +223,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-22** — T-113: editores de producto y presentación en Android (S-09, S-10) con asistente de contenido, códigos y etiquetas; eliminar solo para admin (T56).
 - **2026-10-22** — T-114: ficha del producto en Android con presentaciones y comparador iguales a la API, y fusión de admin con llamada directa (T57, decisión de Mauricio). Los `strings.xml` declaran `tools:locale="es"`: lint revisaba la ortografía en inglés y ahora exige el plural `many` del español.
 - **2026-10-22** — T-115: historial de precios con Vico 3.3.1 (ya estaba en el catálogo desde T-100), filtros y lista accesible; mismos puntos que la API (T58).
+- **2026-10-22** — T-120: lista de compras de Android con agrupación por día y filtros de tienda, fechas y estado (T59).

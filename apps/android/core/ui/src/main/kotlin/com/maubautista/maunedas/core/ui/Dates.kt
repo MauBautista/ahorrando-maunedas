@@ -16,6 +16,7 @@ object Dates {
         listOf("enero", "febrero", "marzo", "abril", "mayo", "junio", "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre")
     private val SHORT_MONTHS = listOf("ene", "feb", "mar", "abr", "may", "jun", "jul", "ago", "sep", "oct", "nov", "dic")
     private val SHORT_DAYS = listOf("lun", "mar", "mié", "jue", "vie", "sáb", "dom")
+    private val DAYS = listOf("lunes", "martes", "miércoles", "jueves", "viernes", "sábado", "domingo")
 
     fun monthName(month: YearMonth): String = MONTHS[month.monthValue - 1]
 
@@ -60,6 +61,21 @@ object Dates {
         val date = local(at)
         val base = "${date.dayOfMonth} ${SHORT_MONTHS[date.monthValue - 1]}"
         return if (date.year == local(now).year) base else "$base ${date.year}"
+    }
+
+    /** Heading of a day in a list: "Hoy", "Ayer", "martes 20 de octubre", "20 de octubre de 2025" before this year. */
+    fun dayTitle(
+        at: Long,
+        now: Long,
+    ): String {
+        val date = local(at).toLocalDate()
+        val today = local(now).toLocalDate()
+        return when {
+            date == today -> "Hoy"
+            date == today.minusDays(1) -> "Ayer"
+            date.year == today.year -> "${DAYS[date.dayOfWeek.value - 1]} ${date.dayOfMonth} de ${MONTHS[date.monthValue - 1]}"
+            else -> "${date.dayOfMonth} de ${MONTHS[date.monthValue - 1]} de ${date.year}"
+        }
     }
 
     /** [shortDate] of a calendar day given as [HouseholdTime.epochDay]. */
