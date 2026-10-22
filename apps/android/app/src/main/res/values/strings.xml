@@ -1,4 +1,10 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Ahorrando Maunedas</string>
+    <!-- Bottom bar (05 §4) -->
+    <string name="tab_home">Inicio</string>
+    <string name="tab_purchases">Compras</string>
+    <string name="tab_scan">Escanear</string>
+    <string name="tab_catalog">Catálogo</string>
+    <string name="tab_settings">Ajustes</string>
 </resources>

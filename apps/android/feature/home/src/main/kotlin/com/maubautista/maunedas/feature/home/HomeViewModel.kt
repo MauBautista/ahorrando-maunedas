@@ -2,59 +2,59 @@ package com.maubautista.maunedas.feature.home
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.maubautista.maunedas.core.auth.AuthService
 import com.maubautista.maunedas.core.auth.SessionStore
-import com.maubautista.maunedas.core.auth.SessionUser
-import com.maubautista.maunedas.core.sync.SyncScheduler
-import com.maubautista.maunedas.core.sync.SyncStatus
-import com.maubautista.maunedas.core.sync.SyncStatusStore
+import com.maubautista.maunedas.core.data.PurchaseRepository
+import com.maubautista.maunedas.core.data.PurchaseSummary
+import com.maubautista.maunedas.core.data.SyncHealthRepository
+import com.maubautista.maunedas.core.model.Clock
+import com.maubautista.maunedas.core.model.HouseholdTime
 import dagger.hilt.android.lifecycle.HiltViewModel
-import kotlinx.coroutines.channels.Channel
-import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
-import kotlinx.coroutines.flow.asStateFlow
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.flow
+import kotlinx.coroutines.flow.stateIn
+import java.time.YearMonth
 import javax.inject.Inject
 
-/** Provisional home (S-02 is T-111): who is signed in, sync status, sync now and sign out (02 §6.4). */
+/** S-02 (05 §5). [loaded] is false until Room answers, so the empty state does not flash. */
+data class HomeUiState(
+    val loaded: Boolean = false,
+    val displayName: String = "",
+    val month: YearMonth = YearMonth.of(2026, 1),
+    val monthSpentCents: Long = 0,
+    val recent: List<PurchaseSummary> = emptyList(),
+    val openDrafts: Int = 0,
+    val pending: Int = 0,
+    val rejected: Int = 0,
+    /** For "Hoy" and "Ayer" in the dates. */
+    val now: Long = 0,
+)
+
 @HiltViewModel
 class HomeViewModel
     @Inject
     constructor(
         session: SessionStore,
-        status: SyncStatusStore,
-        private val auth: AuthService,
-        private val scheduler: SyncScheduler,
+        purchases: PurchaseRepository,
+        health: SyncHealthRepository,
+        clock: Clock,
     ) : ViewModel() {
-        val user: StateFlow<SessionUser?> = session.user
-        val sync: StateFlow<SyncStatus> = status.status
+        /** The month is read each time the screen starts observing: reopening the app in a new month moves it. */
+        @OptIn(ExperimentalCoroutinesApi::class)
+        val state: StateFlow<HomeUiState> =
+            flow { emit(clock.nowMillis()) }
+                .flatMapLatest { now ->
+                    val month = HouseholdTime.monthOf(now)
+                    combine(session.user, purchases.recent(RECENT), purchases.spentIn(month), purchases.openDrafts(), health.backlog()) {
+                            user, recent, spent, drafts, backlog ->
+                        HomeUiState(true, user?.displayName.orEmpty(), month, spent, recent, drafts, backlog.pending, backlog.rejected, now)
+                    }
+                }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), HomeUiState())
 
-        /** Pending changes when sign-out was asked; null = no dialog. Zero signs out without asking. */
-        private val confirm = MutableStateFlow<Int?>(null)
-        val confirmSignOut: StateFlow<Int?> = confirm.asStateFlow()
-
-        private val out = Channel<Unit>(Channel.BUFFERED)
-        val signedOut = out.receiveAsFlow()
-
-        fun syncNow() = scheduler.syncNow()
-
-        fun askSignOut() {
-            viewModelScope.launch {
-                val pending = auth.pendingChanges()
-                if (pending == 0) signOut() else confirm.value = pending
-            }
-        }
-
-        fun dismissSignOut() {
-            confirm.value = null
-        }
-
-        fun signOut() {
-            confirm.value = null
-            viewModelScope.launch {
-                auth.signOut()
-                out.send(Unit)
-            }
+        private companion object {
+            const val RECENT = 5
         }
     }

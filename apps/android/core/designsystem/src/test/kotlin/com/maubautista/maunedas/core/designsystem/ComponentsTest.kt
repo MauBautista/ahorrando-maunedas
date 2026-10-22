@@ -103,8 +103,7 @@ class ComponentsTest {
                 val layouts = mutableListOf<TextLayoutResult>()
                 node.config[SemanticsActions.GetTextLayoutResult].action?.invoke(layouts)
                 val text = node.config.getOrNull(SemanticsProperties.Text)?.joinToString() ?: node.config.getOrNull(SemanticsProperties.EditableText)?.text
-                // An ellipsis is a cut too.
-                layouts.firstOrNull()?.takeIf { it.hasVisualOverflow }?.let { text }
+                layouts.firstOrNull()?.takeIf { it.isCut() }?.let { text }
             }
         assertEquals("textos cortados al 200 %", emptyList<String>(), cut)
         for (label in listOf("Precio unitario", "Cantidad (kg)", "Tienda", "Buscar producto")) {
@@ -125,3 +124,14 @@ class ComponentsTest {
         assertEquals(androidx.compose.ui.graphics.Color(Tokens.ColorLight.primary).value.toLong(), light)
     }
 }
+
+/**
+ * Whether part of the text is not shown: taller than its box, past its line limit, an ellipsis, or narrower than
+ * the text itself. Not `hasVisualOverflow`: the semantics action lays the paragraph out at the full available
+ * width, so any one-line text narrower than its row reports a width overflow that is not there.
+ */
+private fun TextLayoutResult.isCut(): Boolean =
+    didOverflowHeight ||
+        multiParagraph.didExceedMaxLines ||
+        (0 until lineCount).any { isLineEllipsized(it) } ||
+        size.width + 1 < minOf(multiParagraph.intrinsics.maxIntrinsicWidth, multiParagraph.width)
