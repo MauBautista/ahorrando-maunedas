@@ -26,8 +26,9 @@ data class VariantForm(
     val codes: List<String> = emptyList(),
     val codeInput: String = "",
     @StringRes val codeError: Int? = null,
-    /** "Producto · presentación" that already has the typed code. */
+    /** "Producto · presentación" that already has the typed code, and its id (an admin can merge into it). */
     val codeOwner: String? = null,
+    val codeOwnerId: String? = null,
     @StringRes val packError: Int? = null,
     @StringRes val amountError: Int? = null,
     @StringRes val labelError: Int? = null,
@@ -52,7 +53,7 @@ data class VariantForm(
     fun withLabel(value: String): VariantForm =
         if (value.isBlank()) copy(labelEdited = false, labelError = null).relabeled() else copy(label = value, labelEdited = true, labelError = null)
 
-    fun withCodeInput(value: String): VariantForm = copy(codeInput = value, codeError = null, codeOwner = null)
+    fun withCodeInput(value: String): VariantForm = copy(codeInput = value, codeError = null, codeOwner = null, codeOwnerId = null)
 
     fun withoutCode(code: String): VariantForm = copy(codes = codes - code)
 
@@ -66,12 +67,13 @@ data class VariantForm(
         }
     }
 
-    fun withCode(code: String): VariantForm = copy(codes = if (code in codes) codes else codes + code, codeInput = "", codeError = null, codeOwner = null)
+    fun withCode(code: String): VariantForm = copy(codes = if (code in codes) codes else codes + code, codeInput = "", codeError = null, codeOwner = null, codeOwnerId = null)
 
     fun withCodeProblem(
         @StringRes error: Int,
         owner: String? = null,
-    ): VariantForm = copy(codeError = error, codeOwner = owner)
+        ownerId: String? = null,
+    ): VariantForm = copy(codeError = error, codeOwner = owner, codeOwnerId = ownerId)
 
     /** "6 × 1 L", "946 ml", "A granel (kg)"; null while the content is not a number yet. */
     fun suggestedLabel(): String? {

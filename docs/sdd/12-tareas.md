@@ -256,9 +256,17 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - Asistente `[paquete] × [cantidad] [unidad]` a unidades base (`Content`, `core:pricing`); etiqueta sugerida con `suggestVariantLabel` que sigue al contenido hasta que se escribe otra; "a granel" solo con masa (1 kg, paquete de 1).
   - Eliminar producto o presentación solo para admin, con las cascadas de 04 §6.2.
   - 25 pruebas: asistente de contenido, repositorio de edición con Room, formularios y pantallas (incluida la fuente al 200 %). Decisiones de flujo en T56.
-### [ ] T-114 · Ficha: presentaciones y comparador (S-08)
+### [x] T-114 · Ficha: presentaciones y comparador (S-08)
 - **Depende de:** T-113 · **Hecho cuando:** valores iguales a `GET /v1/products/:id/compare` con los mismos datos.
 - **Incluye (T56):** que la tarjeta del catálogo abra la ficha (hoy abre el editor) y, para el admin, la fusión que ofrece RF-CAT-03 cuando un código ya es de otra presentación.
+- **Resultado (2026-10-22):**
+  - Ficha con encabezado (marca, ruta de categoría, etiquetas), acciones y pestañas.
+  - "Presentaciones": contenido, códigos y último precio por tienda y fuente.
+  - "Comparar": último, mínimo y promedio de 90 días, con el más barato resaltado.
+  - Con los datos de `apps/api/test/prices.test.ts` da las mismas filas, orden y mejor precio que `/compare`.
+  - Fusión de admin de productos y presentaciones con llamada directa (T57), también desde un código repetido en S-10.
+  - La tarjeta del catálogo ya abre la ficha.
+  - 19 pruebas: regla del comparador, ficha sobre Room con los datos de la API, fusión con MockWebServer y pantallas (incluida la fuente al 200 % en ambas pestañas).
 ### [ ] T-115 · Ficha: historial
 - **Depende de:** T-114 · **Hecho cuando:** gráfica Vico con puntos por fuente y filtros.
 ### [ ] T-116 · Escáner y resultado (S-11, S-12)

@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
     <string name="auth_title">Ahorrando Maunedas</string>
     <string name="auth_username">Usuario</string>
     <string name="auth_password">Contraseña</string>

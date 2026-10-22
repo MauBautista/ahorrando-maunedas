@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
     <string name="home_hello">Hola, %1$s</string>
     <string name="home_new_purchase">Nueva compra</string>
     <string name="home_receipt_photo">Foto de ticket</string>
@@ -13,17 +14,21 @@
     <plurals name="home_pending">
         <item quantity="one">%1$d cambio por subir</item>
         <item quantity="other">%1$d cambios por subir</item>
+        <item quantity="many">%1$d cambios por subir</item>
     </plurals>
     <plurals name="home_drafts">
         <item quantity="one">Tienes %1$d compra en borrador.</item>
         <item quantity="other">Tienes %1$d compras en borrador.</item>
+        <item quantity="many">Tienes %1$d compras en borrador.</item>
     </plurals>
     <plurals name="home_rejected">
         <item quantity="one">El servidor rechazó %1$d cambio. Revísalo en Ajustes.</item>
         <item quantity="other">El servidor rechazó %1$d cambios. Revísalos en Ajustes.</item>
+        <item quantity="many">El servidor rechazó %1$d cambios. Revísalos en Ajustes.</item>
     </plurals>
     <plurals name="home_lines">
         <item quantity="one">%1$d producto</item>
         <item quantity="other">%1$d productos</item>
+        <item quantity="many">%1$d productos</item>
     </plurals>
 </resources>

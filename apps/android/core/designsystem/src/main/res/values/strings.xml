@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<resources>
+<!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
     <string name="ds_invalid_price">Escribe un precio, por ejemplo 28.50</string>
     <string name="ds_invalid_quantity">Escribe una cantidad mayor que 0</string>
     <string name="ds_source_purchase">Pagado</string>

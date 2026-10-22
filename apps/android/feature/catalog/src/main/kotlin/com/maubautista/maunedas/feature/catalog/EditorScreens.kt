@@ -228,6 +228,9 @@ fun VariantEditorRoute(
                 onAskDelete = viewModel::askDelete,
                 onDismissDelete = viewModel::dismissDelete,
                 onDelete = viewModel::delete,
+                onAskMerge = viewModel::askMerge,
+                onDismissMerge = viewModel::dismissMerge,
+                onMerge = viewModel::mergeIntoCodeOwner,
             ),
     )
 }
@@ -240,9 +243,15 @@ data class VariantEditorActions(
     val onAskDelete: () -> Unit = {},
     val onDismissDelete: () -> Unit = {},
     val onDelete: () -> Unit = {},
+    val onAskMerge: () -> Unit = {},
+    val onDismissMerge: () -> Unit = {},
+    val onMerge: () -> Unit = {},
 )
 
-/** S-10 (05 §5). Deleting is only offered to admins (RF-CAT-08). */
+/**
+ * S-10 (05 §5). Deleting is only offered to admins (RF-CAT-08), and so is merging this variant into the one that
+ * already has a typed code (RF-CAT-03).
+ */
 @Composable
 fun VariantEditorScreen(
     state: VariantEditorState,
@@ -256,6 +265,12 @@ fun VariantEditorScreen(
     ) {
         EditorHeader(if (isNew) R.string.editor_new_variant else R.string.editor_edit_variant, actions.onBack)
         VariantFields(state.variant, actions.onVariant, actions.onAddCode)
+        val owner = state.variant.codeOwner
+        if (!isNew && isAdmin && owner != null && state.variant.codeOwnerId != null) {
+            OutlinedButton(onClick = actions.onAskMerge, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) {
+                Text(stringResource(R.string.merge_code_owner, owner))
+            }
+        }
         Button(onClick = actions.onSave, enabled = !state.busy, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) {
             Text(stringResource(R.string.editor_save))
         }
@@ -264,6 +279,15 @@ fun VariantEditorScreen(
     if (state.confirmDelete) {
         ConfirmDelete(stringResource(R.string.editor_delete_variant_confirm, state.variant.label), actions.onDelete, actions.onDismissDelete)
     }
+    if (state.confirmMerge) {
+        AlertDialog(
+            onDismissRequest = actions.onDismissMerge,
+            text = { Text(stringResource(R.string.merge_variant_confirm, state.variant.label, state.variant.codeOwner.orEmpty())) },
+            confirmButton = { TextButton(onClick = actions.onMerge) { Text(stringResource(R.string.merge_confirm), color = MaterialTheme.colorScheme.error) } },
+            dismissButton = { TextButton(onClick = actions.onDismissMerge) { Text(stringResource(R.string.editor_cancel)) } },
+        )
+    }
+    state.message?.let { MergeMessage(it, actions.onDismissMerge) }
 }
 
 /** Measure, "a granel", the content assistant, the label and the barcodes (S-10). */

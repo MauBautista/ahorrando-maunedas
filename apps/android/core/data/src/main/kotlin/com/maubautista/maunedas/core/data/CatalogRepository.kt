@@ -13,7 +13,6 @@ import com.maubautista.maunedas.core.model.DisplayUnit
 import com.maubautista.maunedas.core.model.Measure
 import com.maubautista.maunedas.core.model.trimJs
 import com.maubautista.maunedas.core.pricing.BestPrices
-import com.maubautista.maunedas.core.pricing.PricePoint
 import com.maubautista.maunedas.core.pricing.SearchKey
 import com.maubautista.maunedas.core.pricing.Units
 import kotlinx.coroutines.flow.Flow
@@ -82,10 +81,7 @@ class CatalogRepository
             unit: DisplayUnit,
         ): BestPrice? {
             val since = clock.nowMillis() - BestPrices.WINDOW_MS
-            val points =
-                db.catalogQueries().pricePoints(productId, since).map {
-                    PricePoint(it.pointId, it.source, it.variantId, it.variantLabel, Measure.fromWire(it.measure), it.storeId, it.storeName, it.observedAt, it.centsPerBase)
-                }
+            val points = db.catalogQueries().pricePoints(productId, since).map { it.toPoint() }
             val best = BestPrices.pick(points, unit) ?: return null
             return BestPrice(best.variantLabel, Units.displayCents(best.centsPerBase, best.measure, unit), unit, best.storeName, best.source, best.observedAt)
         }

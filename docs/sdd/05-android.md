@@ -66,7 +66,7 @@ Dependencias permitidas: `feature → core:*`; `core:data → core:database, cor
 
 - Flujo unidireccional: `ViewModel` expone `StateFlow<XxxUiState>`; la pantalla llama funciones del ViewModel; efectos de una vez (navegar, snackbar) por `Channel`.
 - Los repositorios exponen `Flow` desde Room. Las escrituras pasan por `LocalWriter` (`04-sincronizacion.md` §6.2).
-- La red solo se usa en: login, lookup de código en catálogo, extracción de ticket, resolución de URL (E2) y los Workers.
+- La red solo se usa en: login, lookup de código en catálogo, extracción de ticket, resolución de URL (E2), la fusión de admin (`POST /v1/admin/merge`, decisión T57) y los Workers.
 - Listas largas (compras, catálogo) con Paging 3 sobre Room.
 - Navegación con rutas tipadas (`@Serializable` routes) en Navigation Compose.
 
@@ -190,6 +190,18 @@ Pestañas:
 3. **Historial**: selector de variante; gráfica con puntos de compra y anaquel y línea escalonada web (E2); filtros por fuente y tienda (RF-PRE-02).
 4. **Seguimiento** (E2): listings y reglas de alerta.
 - Acciones: editar, agregar variante, agregar foto, registrar precio de anaquel, (admin) eliminar o fusionar.
+- **Implementación (T-114):**
+  - **Datos:** `ProductPageRepository` (`core:data`) observa Room y aplica `PriceComparison` (`core:pricing`), que son `latestPoints` y `comparePrices` de la API.
+    - "Presentaciones" muestra el último precio por tienda y fuente.
+    - "Comparar" toma los 90 días con el mejor de `pickBest`.
+    - Con los datos de la prueba de la API da las mismas filas.
+  - **Comparar en tarjetas:** cada presentación × tienda es una tarjeta (último, mínimo, promedio de 90 días y número de precios), porque una tabla no cabe al 200 % en 360 dp. La más barata se resalta con "Más barato"; las de otra medida van aparte, "Otras medidas (no se comparan)".
+  - **Fusión (admin, T57):** "Fusionar con otro producto" y, en cada presentación, "Fusionar con otra presentación".
+    - Se busca el destino, que en presentaciones debe ser de la misma medida, y se confirma con lo que se mueve.
+    - Necesita red y que no haya cambios por subir; después pide un sync.
+    - Al fusionar el producto, la ficha del destino reemplaza a la actual.
+    - En S-10, un código que ya es de otra presentación ofrece al admin "Fusionar esta presentación con «…»" (RF-CAT-03).
+  - **Pendientes:** el historial llega con T-115, la foto con T-117 y el precio de anaquel con T-125.
 
 ### S-09 Editor de producto
 Nombre, marca, categoría (árbol), etiquetas (chips con alta rápida), unidad de despliegue (sugerida por la medida de la primera variante), notas.
