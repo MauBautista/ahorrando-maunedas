@@ -19,7 +19,6 @@ import androidx.navigation.compose.rememberNavController
 import com.maubautista.maunedas.core.auth.AuthService
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
 import com.maubautista.maunedas.feature.auth.LoginRoute
-import com.maubautista.maunedas.feature.home.HomeRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
@@ -27,8 +26,9 @@ import javax.inject.Inject
 @Serializable
 object LoginDestination
 
+/** Signed in: the bottom-bar screens ([MainShell]). */
 @Serializable
-object HomeDestination
+object MainDestination
 
 /** Single activity (05 §4). With a saved session it opens at home without network (RF-AUTH-08). */
 @AndroidEntryPoint
@@ -43,18 +43,18 @@ class MainActivity : ComponentActivity() {
                 Surface(Modifier.fillMaxSize()) {
                     // Wait for the session to be read: no flash of the login screen for someone signed in.
                     var start by remember { mutableStateOf<Any?>(null) }
-                    LaunchedEffect(Unit) { start = if (auth.isSignedIn()) HomeDestination else LoginDestination }
+                    LaunchedEffect(Unit) { start = if (auth.isSignedIn()) MainDestination else LoginDestination }
                     start?.let { first ->
                         val nav = rememberNavController()
                         NavHost(navController = nav, startDestination = first, modifier = Modifier.safeDrawingPadding()) {
                             composable<LoginDestination> {
                                 LoginRoute(onSignedIn = {
-                                    nav.navigate(HomeDestination) { popUpTo<LoginDestination> { inclusive = true } }
+                                    nav.navigate(MainDestination) { popUpTo<LoginDestination> { inclusive = true } }
                                 })
                             }
-                            composable<HomeDestination> {
-                                HomeRoute(onSignedOut = {
-                                    nav.navigate(LoginDestination) { popUpTo<HomeDestination> { inclusive = true } }
+                            composable<MainDestination> {
+                                MainShell(onSignedOut = {
+                                    nav.navigate(LoginDestination) { popUpTo<MainDestination> { inclusive = true } }
                                 })
                             }
                         }

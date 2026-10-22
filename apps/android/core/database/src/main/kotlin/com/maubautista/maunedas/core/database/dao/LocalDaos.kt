@@ -10,6 +10,7 @@ import com.maubautista.maunedas.core.database.entity.OutboxEntry
 import com.maubautista.maunedas.core.database.entity.PendingUploadEntity
 import com.maubautista.maunedas.core.database.entity.SyncCursorEntity
 import com.maubautista.maunedas.core.database.entity.SyncIssueEntity
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface OutboxDao {
@@ -65,6 +66,9 @@ interface OutboxDao {
     @Query("SELECT count(*) FROM outbox")
     suspend fun count(): Int
 
+    @Query("SELECT count(*) FROM outbox")
+    fun observeCount(): Flow<Int>
+
     /** A local change of that row is waiting to be pushed (04 §6.4). */
     @Query("SELECT EXISTS (SELECT 1 FROM outbox WHERE table_name = :tableName AND row_id = :rowId)")
     suspend fun contains(
@@ -97,6 +101,9 @@ interface PendingUploadDao {
 
     @Query("SELECT count(*) FROM pending_uploads")
     suspend fun count(): Int
+
+    @Query("SELECT count(*) FROM pending_uploads")
+    fun observeCount(): Flow<Int>
 }
 
 @Dao
@@ -115,6 +122,9 @@ interface SyncIssueDao {
 
     @Query("SELECT * FROM sync_issues WHERE resolved_at IS NULL ORDER BY created_at, id")
     suspend fun unresolved(): List<SyncIssueEntity>
+
+    @Query("SELECT count(*) FROM sync_issues WHERE resolved_at IS NULL")
+    fun observeUnresolvedCount(): Flow<Int>
 
     @Query("UPDATE sync_issues SET resolved_at = :at WHERE id = :id")
     suspend fun resolve(

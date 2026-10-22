@@ -116,6 +116,12 @@ Login ─► Inicio ─┬─► Compras ─► Editor de compra ─┬─► Ed
 
 Deep links: `maunedas://variant/{id}` (alertas, E2), `maunedas://purchase/{id}`.
 
+**Implementación (T-111):**
+- `MainShell` (app) tiene la barra y su propio `NavHost`; cada pestaña guarda su estado, y Atrás desde cualquiera vuelve a Inicio.
+- Las pantallas sin barra (editores, fichas) irán en el `NavHost` raíz, junto al login.
+- Compras, Escanear y Catálogo muestran `ComingSoon` (`core:ui`) hasta su tarea; Ajustes es provisional hasta T-126.
+- **Íconos:** Material Symbols Outlined, como vectores en `core:designsystem/res/drawable` (`ic_*`).
+
 ## 5. Pantallas
 
 ### S-01 Login — ver `02-autenticacion.md` §6.1
@@ -125,6 +131,11 @@ Deep links: `maunedas://variant/{id}` (alertas, E2), `maunedas://purchase/{id}`.
 - "Compras recientes" (5) con tienda, fecha, total y estado.
 - "Gasto del mes": suma de `total_cents` (o suma de líneas si no hay total) de compras confirmadas del mes en curso.
 - Aviso si hay borradores abiertos o cambios rechazados; indicador discreto si hay pendientes de sincronizar.
+- **Implementación (T-111):**
+  - Sin `total_cents`, el total es Σ `final_cents` de las líneas vivas − el descuento de ticket, nunca menos de cero (como RF-COM-06). Lo usan el gasto del mes (`PurchaseQueryDao.spent`) y la lista (`recent`).
+  - El mes es el de la Ciudad de México (`HouseholdTime`). Las horas siguen el formato de 12 o 24 horas del teléfono ("10:46 p.m." o "22:46"; `Dates`, `clock24h()` en `core:ui`).
+  - "Pendientes" suma la cola de cambios y las fotos por subir; "rechazados" son los `sync_issues` sin resolver.
+  - Mientras no existan sus pantallas, cada acción abre la pestaña que la tendrá: Nueva compra y Foto de ticket → Compras; Precio de anaquel y Escanear → Escanear; los borradores → Compras; los rechazados → Ajustes.
 
 ### S-03 Compras
 - Lista paginada agrupada por día: tienda (+ sucursal), hora, total, número de líneas, chip "Borrador".

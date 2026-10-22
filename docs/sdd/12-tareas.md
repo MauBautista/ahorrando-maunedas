@@ -232,8 +232,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** usuario/contraseña y Google funcionan contra dev; mensajes de 02 §8; sesión offline; cierre de sesión con advertencia de pendientes. Incluye confirmar el correo sintético `@maunedas.local` con el SDK de Android (pendiente del spike E), y conectar en la app `IdTokenProvider` y `CurrentUser` (Firebase), `ApiConfig`/`ClientInfo`, `HiltWorkerFactory` para WorkManager, `ForegroundSync` y `schedulePeriodic` al iniciar sesión (T-103, T-104).
 - **Resultado (2026-10-22):** `core:auth`, pantalla S-01, Inicio provisional con cierre de sesión, app conectada (Firebase, WorkManager con Hilt, sync al entrar); 10 pruebas (ViewModel con mensajes de 02 §8, `LoginFinisher` con MockWebServer, cierre de sesión que borra todo, sesión). Probado en un Pixel 8 Pro (Android 17) contra dev: contraseña incorrecta, login con `mau@maunedas.local` (cierra el spike E), arranque sin red, cierre de sesión (borra el dispositivo) y Google; el sync quedó en 200 cada 60 s en primer plano. La prueba encontró que el pull mandaba `"tables": null` y el Worker respondía 400 (PR #40, T53).
 
-### [ ] T-111 · Inicio (S-02)
+### [x] T-111 · Inicio (S-02)
 - **Depende de:** T-110, T-104
+- **Resultado (2026-10-22):**
+  - S-02 con las cuatro acciones, el gasto del mes (hora de la Ciudad de México), las cinco compras recientes con su chip "Borrador", avisos de borradores y de cambios rechazados, e indicador de pendientes.
+  - Barra inferior de 05 §4; Ajustes provisional con sync y cierre de sesión.
+  - `core:data` (`PurchaseRepository`, `SyncHealthRepository`) y `core:ui` (fechas en español, `ComingSoon`).
+  - 18 pruebas: consultas de Room, meses de la Ciudad de México, fechas (12 y 24 horas) y pantalla, incluida la de fuente al 200 %, ahora sin el falso positivo de desborde (T54).
+  - Revisado en un Pixel 8 Pro: Inicio, pestañas, Atrás a Inicio y la hora en el formato del teléfono.
 ### [ ] T-112 · Catálogo (S-07)
 - **Depende de:** T-104, T-106, T-101 · **Hecho cuando:** búsqueda local sin acentos, filtros por categoría (con subcategorías) y etiqueta, mejor precio por unidad por tarjeta.
 ### [ ] T-113 · Editor de producto y variante (S-09, S-10)

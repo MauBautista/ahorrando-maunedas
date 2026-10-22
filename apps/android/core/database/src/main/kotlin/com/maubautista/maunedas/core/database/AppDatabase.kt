@@ -75,6 +75,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun pricePoints(): PricePointDao
 
+    abstract fun purchaseQueries(): PurchaseQueryDao
+
     companion object {
         const val NAME = "maunedas.db"
     }
