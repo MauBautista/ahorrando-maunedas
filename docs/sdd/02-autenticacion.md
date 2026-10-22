@@ -419,6 +419,19 @@ Implementación (T-103, `core:network`): el interceptor y el autenticador no dep
 - Si una llamada devuelve `USER_DISABLED` o `USER_NOT_ALLOWED`: cerrar sesión (RF-AUTH-07).
 - Cerrar sesión: si `outbox` o `pending_uploads` no están vacíos → diálogo "Tienes N cambios sin sincronizar. Si sales, se perderán." Al confirmar: `DELETE /v1/devices/:id` (si hay red), `auth.signOut()`, borrar Room y archivos locales, limpiar DataStore.
 
+### 6.5 Implementación (T-110)
+
+- **`core:auth`:**
+  - `FirebaseAuthService`, que implementa `AuthService`, la interfaz que usa la pantalla y que las pruebas falsean.
+  - `LoginFinisher` (`/v1/me` → sesión → `POST /v1/devices`; ante 403 o sin red cierra Firebase).
+  - `SessionStore`, en DataStore; también es el `CurrentUser` de sync.
+  - `FirebaseIdTokenProvider` y `SignOutCleaner`.
+- **Errores del login:** "sin red" es `NoNetwork` tanto si falla Firebase como si falla `/v1/me`, y cancelar la hoja de Google no muestra error.
+- **Al entrar:** `sync-periodic` más un `sync-now`.
+- **Al cerrar sesión:** con red, borra el dispositivo; luego cierra Firebase, cancela los trabajos, vacía Room y `filesDir/images`, la sesión y el `device_id`.
+- **App:** `MainActivity` espera a leer la sesión antes de elegir la primera pantalla (sin destello del login), configura WorkManager con `HiltWorkerFactory` (sin el inicializador por omisión) y registra `ForegroundSync` en `ProcessLifecycleOwner`.
+- **Inicio provisional:** mientras llega S-02 (T-111), muestra el estado del sync, "Sincronizar ahora" y "Cerrar sesión" con el aviso de pendientes.
+
 ## 7. Web (T-160)
 
 ```ts
