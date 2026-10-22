@@ -267,8 +267,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - Fusión de admin de productos y presentaciones con llamada directa (T57), también desde un código repetido en S-10.
   - La tarjeta del catálogo ya abre la ficha.
   - 19 pruebas: regla del comparador, ficha sobre Room con los datos de la API, fusión con MockWebServer y pantallas (incluida la fuente al 200 % en ambas pestañas).
-### [ ] T-115 · Ficha: historial
+### [x] T-115 · Ficha: historial
 - **Depende de:** T-114 · **Hecho cuando:** gráfica Vico con puntos por fuente y filtros.
+- **Resultado (2026-10-22):**
+  - Pestaña "Historial" con Vico 3.3.1: un color por fuente, solo puntos, x por día de la Ciudad de México.
+  - Filtros por presentación, fuente, periodo (3 meses, 1 año por omisión, todo) y tienda.
+  - Debajo, la lista de precios del más nuevo al más viejo con "Con promoción"; la gráfica tiene una descripción para lectores de pantalla.
+  - Con los datos de la prueba de historial de la API da los mismos puntos: cupón prorrateado, solo confirmadas, otra medida en su unidad.
+  - 9 pruebas (T58).
 ### [ ] T-116 · Escáner y resultado (S-11, S-12)
 - **Depende de:** T-113, T-036 · **Hecho cuando:** los cuatro caminos de S-12 funcionan, incluido sin red.
 - **Incluye (T56):** el botón "Escanear código" del editor de presentación (S-10); hoy los códigos se escriben a mano (`source = 'manual'`).
@@ -365,6 +371,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-221 · Android: reglas, historial de alertas, FCM y deep link (S-22, S-23)
 - **Docs:** 08 §7 · **Depende de:** T-213, T-220
 ### [ ] T-222 · Android: serie web escalonada y estado del agente
+- **Nota (T-115):** hoy la serie web se dibuja como puntos, igual que las otras; esta tarea la convierte en escalones hasta `web_confirmed_until`.
 - **Depende de:** T-115, T-211
 ### [ ] T-223 · Web: seguimiento, alertas y agente (W-20 a W-22)
 - **Depende de:** T-210, T-212, T-161

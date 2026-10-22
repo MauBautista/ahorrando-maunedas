@@ -16,6 +16,20 @@ data class MergeCandidateRow(
     @ColumnInfo(name = "search_key") val searchKey: String,
 )
 
+/** A point of a variant's price history (RF-PRE-02), as `GET /v1/variants/:id/history` lists it. */
+data class HistoryPointRow(
+    @ColumnInfo(name = "point_id") val pointId: String,
+    val source: String,
+    @ColumnInfo(name = "store_id") val storeId: String,
+    @ColumnInfo(name = "store_name") val storeName: String?,
+    @ColumnInfo(name = "observed_at") val observedAt: Long,
+    @ColumnInfo(name = "list_unit_cents") val listUnitCents: Long,
+    @ColumnInfo(name = "effective_unit_cents") val effectiveUnitCents: Long?,
+    @ColumnInfo(name = "cents_per_base") val centsPerBase: Double,
+    @ColumnInfo(name = "has_promo") val hasPromo: Boolean,
+    val measure: String,
+)
+
 /** What the product page (S-08) observes; prices come from [CatalogQueryDao.allPricePoints]. */
 @Dao
 interface ProductPageDao {
@@ -40,6 +54,18 @@ interface ProductPageDao {
         """,
     )
     fun barcodes(productId: String): Flow<List<BarcodeEntity>>
+
+    /** Every point of a variant, oldest first (the history filters them by period, source and store). */
+    @Query(
+        """
+        SELECT pp.point_id, pp.source, pp.store_id, s.name AS store_name, pp.observed_at, pp.list_unit_cents,
+               pp.effective_unit_cents, pp.cents_per_base, pp.has_promo, v.measure
+        FROM v_price_points pp JOIN variants v ON v.id = pp.variant_id LEFT JOIN stores s ON s.id = pp.store_id
+        WHERE pp.variant_id = :variantId AND pp.cents_per_base IS NOT NULL
+        ORDER BY pp.observed_at, pp.point_id
+        """,
+    )
+    fun variantPoints(variantId: String): Flow<List<HistoryPointRow>>
 
     /** Other live products, to merge [exceptId] into one of them. */
     @Query("SELECT id, name, brand AS detail, search_key FROM products WHERE deleted_at IS NULL AND id != :exceptId ORDER BY search_key, id")

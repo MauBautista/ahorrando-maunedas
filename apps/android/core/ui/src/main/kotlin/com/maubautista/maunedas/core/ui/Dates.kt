@@ -2,6 +2,7 @@ package com.maubautista.maunedas.core.ui
 
 import com.maubautista.maunedas.core.model.HouseholdTime
 import java.time.Instant
+import java.time.LocalDate
 import java.time.YearMonth
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
@@ -50,6 +51,22 @@ object Dates {
                 }
         }
     }
+
+    /** "20 oct" in the current year, "20 oct 2025" before it (chart axes, lists). */
+    fun shortDate(
+        at: Long,
+        now: Long,
+    ): String {
+        val date = local(at)
+        val base = "${date.dayOfMonth} ${SHORT_MONTHS[date.monthValue - 1]}"
+        return if (date.year == local(now).year) base else "$base ${date.year}"
+    }
+
+    /** [shortDate] of a calendar day given as [HouseholdTime.epochDay]. */
+    fun shortDateOfDay(
+        epochDay: Long,
+        now: Long,
+    ): String = shortDate(LocalDate.ofEpochDay(epochDay).atTime(12, 0).atZone(HouseholdTime.ZONE).toInstant().toEpochMilli(), now)
 
     /** How old a datum is, by calendar days in Mexico City: "hoy", "ayer", "hace 3 días", "hace 2 semanas", "hace 2 meses". */
     fun ago(
