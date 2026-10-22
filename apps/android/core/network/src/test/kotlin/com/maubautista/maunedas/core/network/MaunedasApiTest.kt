@@ -165,7 +165,8 @@ class MaunedasApiTest {
             )
             val pulled = api.pull(PullRequest(cursors = mapOf("products" to PullCursor(117, "p0"), "stores" to PullCursor.START)))
             assertEquals(
-                """{"cursors":{"products":[117,"p0"],"stores":[0,""]},"limit":100,"tables":null}""",
+                // No "tables" key: the Worker rejects null (found on the first device test).
+                """{"cursors":{"products":[117,"p0"],"stores":[0,""]},"limit":100}""",
                 server.takeRequest().body!!.utf8(),
             )
             assertEquals(PullCursor(118, "p1"), pulled.cursors["products"])
@@ -185,6 +186,14 @@ class MaunedasApiTest {
             )
             assertEquals("BARCODE_TAKEN", pushed.conflicts.single().reason)
             assertEquals("v9", pushed.conflicts.single().details!!.jsonObject["variant_id"]!!.jsonPrimitive.content)
+        }
+
+    @Test
+    fun aPullOfSomeTablesSendsTheirNames() =
+        runTest {
+            server.enqueue(json(200, """{"changes":{},"cursors":{},"has_more":false,"server_time":1,"schema_version":1}"""))
+            api.pull(PullRequest(cursors = emptyMap(), tables = listOf("stores")))
+            assertEquals("""{"cursors":{},"limit":100,"tables":["stores"]}""", server.takeRequest().body!!.utf8())
         }
 
     @Test
