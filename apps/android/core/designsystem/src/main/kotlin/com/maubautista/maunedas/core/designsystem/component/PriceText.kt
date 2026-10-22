@@ -22,8 +22,17 @@ import com.maubautista.maunedas.core.designsystem.Spacing
 import com.maubautista.maunedas.core.model.DisplayUnit
 import com.maubautista.maunedas.core.model.Money
 
-/** Where a price comes from; the UI always tells them apart (ARQUITECTURA §3.3). */
-enum class PriceSource { PURCHASE, SHELF, WEB }
+/** Where a price comes from; the UI always tells them apart (ARQUITECTURA §3.3). [wire] is `v_price_points.source`. */
+enum class PriceSource(val wire: String) {
+    PURCHASE("purchase"),
+    SHELF("shelf"),
+    WEB("web"),
+    ;
+
+    companion object {
+        fun fromWire(value: String): PriceSource? = entries.firstOrNull { it.wire == value }
+    }
+}
 
 @Composable
 fun DisplayUnit.label(): String =
@@ -53,15 +62,7 @@ fun PriceText(
     val price = MaterialTheme.typography.titleMedium.toSpanStyle()
     val secondary = MaterialTheme.typography.bodyMedium.toSpanStyle().copy(color = MaterialTheme.colorScheme.onSurfaceVariant)
     Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-        if (source != null) {
-            val (color, name) =
-                when (source) {
-                    PriceSource.PURCHASE -> MaunedasTheme.extended.purchase to stringResource(R.string.ds_source_purchase)
-                    PriceSource.SHELF -> MaunedasTheme.extended.shelf to stringResource(R.string.ds_source_shelf)
-                    PriceSource.WEB -> MaunedasTheme.extended.web to stringResource(R.string.ds_source_web)
-                }
-            Box(Modifier.size(Spacing.md).background(color, CircleShape).semantics { contentDescription = name })
-        }
+        if (source != null) SourceDot(source)
         // One text with two styles: at large font sizes the price per unit wraps to the next line (RNF-08).
         Text(
             buildAnnotatedString {
@@ -74,4 +75,30 @@ fun PriceText(
             style = MaterialTheme.typography.bodyMedium,
         )
     }
+}
+
+/** A price per unit alone, "$26.50/L", with the dot of its source (catalog cards, comparator). */
+@Composable
+fun UnitPriceText(
+    perUnitCents: Long,
+    unit: DisplayUnit,
+    source: PriceSource,
+    modifier: Modifier = Modifier,
+) {
+    Row(modifier = modifier, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        SourceDot(source)
+        Text(stringResource(R.string.ds_per_unit, Money.format(perUnitCents), unit.label()), style = MaterialTheme.typography.titleMedium)
+    }
+}
+
+/** The source color, which screen readers announce by name. */
+@Composable
+private fun SourceDot(source: PriceSource) {
+    val (color, name) =
+        when (source) {
+            PriceSource.PURCHASE -> MaunedasTheme.extended.purchase to stringResource(R.string.ds_source_purchase)
+            PriceSource.SHELF -> MaunedasTheme.extended.shelf to stringResource(R.string.ds_source_shelf)
+            PriceSource.WEB -> MaunedasTheme.extended.web to stringResource(R.string.ds_source_web)
+        }
+    Box(Modifier.size(Spacing.md).background(color, CircleShape).semantics { contentDescription = name })
 }

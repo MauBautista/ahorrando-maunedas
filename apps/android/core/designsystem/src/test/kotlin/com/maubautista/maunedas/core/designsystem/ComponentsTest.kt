@@ -25,6 +25,7 @@ import com.maubautista.maunedas.core.designsystem.component.MoneyField
 import com.maubautista.maunedas.core.designsystem.component.PriceSource
 import com.maubautista.maunedas.core.designsystem.component.PriceText
 import com.maubautista.maunedas.core.designsystem.component.QuantityField
+import com.maubautista.maunedas.core.designsystem.component.UnitPriceText
 import com.maubautista.maunedas.core.model.DisplayUnit
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
@@ -84,6 +85,15 @@ class ComponentsTest {
         }
         compose.onNodeWithText("$159.00  $26.50/L").assertExists()
         compose.onNodeWithContentDescription("Anaquel").assertExists()
+    }
+
+    @Test
+    fun unitPriceTextShowsOnlyThePricePerUnitAndItsSource() {
+        compose.setContent { MaunedasTheme { UnitPriceText(perUnitCents = 2_650, unit = DisplayUnit.L, source = PriceSource.WEB) } }
+        compose.onNodeWithText("$26.50/L").assertExists()
+        compose.onNodeWithContentDescription("Web").assertExists()
+        assertEquals(PriceSource.SHELF, PriceSource.fromWire("shelf"))
+        assertEquals(null, PriceSource.fromWire("otro"))
     }
 
     /** RNF-08 (05 §7): at 200 % font scale on a 360 dp phone no text is cut and controls stay ≥ 48 dp. */

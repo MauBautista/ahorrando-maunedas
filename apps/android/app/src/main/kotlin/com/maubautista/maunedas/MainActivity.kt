@@ -18,6 +18,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.maubautista.maunedas.core.auth.AuthService
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
+import androidx.compose.ui.res.stringResource
+import com.maubautista.maunedas.core.ui.ComingSoon
 import com.maubautista.maunedas.feature.auth.LoginRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
@@ -29,6 +31,12 @@ object LoginDestination
 /** Signed in: the bottom-bar screens ([MainShell]). */
 @Serializable
 object MainDestination
+
+/** S-08, without the bottom bar; T-114 builds it. */
+@Serializable
+data class ProductDestination(
+    val id: String,
+)
 
 /** Single activity (05 §4). With a saved session it opens at home without network (RF-AUTH-08). */
 @AndroidEntryPoint
@@ -53,10 +61,12 @@ class MainActivity : ComponentActivity() {
                                 })
                             }
                             composable<MainDestination> {
-                                MainShell(onSignedOut = {
-                                    nav.navigate(LoginDestination) { popUpTo<MainDestination> { inclusive = true } }
-                                })
+                                MainShell(
+                                    onSignedOut = { nav.navigate(LoginDestination) { popUpTo<MainDestination> { inclusive = true } } },
+                                    onOpenProduct = { nav.navigate(ProductDestination(it)) },
+                                )
                             }
+                            composable<ProductDestination> { ComingSoon(stringResource(R.string.product_title)) }
                         }
                     }
                 }

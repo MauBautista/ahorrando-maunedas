@@ -34,6 +34,20 @@ class DatesTest {
     }
 
     @Test
+    fun theAgeOfADatumCountsMexicoCityDays() {
+        assertEquals("hoy", Dates.ago(at("2026-10-22T06:00:00Z"), now))
+        // 23:30 on the 21st in Mexico City, half an hour before midnight: already "ayer".
+        assertEquals("ayer", Dates.ago(at("2026-10-22T05:30:00Z"), now))
+        assertEquals("hace 3 días", Dates.ago(at("2026-10-19T18:00:00Z"), now))
+        assertEquals("hace 13 días", Dates.ago(at("2026-10-09T18:00:00Z"), now))
+        assertEquals("hace 2 semanas", Dates.ago(at("2026-10-08T18:00:00Z"), now))
+        assertEquals("hace 8 semanas", Dates.ago(at("2026-08-24T18:00:00Z"), now))
+        assertEquals("hace 2 meses", Dates.ago(at("2026-08-23T18:00:00Z"), now))
+        // A clock a little ahead on another phone is not "in the future".
+        assertEquals("hoy", Dates.ago(at("2026-10-23T05:00:00Z"), now))
+    }
+
+    @Test
     fun aTwelveHourClockSaysAmOrPmLikeMexicanSpanish() {
         // Midnight and noon are 12, not 0.
         assertEquals("12:05 a.m.", Dates.time(at("2026-10-22T06:05:00Z"), clock24h = false))

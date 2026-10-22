@@ -4,6 +4,7 @@ import com.maubautista.maunedas.core.model.HouseholdTime
 import java.time.Instant
 import java.time.YearMonth
 import java.time.ZonedDateTime
+import java.time.temporal.ChronoUnit
 
 /**
  * Dates in Mexican Spanish, in Mexico City time (CLAUDE.md rules 2 and 14). The names are written here, not
@@ -47,6 +48,21 @@ object Dates {
                 } else {
                     "${date.dayOfMonth} ${SHORT_MONTHS[date.monthValue - 1]} ${date.year}"
                 }
+        }
+    }
+
+    /** How old a datum is, by calendar days in Mexico City: "hoy", "ayer", "hace 3 días", "hace 2 semanas", "hace 2 meses". */
+    fun ago(
+        at: Long,
+        now: Long,
+    ): String {
+        val days = ChronoUnit.DAYS.between(local(at).toLocalDate(), local(now).toLocalDate())
+        return when {
+            days <= 0 -> "hoy"
+            days == 1L -> "ayer"
+            days < 14 -> "hace $days días"
+            days < 60 -> "hace ${days / 7} semanas"
+            else -> "hace ${days / 30} meses"
         }
     }
 

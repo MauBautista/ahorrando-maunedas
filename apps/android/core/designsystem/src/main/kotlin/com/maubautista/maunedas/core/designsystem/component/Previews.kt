@@ -34,6 +34,7 @@ fun ComponentGallery() {
         PriceText(cents = 15_900, perUnitCents = 2_650, unit = DisplayUnit.L, source = PriceSource.PURCHASE)
         PriceText(cents = 2_700, perUnitCents = 2_700, unit = DisplayUnit.L, source = PriceSource.SHELF)
         PriceText(cents = 32_900, perUnitCents = 685, unit = DisplayUnit.PZ, source = PriceSource.WEB)
+        UnitPriceText(perUnitCents = 2_650, unit = DisplayUnit.L, source = PriceSource.PURCHASE)
     }
 }
 

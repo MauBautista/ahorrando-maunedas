@@ -22,6 +22,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import com.maubautista.maunedas.core.ui.ComingSoon
+import com.maubautista.maunedas.feature.catalog.CatalogRoute
 import com.maubautista.maunedas.feature.home.HomeActions
 import com.maubautista.maunedas.feature.home.HomeRoute
 import com.maubautista.maunedas.feature.settings.SettingsRoute
@@ -61,7 +62,10 @@ private enum class Tab(
 
 /** Bottom bar: Inicio · Compras · Escanear · Catálogo · Ajustes (05 §4). */
 @Composable
-fun MainShell(onSignedOut: () -> Unit) {
+fun MainShell(
+    onSignedOut: () -> Unit,
+    onOpenProduct: (String) -> Unit,
+) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
     Scaffold(
@@ -95,7 +99,7 @@ fun MainShell(onSignedOut: () -> Unit) {
             }
             composable<PurchasesTab> { ComingSoon(stringResource(R.string.tab_purchases)) }
             composable<ScanTab> { ComingSoon(stringResource(R.string.tab_scan)) }
-            composable<CatalogTab> { ComingSoon(stringResource(R.string.tab_catalog)) }
+            composable<CatalogTab> { CatalogRoute(onOpenProduct = onOpenProduct) }
             composable<SettingsTab> { SettingsRoute(onSignedOut = onSignedOut) }
         }
     }
