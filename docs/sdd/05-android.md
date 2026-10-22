@@ -141,6 +141,13 @@ Deep links: `maunedas://variant/{id}` (alertas, E2), `maunedas://purchase/{id}`.
 - Lista paginada agrupada por día: tienda (+ sucursal), hora, total, número de líneas, chip "Borrador".
 - Filtros: tienda, rango de fechas, estado.
 - Vacío: "Aún no hay compras. Toca + para registrar la primera."
+- **Implementación (T-120, decisión T59):**
+  - **Datos:** `PurchaseQueryDao.page` es el orden de `GET /v1/purchases` (`purchased_at` y `id` descendentes) con filtros opcionales e intervalo inclusivo. El total sigue la regla de S-02.
+  - **Agrupación:** encabezados por día de la Ciudad de México con `insertSeparators`.
+  - **Fechas:** "Este mes", "Mes pasado", "Últimos 3 meses" (este y los dos anteriores) o "Elegir fechas…" con el `DateRangePicker`, que da medianoche UTC de cada día; se convierte a días completos de la Ciudad de México.
+  - **Tiendas del filtro:** las que tienen compras vivas.
+  - **Sin filtros y sin compras** se ve el mensaje de vacío; con filtros, "Ninguna compra coincide con los filtros."
+  - **Navegación:** "Nueva compra" (aquí y en Inicio) y tocar una compra abren `PurchaseEditorDestination`, que muestra "llega pronto" hasta T-121.
 
 ### S-04 Editor de compra (RF-COM-01 a 09, RF-TIC-01)
 Encabezado:

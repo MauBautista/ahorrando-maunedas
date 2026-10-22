@@ -284,8 +284,15 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-118 · Recorte en el teléfono (opcional)
 - **Docs:** 10 §5 · **Depende de:** T-117
 
-### [ ] T-120 · Lista de compras (S-03)
+### [x] T-120 · Lista de compras (S-03)
 - **Depende de:** T-104
+- **Resultado (2026-10-22):**
+  - Lista paginada (Paging 3 sobre Room), de la más nueva a la más vieja, agrupada por día de la Ciudad de México ("Hoy", "Ayer", "martes 20 de octubre").
+  - Cada compra con tienda · sucursal, hora, productos, total (sin total de ticket, la regla de Inicio) y "Borrador".
+  - Filtros: tienda (las que tienen compras), fechas (este mes, mes pasado, últimos 3 meses o días elegidos) y estado.
+  - Mensajes distintos para "sin compras" y "sin coincidencias".
+  - "Nueva compra" y tocar una compra abren la ruta del editor, que llega con T-121 (T59).
+  - 13 pruebas.
 ### [ ] T-121 · Editor de compra y de línea (S-04, S-05)
 - **Docs:** 05 §5, 09 §6.1 · **Depende de:** T-120, T-112, T-101
 - **Hecho cuando:** promociones calculadas según fixtures, a granel, descuentos de ticket, validación del total, borrado en cascada (04 §6.2), autoguardado.

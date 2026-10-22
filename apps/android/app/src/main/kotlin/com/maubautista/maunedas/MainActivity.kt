@@ -18,6 +18,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.maubautista.maunedas.core.auth.AuthService
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
+import androidx.compose.ui.res.stringResource
+import com.maubautista.maunedas.core.ui.ComingSoon
 import com.maubautista.maunedas.feature.auth.LoginRoute
 import com.maubautista.maunedas.feature.catalog.ProductEditorRoute
 import com.maubautista.maunedas.feature.catalog.ProductPageRoute
@@ -43,6 +45,12 @@ data class ProductDestination(
 @Serializable
 data class ProductEditorDestination(
     val productId: String? = null,
+)
+
+/** S-04; null [purchaseId] starts a new purchase. The editor arrives with T-121. */
+@Serializable
+data class PurchaseEditorDestination(
+    val purchaseId: String? = null,
 )
 
 /** S-10; null [variantId] adds a variant to the product. */
@@ -79,8 +87,10 @@ class MainActivity : ComponentActivity() {
                                     onSignedOut = { nav.navigate(LoginDestination) { popUpTo<MainDestination> { inclusive = true } } },
                                     onOpenProduct = { nav.navigate(ProductDestination(it)) },
                                     onNewProduct = { nav.navigate(ProductEditorDestination()) },
+                                    onOpenPurchase = { nav.navigate(PurchaseEditorDestination(it)) },
                                 )
                             }
+                            composable<PurchaseEditorDestination> { ComingSoon(stringResource(R.string.purchase_editor_title)) }
                             composable<ProductDestination> {
                                 ProductPageRoute(
                                     onBack = { nav.popBackStack() },

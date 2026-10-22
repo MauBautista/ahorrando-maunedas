@@ -25,6 +25,7 @@ import com.maubautista.maunedas.core.ui.ComingSoon
 import com.maubautista.maunedas.feature.catalog.CatalogRoute
 import com.maubautista.maunedas.feature.home.HomeActions
 import com.maubautista.maunedas.feature.home.HomeRoute
+import com.maubautista.maunedas.feature.purchases.PurchasesRoute
 import com.maubautista.maunedas.feature.settings.SettingsRoute
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
@@ -66,6 +67,7 @@ fun MainShell(
     onSignedOut: () -> Unit,
     onOpenProduct: (String) -> Unit,
     onNewProduct: () -> Unit,
+    onOpenPurchase: (String?) -> Unit,
 ) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
@@ -85,20 +87,21 @@ fun MainShell(
     ) { padding ->
         NavHost(navController = nav, startDestination = HomeTab, modifier = Modifier.padding(padding)) {
             composable<HomeTab> {
-                // Until their screens exist, each action opens the tab that will hold it (T-116, T-121, T-123, T-125).
+                // Until their screens exist, the receipt photo, shelf price and scan open the tab that will hold them
+                // (T-116, T-123, T-125).
                 HomeRoute(
                     HomeActions(
-                        newPurchase = { nav.openTab(Tab.PURCHASES) },
+                        newPurchase = { onOpenPurchase(null) },
                         receiptPhoto = { nav.openTab(Tab.PURCHASES) },
                         shelfPrice = { nav.openTab(Tab.SCAN) },
                         scan = { nav.openTab(Tab.SCAN) },
-                        openPurchase = { nav.openTab(Tab.PURCHASES) },
+                        openPurchase = { onOpenPurchase(it) },
                         openDrafts = { nav.openTab(Tab.PURCHASES) },
                         openRejected = { nav.openTab(Tab.SETTINGS) },
                     ),
                 )
             }
-            composable<PurchasesTab> { ComingSoon(stringResource(R.string.tab_purchases)) }
+            composable<PurchasesTab> { PurchasesRoute(onOpenPurchase = onOpenPurchase, onNewPurchase = { onOpenPurchase(null) }) }
             composable<ScanTab> { ComingSoon(stringResource(R.string.tab_scan)) }
             composable<CatalogTab> { CatalogRoute(onOpenProduct = onOpenProduct, onNewProduct = onNewProduct) }
             composable<SettingsTab> { SettingsRoute(onSignedOut = onSignedOut) }
