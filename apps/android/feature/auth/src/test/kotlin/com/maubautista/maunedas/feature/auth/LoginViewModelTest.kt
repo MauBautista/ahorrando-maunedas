@@ -42,6 +42,11 @@ class LoginViewModelTest {
         override suspend fun pendingChanges() = 0
 
         override suspend fun signOut() = Unit
+
+        override suspend fun changePassword(
+            current: String,
+            new: String,
+        ) = com.maubautista.maunedas.core.auth.PasswordChange.DONE
     }
 
     private val auth = FakeAuth()

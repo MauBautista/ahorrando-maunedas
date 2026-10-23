@@ -12,7 +12,9 @@ import com.google.android.libraries.identity.googleid.GoogleIdTokenCredential
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.auth.FirebaseAuthInvalidCredentialsException
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuthInvalidUserException
+import com.google.firebase.auth.FirebaseAuthWeakPasswordException
 import com.google.firebase.auth.GoogleAuthProvider
 import com.maubautista.maunedas.core.model.Usernames
 import com.maubautista.maunedas.core.network.IdTokenProvider
@@ -38,7 +40,19 @@ interface AuthService {
     suspend fun pendingChanges(): Int
 
     suspend fun signOut()
+
+    /** RF-AUTH-06: asks for the current password; the new one has at least [MIN_PASSWORD] characters (checked before). */
+    suspend fun changePassword(
+        current: String,
+        new: String,
+    ): PasswordChange
 }
+
+/** What changing one's own password gave. */
+enum class PasswordChange { DONE, WRONG_CURRENT, WEAK, NO_NETWORK, FAILED }
+
+/** RF-AUTH-06 and the Worker's admin reset (`WEAK_PASSWORD`, 03 §10). */
+const val MIN_PASSWORD = 8
 
 /** Firebase Auth with the synthetic e-mail (02 §3) or Google through Credential Manager (02 §6.2). */
 @Singleton
@@ -101,6 +115,28 @@ class FirebaseAuthService
         override suspend fun pendingChanges(): Int = cleaner.pendingChanges()
 
         override suspend fun signOut() = cleaner.signOut { auth.signOut() }
+
+        /** `reauthenticateWithCredential` + `updatePassword` (02 §6.5); the Worker never sees passwords. */
+        override suspend fun changePassword(
+            current: String,
+            new: String,
+        ): PasswordChange {
+            val user = auth.currentUser ?: return PasswordChange.FAILED
+            val email = user.email ?: return PasswordChange.FAILED
+            return try {
+                user.reauthenticate(EmailAuthProvider.getCredential(email, current)).await()
+                user.updatePassword(new).await()
+                PasswordChange.DONE
+            } catch (e: FirebaseAuthWeakPasswordException) {
+                PasswordChange.WEAK
+            } catch (e: FirebaseAuthInvalidCredentialsException) {
+                PasswordChange.WRONG_CURRENT
+            } catch (e: FirebaseNetworkException) {
+                PasswordChange.NO_NETWORK
+            } catch (e: Exception) {
+                PasswordChange.FAILED
+            }
+        }
     }
 
 /** The ID token of the Firebase user for every API request (02 §6.3). */

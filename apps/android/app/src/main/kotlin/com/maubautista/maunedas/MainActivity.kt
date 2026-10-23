@@ -23,6 +23,7 @@ import com.maubautista.maunedas.feature.catalog.ProductEditorRoute
 import com.maubautista.maunedas.feature.catalog.ProductPageRoute
 import com.maubautista.maunedas.feature.catalog.VariantEditorRoute
 import com.maubautista.maunedas.feature.purchases.PurchaseEditorRoute
+import com.maubautista.maunedas.feature.settings.SyncStatusRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
@@ -45,6 +46,10 @@ data class ProductDestination(
 data class ProductEditorDestination(
     val productId: String? = null,
 )
+
+/** S-16, sync state and "Cambios rechazados". */
+@Serializable
+object SyncDestination
 
 /** S-04; null [purchaseId] starts a new purchase. */
 @Serializable
@@ -87,8 +92,10 @@ class MainActivity : ComponentActivity() {
                                     onOpenProduct = { nav.navigate(ProductDestination(it)) },
                                     onNewProduct = { nav.navigate(ProductEditorDestination()) },
                                     onOpenPurchase = { nav.navigate(PurchaseEditorDestination(it)) },
+                                    onOpenSync = { nav.navigate(SyncDestination) },
                                 )
                             }
+                            composable<SyncDestination> { SyncStatusRoute(onBack = { nav.popBackStack() }) }
                             composable<PurchaseEditorDestination> { PurchaseEditorRoute(onDone = { nav.popBackStack() }) }
                             composable<ProductDestination> {
                                 ProductPageRoute(

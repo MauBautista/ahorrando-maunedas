@@ -6,10 +6,13 @@ import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import android.content.Context
+import androidx.core.content.edit
+import dagger.hilt.android.qualifiers.ApplicationContext
 import javax.inject.Inject
 import javax.inject.Singleton
 
-/** Last sync outcome for the UI (settings, banners). Kept in memory: a new process syncs again anyway. */
+/** Last sync outcome for the UI (settings, banners). Only the time of the last success outlives the process (S-16). */
 sealed interface SyncStatus {
     data object Idle : SyncStatus
 
@@ -27,8 +30,11 @@ data class SyncNotice(val table: String, val rowId: String)
 @Singleton
 class SyncStatusStore
     @Inject
-    constructor() {
-        private val state = MutableStateFlow<SyncStatus>(SyncStatus.Idle)
+    constructor(
+        @ApplicationContext context: Context,
+    ) {
+        private val prefs = context.getSharedPreferences("sync_status", Context.MODE_PRIVATE)
+        private val state = MutableStateFlow(prefs.getLong(LAST_SYNCED, 0).takeIf { it > 0 }?.let { SyncStatus.Synced(it) } ?: SyncStatus.Idle)
         private val notices = MutableSharedFlow<SyncNotice>(extraBufferCapacity = 32)
 
         val status: StateFlow<SyncStatus> = state.asStateFlow()
@@ -36,6 +42,17 @@ class SyncStatusStore
 
         fun set(value: SyncStatus) {
             state.value = value
+            if (value is SyncStatus.Synced) prefs.edit { putLong(LAST_SYNCED, value.at) }
+        }
+
+        /** Signing out forgets the previous person's last sync. */
+        fun clear() {
+            prefs.edit { clear() }
+            state.value = SyncStatus.Idle
+        }
+
+        private companion object {
+            const val LAST_SYNCED = "last_synced_at"
         }
 
         fun notice(value: SyncNotice) {

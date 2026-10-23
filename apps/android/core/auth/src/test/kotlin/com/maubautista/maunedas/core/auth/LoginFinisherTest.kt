@@ -16,6 +16,7 @@ import com.maubautista.maunedas.core.network.createMaunedasApi
 import com.maubautista.maunedas.core.network.createOkHttpClient
 import com.maubautista.maunedas.core.sync.DeviceIdStore
 import com.maubautista.maunedas.core.sync.SyncScheduler
+import com.maubautista.maunedas.core.sync.SyncStatusStore
 import androidx.work.Configuration
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
@@ -64,7 +65,7 @@ class LoginFinisherTest {
         db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
         session = SessionStore(context)
         finisher = LoginFinisher(api, session, deviceId, client)
-        cleaner = SignOutCleaner(context, db, api, session, deviceId, SyncScheduler(context, db))
+        cleaner = SignOutCleaner(context, db, api, session, deviceId, SyncScheduler(context, db), SyncStatusStore(context))
     }
 
     @After

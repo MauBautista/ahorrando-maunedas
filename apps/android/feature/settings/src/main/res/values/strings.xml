@@ -2,7 +2,6 @@
 <!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
     <string name="settings_title">Ajustes</string>
-    <string name="settings_account">Cuenta: %1$s (%2$s)</string>
     <string name="settings_sync_idle">Sin sincronizar todavía</string>
     <string name="settings_sync_ok">Sincronizado a las %1$s</string>
     <string name="settings_sync_failed">No se pudo sincronizar (%1$s); se reintentará</string>
@@ -16,4 +15,88 @@
     </plurals>
     <string name="settings_sign_out_confirm">Salir</string>
     <string name="settings_cancel">Cancelar</string>
+    <!-- S-15 -->
+    <string name="settings_account_title">Cuenta</string>
+    <string name="settings_user">%1$s · usuario %2$s</string>
+    <string name="settings_change_password">Cambiar contraseña</string>
+    <string name="settings_current_password">Contraseña actual</string>
+    <string name="settings_new_password">Contraseña nueva</string>
+    <string name="settings_repeat_password">Repite la contraseña nueva</string>
+    <string name="settings_password_short">La contraseña nueva necesita al menos 8 caracteres.</string>
+    <string name="settings_password_mismatch">Las contraseñas nuevas no coinciden.</string>
+    <string name="settings_password_wrong">La contraseña actual no es correcta.</string>
+    <string name="settings_password_weak">Esa contraseña es muy débil. Elige otra.</string>
+    <string name="settings_password_no_network">Necesitas internet para cambiar la contraseña.</string>
+    <string name="settings_password_failed">No se pudo cambiar la contraseña. Intenta de nuevo.</string>
+    <string name="settings_password_done">Listo: tu contraseña cambió.</string>
+    <string name="settings_sync_title">Sincronización</string>
+    <string name="settings_sync_details">Ver detalle y cambios rechazados</string>
+    <string name="settings_storage_title">Almacenamiento</string>
+    <string name="settings_photos_size">Fotos guardadas en el teléfono: %1$s</string>
+    <string name="settings_free_space">Liberar espacio</string>
+    <string name="settings_free_space_confirm">Se borran del teléfono las fotos que ya se subieron; se seguirán viendo desde el servidor cuando haya internet.</string>
+    <string name="settings_freed">Se liberaron %1$s.</string>
+    <string name="settings_about_title">Acerca de</string>
+    <string name="settings_version">Versión %1$s · esquema %2$d</string>
+    <string name="settings_ok">Aceptar</string>
+    <plurals name="settings_pending">
+        <item quantity="one">%1$d cambio por subir</item>
+        <item quantity="other">%1$d cambios por subir</item>
+        <item quantity="many">%1$d cambios por subir</item>
+    </plurals>
+    <!-- S-16 -->
+    <string name="sync_title">Estado de sincronización</string>
+    <string name="sync_back">Volver</string>
+    <string name="sync_never">Aún no se ha sincronizado.</string>
+    <string name="sync_last">Última sincronización: %1$s</string>
+    <string name="sync_pending_title">Cambios por subir</string>
+    <string name="sync_nothing_pending">Nada por subir.</string>
+    <string name="sync_table_count">%1$s: %2$d</string>
+    <string name="sync_uploads">Fotos por subir: %1$d</string>
+    <string name="sync_errors_title">Último error</string>
+    <string name="sync_rejected_title">Cambios rechazados</string>
+    <string name="sync_no_rejected">Ningún cambio rechazado.</string>
+    <string name="sync_rejected_item">%1$s · %2$s</string>
+    <string name="sync_dismiss">Entendido</string>
+    <!-- S-17 -->
+    <string name="conflict_title">Código repetido</string>
+    <string name="conflict_text">El código %1$s ya pertenece a «%2$s». Lo agregaste a «%3$s».</string>
+    <string name="conflict_someone_else">otra presentación</string>
+    <string name="conflict_use_theirs">Usar esa presentación</string>
+    <string name="conflict_keep">Mantener separado</string>
+    <string name="conflict_use_theirs_hint">Tus compras, precios y fotos de «%1$s» pasan a «%2$s».</string>
+    <!-- 04 §6.5 -->
+    <string name="stale_notice">Otro dispositivo actualizó %1$s.</string>
+    <string name="stale_unknown">un registro</string>
+    <!-- Names of the synced tables and of the reasons for a refusal -->
+    <string name="table_purchases">Compra</string>
+    <string name="table_purchase_items">Producto de una compra</string>
+    <string name="table_products">Producto</string>
+    <string name="table_variants">Presentación</string>
+    <string name="table_barcodes">Código de barras</string>
+    <string name="table_tags">Etiqueta</string>
+    <string name="table_product_tags">Etiqueta de un producto</string>
+    <string name="table_stores">Tienda</string>
+    <string name="table_store_branches">Sucursal</string>
+    <string name="table_categories">Categoría</string>
+    <string name="table_price_observations">Precio de anaquel</string>
+    <string name="table_promotions">Promoción</string>
+    <string name="table_images">Foto</string>
+    <string name="table_receipt_aliases">Texto de ticket</string>
+    <string name="table_listings">Enlace de tienda en línea</string>
+    <string name="table_alert_rules">Alerta</string>
+    <string name="table_other">Registro</string>
+    <string name="reason_validation">datos no válidos</string>
+    <string name="reason_forbidden">sin permiso</string>
+    <string name="reason_immutable">ya no se puede cambiar</string>
+    <string name="reason_too_large">demasiado grande</string>
+    <string name="reason_unsupported">tipo de archivo no permitido</string>
+    <string name="reason_missing_file">la foto ya no está en el teléfono</string>
+    <string name="reason_missing_parent">falta un registro del que depende</string>
+    <string name="reason_measure_locked">la medida no se puede cambiar porque ya tiene compras</string>
+    <string name="reason_duplicate">se mandó dos veces</string>
+    <string name="reason_admin_delete">solo el administrador puede eliminarlo</string>
+    <string name="reason_not_owner">es de otra persona</string>
+    <string name="reason_web">los precios web los registra el agente</string>
+    <string name="reason_other">rechazado (%1$s)</string>
 </resources>

@@ -430,7 +430,7 @@ Implementación (T-103, `core:network`): el interceptor y el autenticador no dep
 - **Al entrar:** `sync-periodic` más un `sync-now`.
 - **Al cerrar sesión:** con red, borra el dispositivo; luego cierra Firebase, cancela los trabajos, vacía Room y `filesDir/images`, la sesión y el `device_id`.
 - **App:** `MainActivity` espera a leer la sesión antes de elegir la primera pantalla (sin destello del login), configura WorkManager con `HiltWorkerFactory` (sin el inicializador por omisión) y registra `ForegroundSync` en `ProcessLifecycleOwner`.
-- **Ajustes provisional:** desde T-111, el estado del sync, "Sincronizar ahora" y "Cerrar sesión" con el aviso de pendientes viven en la pestaña Ajustes hasta que T-126 haga S-15 a S-17.
+- **Ajustes (T-126):** cerrar sesión, con el aviso de pendientes, está en S-15. "Cambiar contraseña" (RF-AUTH-06) pide la actual, la nueva dos veces (≥ 8 caracteres) y usa `reauthenticate` + `updatePassword`; traduce contraseña actual incorrecta, contraseña débil y sin red. Cerrar sesión también olvida la última sincronización.
 
 ## 7. Web (T-160)
 

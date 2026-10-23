@@ -7,9 +7,12 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -27,6 +30,7 @@ import com.maubautista.maunedas.feature.home.HomeActions
 import com.maubautista.maunedas.feature.home.HomeRoute
 import com.maubautista.maunedas.feature.purchases.PurchasesRoute
 import com.maubautista.maunedas.feature.settings.SettingsRoute
+import com.maubautista.maunedas.feature.settings.SyncMessagesHost
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 import com.maubautista.maunedas.core.designsystem.R as DesignR
@@ -68,10 +72,15 @@ fun MainShell(
     onOpenProduct: (String) -> Unit,
     onNewProduct: () -> Unit,
     onOpenPurchase: (String?) -> Unit,
+    onOpenSync: () -> Unit,
 ) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
+    val snackbar = remember { SnackbarHostState() }
+    // The barcode dialog (S-17) and "Otro dispositivo actualizó …" over every tab (04 §6.5).
+    SyncMessagesHost(snackbar)
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbar) },
         bottomBar = {
             NavigationBar {
                 Tab.entries.forEach { tab ->
@@ -97,14 +106,14 @@ fun MainShell(
                         scan = { nav.openTab(Tab.SCAN) },
                         openPurchase = { onOpenPurchase(it) },
                         openDrafts = { nav.openTab(Tab.PURCHASES) },
-                        openRejected = { nav.openTab(Tab.SETTINGS) },
+                        openRejected = onOpenSync,
                     ),
                 )
             }
             composable<PurchasesTab> { PurchasesRoute(onOpenPurchase = onOpenPurchase, onNewPurchase = { onOpenPurchase(null) }) }
             composable<ScanTab> { ComingSoon(stringResource(R.string.tab_scan)) }
             composable<CatalogTab> { CatalogRoute(onOpenProduct = onOpenProduct, onNewProduct = onNewProduct) }
-            composable<SettingsTab> { SettingsRoute(onSignedOut = onSignedOut) }
+            composable<SettingsTab> { SettingsRoute(onSignedOut = onSignedOut, onOpenSync = onOpenSync) }
         }
     }
 }
