@@ -273,6 +273,12 @@ Cuenta (nombre, usuario, cambiar contraseña), Sincronización (S-16), Almacenam
 
 ### S-17 Conflicto de código (diálogo) — `04-sincronizacion.md` §6.5
 
+**Implementación (T-126, decisión T61):**
+- **Datos:** `SyncCenter` (`core:data`) da los pendientes por tabla, los rechazos con el nombre de la fila (producto, presentación, compra, código…) y su motivo de detalle, que sale de las dos formas de `details_json`. También el diálogo del código y el tamaño de las fotos.
+- **S-16 y "Entendido":** "Entendido" resuelve el aviso, y la fila queda como la dejó el servidor. La última sincronización exitosa se guarda en el teléfono.
+- **S-17:** aparece sobre cualquier pestaña mientras haya conflictos, del más viejo al más nuevo. "Usar esa presentación" solo mueve lo que un miembro puede cambiar: los precios web son del agente y las alertas de otros son de ellos. Mi presentación se queda, porque borrarla es del admin.
+- **Otros avisos:** "Otro dispositivo actualizó «…»" sale como snackbar en el armazón. El aviso de Inicio "El servidor rechazó…" abre S-16.
+
 ### S-18 Foto de producto (RF-IMG-02, 03)
 Cámara o galería → reducir a ≤ 2048 px (JPEG 85) → (opcional E1) quitar fondo en el teléfono → vista previa con interruptor "Sin fondo" → guardar. Flujo técnico en `10-imagenes.md` §4–5.
 

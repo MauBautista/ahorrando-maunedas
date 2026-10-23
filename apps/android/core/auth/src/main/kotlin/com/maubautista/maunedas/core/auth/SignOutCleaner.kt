@@ -5,6 +5,7 @@ import com.maubautista.maunedas.core.database.AppDatabase
 import com.maubautista.maunedas.core.network.MaunedasApi
 import com.maubautista.maunedas.core.sync.DeviceIdStore
 import com.maubautista.maunedas.core.sync.SyncScheduler
+import com.maubautista.maunedas.core.sync.SyncStatusStore
 import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
@@ -25,6 +26,7 @@ class SignOutCleaner
         private val session: SessionStore,
         private val deviceId: DeviceIdStore,
         private val scheduler: SyncScheduler,
+        private val status: SyncStatusStore,
     ) {
         suspend fun pendingChanges(): Int = db.outbox().count() + db.pendingUploads().count()
 
@@ -38,5 +40,6 @@ class SignOutCleaner
             }
             session.clear()
             deviceId.clear()
+            status.clear()
         }
     }

@@ -52,13 +52,14 @@
   - productos con cantidad (o kilos a granel), precio y promoción (2x1, rebaja, porcentaje, cupón, meses sin intereses…);
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
+- **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Pantallas de Android: T-126 (Ajustes), el escáner (T-116, luego T-122 en compras) y T-125 (precio de anaquel).
+1. Pantallas de Android: el escáner (T-116, luego T-122 en compras), T-125 (precio de anaquel) y T-117 (fotos de producto).
 2. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
 3. Antes del primer despliegue a producción: T-004 (Firebase prod) y la decisión pendiente de T41.
 
@@ -126,6 +127,7 @@
 | T58 | **Historial de Android.** Solo puntos por fuente, sin unirlos; periodo elegible (3 meses, 1 año por omisión, todo); lista de precios bajo la gráfica, del más nuevo al más viejo, y una descripción de la gráfica para lectores de pantalla. La serie web se ve como puntos hasta T-222 | RF-PRE-02 pide puntos de compra y anaquel: unirlos inventaría precios intermedios. La API ya acepta `from`/`to` y un año ocultaba lo anterior. Una gráfica no se lee con TalkBack ni con letra al 200 %; la lista sí |
 | T59 | **Lista de compras.** Fechas con atajos (este mes, mes pasado, últimos 3 meses) además de elegir días; la tienda se filtra entre las que tienen compras. "Nueva compra" y tocar una compra ya van a la ruta del editor, que dice "llega pronto" hasta T-121 | S-03 pide "rango de fechas": los atajos cubren lo común con un toque y el selector lo demás. Listar todas las tiendas daría opciones que nunca devuelven nada. Con la ruta lista, T-121 solo cambia la pantalla |
 | T60 | **Editor de compra.** Barra fija solo con el total y los botones; el resto del pie se desplaza. Productos en el orden de captura (reordenar va con T-124); quitar con botón además de deslizar. Autoguardado al salir y al pasar a segundo plano, serializado. El cupón de línea es por monto. Tienda y sucursal en hojas separadas | Un pie fijo completo no cabe con letra al 200 %. El orden importa sobre todo al revisar un ticket. Deslizar no es accesible con TalkBack. Salir y pasar a segundo plano coinciden y no deben crear dos compras. El porcentaje ya tiene su tipo |
+| T61 | **Ajustes y sincronización.** La última sincronización exitosa se guarda en el teléfono y se olvida al cerrar sesión. El diálogo del código repetido sale sobre cualquier pantalla. "Usar esa presentación" mueve solo lo que un miembro puede cambiar (no precios web ni alertas ajenas) y deja mi presentación. Los rechazos se resuelven con "Entendido". "Liberar espacio" conserva las fotos sin subir | S-16 pide "última sincronización", y en memoria se perdía al reabrir. El servidor rechazaría (FORBIDDEN) mover filas que el miembro no puede tocar, y borrar una presentación es del admin. Una foto sin subir solo existe en el teléfono |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -231,3 +233,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-22** — T-115: historial de precios con Vico 3.3.1 (ya estaba en el catálogo desde T-100), filtros y lista accesible; mismos puntos que la API (T58).
 - **2026-10-22** — T-120: lista de compras de Android con agrupación por día y filtros de tienda, fechas y estado (T59).
 - **2026-10-23** — T-121: editor de compra y de línea en Android con promociones según fixtures, granel, descuentos de ticket, validación del total, cascadas y autoguardado (T60).
+- **2026-10-23** — T-126: Ajustes, estado de sincronización, cambios rechazados y diálogo de código repetido en Android; cambio de contraseña y liberar espacio (T61).

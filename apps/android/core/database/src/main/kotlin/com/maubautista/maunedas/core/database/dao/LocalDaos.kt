@@ -1,5 +1,6 @@
 package com.maubautista.maunedas.core.database.dao
 
+import androidx.room.ColumnInfo
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.OnConflictStrategy
@@ -11,6 +12,11 @@ import com.maubautista.maunedas.core.database.entity.PendingUploadEntity
 import com.maubautista.maunedas.core.database.entity.SyncCursorEntity
 import com.maubautista.maunedas.core.database.entity.SyncIssueEntity
 import kotlinx.coroutines.flow.Flow
+
+data class TableCount(
+    @ColumnInfo(name = "table_name") val tableName: String,
+    val count: Int,
+)
 
 @Dao
 interface OutboxDao {
@@ -69,6 +75,10 @@ interface OutboxDao {
     @Query("SELECT count(*) FROM outbox")
     fun observeCount(): Flow<Int>
 
+    /** Pending changes per table, most first (S-16). */
+    @Query("SELECT table_name, count(*) AS count FROM outbox GROUP BY table_name ORDER BY count DESC, table_name")
+    fun observePerTable(): Flow<List<TableCount>>
+
     /** A local change of that row is waiting to be pushed (04 §6.4). */
     @Query("SELECT EXISTS (SELECT 1 FROM outbox WHERE table_name = :tableName AND row_id = :rowId)")
     suspend fun contains(
@@ -125,6 +135,10 @@ interface SyncIssueDao {
 
     @Query("SELECT count(*) FROM sync_issues WHERE resolved_at IS NULL")
     fun observeUnresolvedCount(): Flow<Int>
+
+    /** "Cambios rechazados" (S-16), newest first. */
+    @Query("SELECT * FROM sync_issues WHERE resolved_at IS NULL ORDER BY created_at DESC, id DESC")
+    fun observeUnresolved(): Flow<List<SyncIssueEntity>>
 
     @Query("UPDATE sync_issues SET resolved_at = :at WHERE id = :id")
     suspend fun resolve(

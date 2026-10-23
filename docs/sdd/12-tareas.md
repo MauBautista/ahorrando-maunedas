@@ -313,8 +313,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** estados de línea, aceptar sugerencia, crear producto desde una línea, confirmar crea compra + alias + códigos; segunda compra se vincula sola.
 ### [ ] T-125 · Precio de anaquel (S-13)
 - **Depende de:** T-121
-### [ ] T-126 · Ajustes y sincronización (S-15 a S-17)
+### [x] T-126 · Ajustes y sincronización (S-15 a S-17)
 - **Depende de:** T-104, T-110 · **Hecho cuando:** estado de sync, "Sincronizar ahora", cambios rechazados y diálogo `BARCODE_TAKEN` con sus dos opciones.
+- **Resultado (2026-10-23):**
+  - **S-15:** cuenta con cambiar contraseña, resumen de sync, fotos en el teléfono con "Liberar espacio" (conserva las que faltan por subir), versión y esquema, y cerrar sesión.
+  - **S-16:** última sincronización (sobrevive a reabrir la app), pendientes por tabla, fotos por subir, último error y "Cambios rechazados" con nombre, motivo en español y "Entendido".
+  - **S-17:** el diálogo del código repetido aparece sobre cualquier pantalla. "Usar esa presentación" mueve lo propio (compras, precios de anaquel, enlaces, alertas propias, alias, fotos) y borra mi código; "Mantener separado" solo borra mi código.
+  - Snackbar "Otro dispositivo actualizó «…»".
+  - 12 pruebas: estado persistente, `SyncCenter` sobre Room (pendientes, rechazos, ambas opciones del código, liberar espacio) y pantallas con letra al 200 % (T61).
 
 ---
 
