@@ -83,6 +83,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun productPage(): ProductPageDao
 
+    abstract fun purchaseEdits(): PurchaseEditDao
+
     companion object {
         const val NAME = "maunedas.db"
     }

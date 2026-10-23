@@ -293,14 +293,22 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - Mensajes distintos para "sin compras" y "sin coincidencias".
   - "Nueva compra" y tocar una compra abren la ruta del editor, que llega con T-121 (T59).
   - 13 pruebas.
-### [ ] T-121 · Editor de compra y de línea (S-04, S-05)
+### [x] T-121 · Editor de compra y de línea (S-04, S-05)
 - **Docs:** 05 §5, 09 §6.1 · **Depende de:** T-120, T-112, T-101
 - **Hecho cuando:** promociones calculadas según fixtures, a granel, descuentos de ticket, validación del total, borrado en cascada (04 §6.2), autoguardado.
+- **Resultado (2026-10-23):**
+  - **`PurchaseEditor` (`core:data`):** guarda en una transacción la compra (`discount_cents` = Σ descuentos de ticket), sus líneas renumeradas con `final = bruto − descuento`, una promoción por línea (parámetros en JSON; MSI con `affects_price = 0`) y una por descuento de ticket. Lo que se quita queda borrado con sus cascadas.
+  - **Formulario de línea (S-05):** con todos los casos de `promociones.json` da lo esperado; el granel es en kilos con 3 decimales (0.845 kg × $32.90 = $27.80) y una rebaja escrita a mano queda como `other`.
+  - **Confirmar y salir:** pide tienda y un producto, y pregunta si el total no cuadra por más de $1.00. El borrador se guarda al salir o al pasar la app a segundo plano, una sola vez aunque coincidan.
+  - **Selector de tienda (S-14):** por uso reciente, con búsqueda y alta de tienda y sucursal; la ciudad sale de la última sucursal usada o Puebla.
+  - **Pantalla:** quitar con deslizar o botón y "Deshacer"; fecha y hora en la Ciudad de México.
+  - 24 pruebas: aritmética de la compra, repositorio sobre Room (incluida la vista de precios con el cupón prorrateado), formulario con los fixtures, ViewModel con Room en memoria y pantallas con letra al 200 % (T60).
 ### [ ] T-122 · Escaneo continuo en compra
 - **Depende de:** T-121, T-116
 ### [ ] T-123 · Foto de ticket (escáner de documentos)
 - **Depende de:** T-121, T-105
 ### [ ] T-124 · Revisión de ticket (S-06)
+- **Incluye (T60):** reordenar las líneas de S-04 (hoy quedan en el orden en que se capturan) y "Vincular" en las líneas sin vincular.
 - **Docs:** 09 §7 · **Depende de:** T-123, T-040, T-101
 - **Hecho cuando:** estados de línea, aceptar sugerencia, crear producto desde una línea, confirmar crea compra + alias + códigos; segunda compra se vincula sola.
 ### [ ] T-125 · Precio de anaquel (S-13)
