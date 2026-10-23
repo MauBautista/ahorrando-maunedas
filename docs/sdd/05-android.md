@@ -166,6 +166,14 @@ Acciones:
 - Confirmar exige tienda y ≥ 1 línea; si hay diferencia de total, diálogo "El total no cuadra por $X. ¿Confirmar de todos modos?".
 - Autoguardado del borrador al salir.
 
+- **Implementación (T-121, decisión T60):**
+  - **Barra fija:** solo el total calculado y "Guardar borrador" / "Confirmar". El resto del pie (Σ, descuentos de ticket, total del ticket y la diferencia en rojo) se desplaza con la lista, porque un pie fijo completo taparía la pantalla con letra al 200 %.
+  - **Productos:** se capturan en orden y se renumeran al guardar; reordenarlos llega con T-124. Se quitan deslizando o con su botón (accesible), con "Deshacer".
+  - **Confirmar** pide tienda y un producto. Si el total no cuadra por más de $1.00, aparece "El total no cuadra por $X. ¿Confirmar de todos modos?".
+  - **Autoguardado:** al salir (Atrás) o al pasar la app a segundo plano, si hay tienda y algo cambió; un `Mutex` evita crear la compra dos veces.
+  - **Fecha y hora** son de la Ciudad de México; la hora se teclea (`TimeInput`).
+  - **Llegan después:** "Escanear" con T-122, "Foto de ticket" con T-123, "Extraer" y "Vincular" con T-124.
+
 ### S-05 Editor de línea (bottom sheet)
 - Variante: búsqueda por texto o código; cada resultado muestra el último precio en **esta** tienda.
 - Cantidad: stepper entero; si la variante es a granel, campo decimal "kg" con 3 decimales.
@@ -173,6 +181,9 @@ Acciones:
 - Promoción: selector de tipo y parámetros; el descuento se calcula con `Promotions.discount()` y se puede sobrescribir a mano (queda `type='other'` si se sobrescribe).
 - Total de línea calculado; precio efectivo por unidad en vivo.
 - Botones: "Guardar" y "Guardar y otra".
+- **Implementación (T-121):**
+  - **Búsqueda:** por palabras en el producto y la etiqueta, o código exacto primero; cada resultado muestra "Último aquí" (precio de lista del punto más nuevo en esa tienda), que también llena el precio.
+  - **Promociones:** el cupón toma un monto (el porcentaje va por "Porcentaje") y la rebaja parte del precio de lista. MSI no lleva descuento.
 
 ### S-06 Revisión de ticket (RF-TIC-02 a 06) — lógica en `09-ia-y-tickets.md` §5
 - Encabezado con tienda detectada (cambiable), fecha detectada, total del ticket.
@@ -252,6 +263,7 @@ Variante (buscar/escanear), tienda y sucursal (recuerda la última), precio, pro
 
 ### S-14 Selector de tienda (sheet)
 Tiendas ordenadas por uso reciente; buscador; "Nueva tienda" (nombre, tipo). Sucursales de la tienda con "Nueva sucursal" (nombre, ciudad; por defecto Puebla o San Pedro Cholula según lo último usado).
+- **Implementación (T-121):** tienda y sucursal son dos hojas: la sucursal se elige después de la tienda. "Nueva tienda" toma como nombre lo que se buscó. La ciudad por omisión es la de la sucursal de la compra más reciente que tenga una, o Puebla.
 
 ### S-15 Ajustes
 Cuenta (nombre, usuario, cambiar contraseña), Sincronización (S-16), Almacenamiento (tamaño de fotos locales), Acerca de (versión, esquema). Cerrar sesión (`02-autenticacion.md` §6.4).
