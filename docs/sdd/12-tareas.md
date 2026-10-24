@@ -312,9 +312,16 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Selector de tienda (S-14):** por uso reciente, con búsqueda y alta de tienda y sucursal; la ciudad sale de la última sucursal usada o Puebla.
   - **Pantalla:** quitar con deslizar o botón y "Deshacer"; fecha y hora en la Ciudad de México.
   - 24 pruebas: aritmética de la compra, repositorio sobre Room (incluida la vista de precios con el cupón prorrateado), formulario con los fixtures, ViewModel con Room en memoria y pantallas con letra al 200 % (T60).
-### [ ] T-122 · Escaneo continuo en compra
+### [x] T-122 · Escaneo continuo en compra
 - **Depende de:** T-121, T-116
 - **Nota (T-116):** `BarcodeScanner(onCode, paused)` ya filtra el mismo código 2 s; en modo continuo cada lectura agrega una línea sin pausar la cámara.
+- **Resultado (2026-10-24):**
+  - **"Escanear productos" en S-04:** la cámara no se pausa. Cada código que ya está aquí agrega una línea al último precio de esa tienda y enfoca su precio. La misma presentación sin promoción suma una pieza (hallazgo frente a RF-COM-09, T64).
+  - **Códigos que no están aquí:** si el servidor los tiene, se bajan. Si no, "Darlo de alta" abre S-12 para ese código. En ambos casos la línea se agrega sola cuando llega.
+  - **Confirmar** rechaza líneas sin precio.
+  - **Probado en un Galaxy A53 (Android 16):** la misma presentación sumó una pieza, se enfocó el precio, y un código del catálogo abierto se dio de alta y volvió solo a la compra. La prueba mostró lecturas falsas con poca luz; ahora un código cuenta al leerse dos veces en menos de 1 s, y los códigos en espera se pueden quitar.
+  - **Corrección:** tres textos de compras (`editor_delete`, `editor_back`, `editor_save`) se llamaban igual que en catálogo, así que en la app uno pisaba al otro y se mostraba "Eliminar" en vez de "Eliminar compra". Se renombraron, y `StringNamesTest` falla si dos módulos repiten un nombre.
+  - 12 pruebas.
 ### [ ] T-123 · Foto de ticket (escáner de documentos)
 - **Depende de:** T-121, T-105
 - **Nota (T-125):** `LocalPhotos.Size.RECEIPT` ya reduce a 1600 px JPEG 80 (10 §4.2).

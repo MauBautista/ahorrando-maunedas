@@ -24,6 +24,7 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.saveable.rememberSaveable
@@ -73,6 +74,43 @@ fun ScanRoute(
             WithCameraPermission(denied = { request -> CameraPermission(request) }) {
                 BarcodeScanner(onCode = viewModel::onCode, paused = result != null, modifier = Modifier.fillMaxSize())
             }
+        },
+    )
+}
+
+/**
+ * S-12 for one code read in a purchase's continuous scanning ("Darlo de alta", RF-COM-09): the same four paths, without
+ * the camera. Closing the sheet goes back to the purchase, which adds the line once the code is in the catalog.
+ */
+@Composable
+fun ScanCodeRoute(
+    code: String,
+    actions: ScanActions,
+    onClose: () -> Unit,
+    viewModel: ScanViewModel = hiltViewModel(),
+) {
+    val result by viewModel.result.collectAsStateWithLifecycle()
+    var started by rememberSaveable { mutableStateOf(false) }
+    LaunchedEffect(code) {
+        if (!started) {
+            started = true
+            viewModel.onCode(code)
+        }
+    }
+    ScanScreen(
+        result = result,
+        now = viewModel.now(),
+        actions = actions,
+        onCode = viewModel::onCode,
+        onDismiss = onClose,
+        onChooseExisting = viewModel::chooseExisting,
+        onProductQuery = viewModel::onProductQuery,
+        camera = {
+            Text(
+                stringResource(R.string.scan_code_label, code),
+                style = MaterialTheme.typography.headlineSmall,
+                modifier = Modifier.fillMaxSize().padding(Spacing.xl),
+            )
         },
     )
 }

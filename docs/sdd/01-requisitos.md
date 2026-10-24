@@ -41,7 +41,7 @@ Formato: **ID · requisito · etapa · criterio de aceptación**. "E1" = etapa 1
 | RF-COM-06 | Validación contra el total del ticket | E1 | Si Σ líneas − descuentos de ticket difiere del total capturado en más de $1.00, se muestra la diferencia y se pide confirmar |
 | RF-COM-07 | Estados borrador y confirmada | E1 | Solo las confirmadas entran en historiales y comparadores |
 | RF-COM-08 | Editar y eliminar compras | E1 | Cualquier usuario puede; queda auditado en `updated_by` |
-| RF-COM-09 | Agregar líneas escaneando códigos en modo continuo | E1 | Cada escaneo agrega una línea y enfoca el campo de precio |
+| RF-COM-09 | Agregar líneas escaneando códigos en modo continuo | E1 | Cada escaneo agrega una línea y enfoca el campo de precio; la misma presentación ya escaneada, sin promoción y que no se pesa, suma una pieza a su línea (T64) |
 
 ## Tickets (`TIC`)
 

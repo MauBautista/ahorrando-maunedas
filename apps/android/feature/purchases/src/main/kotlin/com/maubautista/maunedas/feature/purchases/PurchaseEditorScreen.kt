@@ -86,6 +86,7 @@ data class EditorActions(
     val onDate: (java.time.LocalDate) -> Unit = {},
     val onTime: (LocalTime) -> Unit = {},
     val onNewLine: () -> Unit = {},
+    val onScan: () -> Unit = {},
     val onEditLine: (Int) -> Unit = {},
     val onRemoveLine: (Int) -> Unit = {},
     val onUndoRemove: () -> Unit = {},
@@ -105,6 +106,7 @@ data class EditorActions(
 @Composable
 fun PurchaseEditorRoute(
     onDone: () -> Unit,
+    onRegisterCode: (String) -> Unit = {},
     viewModel: PurchaseEditorViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -133,6 +135,7 @@ fun PurchaseEditorRoute(
                 onDate = viewModel::setDate,
                 onTime = viewModel::setTime,
                 onNewLine = viewModel::newLine,
+                onScan = viewModel::startScanning,
                 onEditLine = viewModel::editLine,
                 onRemoveLine = viewModel::removeLine,
                 onUndoRemove = viewModel::undoRemove,
@@ -161,6 +164,24 @@ fun PurchaseEditorRoute(
     state.discount?.let { form ->
         val defaultDescription = stringResource(R.string.editor_default_discount)
         DiscountDialog(form, viewModel::onDiscount, { viewModel.saveDiscount(defaultDescription) }, viewModel::closeDiscount)
+    }
+    state.scan?.let { session ->
+        ContinuousScanner(
+            session = session,
+            pending = state.pending,
+            draft = state.draft,
+            totalCents = state.totals.computedCents,
+            onCode = viewModel::onScannedCode,
+            actions =
+                ScanPanelActions(
+                    onDone = viewModel::stopScanning,
+                    onPrice = viewModel::onScanPrice,
+                    onStep = viewModel::onScanStep,
+                    onKilos = viewModel::onScanKilos,
+                    onRegister = onRegisterCode,
+                    onDismiss = viewModel::dismissPending,
+                ),
+        )
     }
 }
 
@@ -195,7 +216,7 @@ fun PurchaseEditorScreen(
                 item {
                     Column(Modifier.padding(horizontal = Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                         Row(verticalAlignment = Alignment.CenterVertically) {
-                            IconButton(onClick = actions.onBack) { Icon(painterResource(DesignR.drawable.ic_arrow_back), contentDescription = stringResource(R.string.editor_back)) }
+                            IconButton(onClick = actions.onBack) { Icon(painterResource(DesignR.drawable.ic_arrow_back), contentDescription = stringResource(R.string.editor_back_purchase)) }
                             Text(
                                 stringResource(if (state.isNew) R.string.editor_new_title else R.string.editor_title),
                                 style = MaterialTheme.typography.headlineSmall,
@@ -223,6 +244,7 @@ fun PurchaseEditorScreen(
                 item {
                     Column(Modifier.padding(horizontal = Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                         OutlinedButton(onClick = actions.onNewLine, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_add_line)) }
+                        OutlinedButton(onClick = actions.onScan, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_scan)) }
                         HorizontalDivider()
                         AmountRow(stringResource(R.string.editor_lines_sum), totals.linesCents)
                         Text(stringResource(R.string.editor_ticket_discounts), style = MaterialTheme.typography.titleSmall)
@@ -250,7 +272,7 @@ fun PurchaseEditorScreen(
                         }
                         if (!state.isNew) {
                             TextButton(onClick = actions.onAskDelete, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) {
-                                Text(stringResource(R.string.editor_delete), color = MaterialTheme.colorScheme.error)
+                                Text(stringResource(R.string.editor_delete_purchase), color = MaterialTheme.colorScheme.error)
                             }
                         }
                     }
@@ -261,7 +283,7 @@ fun PurchaseEditorScreen(
                     AmountRow(stringResource(R.string.editor_computed_total), totals.computedCents, strong = true)
                     Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                         OutlinedButton(onClick = actions.onSaveDraft, enabled = !state.busy, modifier = Modifier.weight(1f).heightIn(min = Spacing.touchTarget)) {
-                            Text(stringResource(if (draft.confirmed) R.string.editor_save else R.string.editor_save_draft))
+                            Text(stringResource(if (draft.confirmed) R.string.editor_save_purchase else R.string.editor_save_draft))
                         }
                         Button(onClick = actions.onConfirm, enabled = !state.busy, modifier = Modifier.weight(1f).heightIn(min = Spacing.touchTarget)) {
                             Text(stringResource(R.string.editor_confirm))
@@ -380,7 +402,11 @@ private fun LineRow(
         Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
-                Text(stringResource(R.string.editor_line_qty, quantityText(line), Money.format(line.unitPriceCents)), style = MaterialTheme.typography.bodyMedium)
+                if (line.unitPriceCents == 0L) {
+                    Text(stringResource(R.string.editor_no_price), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
+                } else {
+                    Text(stringResource(R.string.editor_line_qty, quantityText(line), Money.format(line.unitPriceCents)), style = MaterialTheme.typography.bodyMedium)
+                }
                 line.promotion?.let { promo ->
                     Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.small) {
                         Text(stringResource(promo.type.label()), style = MaterialTheme.typography.labelMedium, modifier = Modifier.padding(horizontal = Spacing.sm, vertical = Spacing.xs))
@@ -425,7 +451,7 @@ private fun DiscountDialog(
                 MoneyField(cents = form.amountCents, onCentsChange = { v -> onChange { it.copy(amountCents = v) } }, label = stringResource(R.string.editor_discount_amount))
             }
         },
-        confirmButton = { TextButton(onClick = onSave, enabled = (form.amountCents ?: 0) > 0) { Text(stringResource(R.string.editor_save)) } },
+        confirmButton = { TextButton(onClick = onSave, enabled = (form.amountCents ?: 0) > 0) { Text(stringResource(R.string.editor_save_purchase)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.purchases_cancel)) } },
     )
 }

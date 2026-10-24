@@ -10,23 +10,37 @@ object ScanCodes {
 }
 
 /**
- * S-11: "Ignora el mismo código durante 2 s". The camera reads the same label many times per second; only the first
- * read of a code counts until [quietMs] pass without seeing it again... or another code is read.
+ * Which reads of the camera count (S-11).
+ * - **Confirmed:** a code counts once it was read [confirmations] times within [windowMs]. A blurry or dark frame can
+ *   decode a wrong code that even passes the check digit, but only for one frame, while a real label is read again
+ *   right away (T-122, seen on a Galaxy A53).
+ * - **"Ignora el mismo código durante 2 s":** the code reported stays quiet while it is still read within [quietMs]
+ *   of the last time; another code is reported as soon as it is confirmed.
  */
 class ScanGate(
     private val quietMs: Long = 2_000,
+    private val confirmations: Int = 2,
+    private val windowMs: Long = 1_000,
 ) {
     private var lastCode: String? = null
     private var lastAt = Long.MIN_VALUE
+    private val recent = ArrayDeque<Pair<String, Long>>()
 
     /** True when this read should be reported. */
     fun accept(
         code: String,
         now: Long,
     ): Boolean {
-        val repeated = code == lastCode && now - lastAt < quietMs
+        if (code == lastCode && now - lastAt < quietMs) {
+            lastAt = now
+            return false
+        }
+        while (recent.isNotEmpty() && now - recent.first().second > windowMs) recent.removeFirst()
+        recent.addLast(code to now)
+        if (recent.count { it.first == code } < confirmations) return false
+        recent.removeAll { it.first == code }
         lastCode = code
         lastAt = now
-        return !repeated
+        return true
     }
 }

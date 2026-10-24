@@ -21,13 +21,34 @@ class ScanCodesTest {
     @Test
     fun theSameCodeIsIgnoredForTwoSecondsWhileTheCameraKeepsSeeingIt() {
         val gate = ScanGate()
-        assertTrue(gate.accept("111111", 0))
+        // Two reads confirm it.
+        assertFalse(gate.accept("111111", 0))
+        assertTrue(gate.accept("111111", 30))
         assertFalse(gate.accept("111111", 500))
         // Still in view: each read pushes the quiet time.
         assertFalse(gate.accept("111111", 2_400))
-        assertTrue(gate.accept("111111", 4_500))
-        // Another code counts at once, and so does going back to the first.
-        assertTrue(gate.accept("222222", 4_600))
-        assertTrue(gate.accept("111111", 4_700))
+        assertFalse(gate.accept("111111", 4_500))
+        assertTrue(gate.accept("111111", 4_530))
+        // Another code counts once confirmed, and so does going back to the first.
+        assertFalse(gate.accept("222222", 4_600))
+        assertTrue(gate.accept("222222", 4_630))
+        assertFalse(gate.accept("111111", 4_700))
+        assertTrue(gate.accept("111111", 4_730))
+    }
+
+    @Test
+    fun aCodeReadInOneFrameOnlyIsAMisread() {
+        val gate = ScanGate()
+        // Seen on a Galaxy A53 in low light: a label read as other codes for one frame each, between good reads.
+        assertFalse(gate.accept("7503006698316", 0))
+        assertFalse(gate.accept("4513466698316", 30))
+        assertFalse(gate.accept("4597466698316", 60))
+        assertTrue(gate.accept("7503006698316", 90))
+        // The misreads never come back, so they never count.
+        assertFalse(gate.accept("4513466698316", 1_200))
+        assertFalse(gate.accept("4597466698316", 2_400))
+        // Two reads too far apart are two misreads, not a confirmation.
+        assertFalse(gate.accept("12345670", 5_000))
+        assertFalse(gate.accept("12345670", 6_100))
     }
 }
