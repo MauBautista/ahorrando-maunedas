@@ -87,6 +87,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun variantRefs(): VariantRefsDao
 
+    abstract fun scan(): ScanDao
+
     companion object {
         const val NAME = "maunedas.db"
     }

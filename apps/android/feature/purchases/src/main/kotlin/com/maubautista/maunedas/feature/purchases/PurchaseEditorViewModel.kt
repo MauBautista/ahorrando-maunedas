@@ -10,6 +10,7 @@ import com.maubautista.maunedas.core.data.PurchaseEditor
 import com.maubautista.maunedas.core.data.PurchaseLine
 import com.maubautista.maunedas.core.data.StoreChoice
 import com.maubautista.maunedas.core.data.TicketDiscount
+import com.maubautista.maunedas.core.data.VariantChoice
 import com.maubautista.maunedas.core.model.Clock
 import com.maubautista.maunedas.core.model.HouseholdTime
 import com.maubautista.maunedas.core.pricing.PurchaseMath
@@ -73,6 +74,9 @@ class PurchaseEditorViewModel
         private val clock: Clock,
     ) : ViewModel() {
         private val purchaseId: String? = savedState["purchaseId"]
+
+        /** "Agregar a la compra abierta" from the scanner (S-12): the line sheet opens with this variant. */
+        private val addVariantId: String? = savedState["addVariantId"]
         private val ui = MutableStateFlow(EditorState())
         val state: StateFlow<EditorState> = ui.asStateFlow()
 
@@ -97,7 +101,11 @@ class PurchaseEditorViewModel
             viewModelScope.launch {
                 val draft = purchaseId?.let { editor.load(it) } ?: PurchaseDraft(purchasedAt = clock.nowMillis())
                 saved = draft.takeIf { it.id != null }
-                ui.value = EditorState(loading = false, draft = draft)
+                val line =
+                    addVariantId?.let { id ->
+                        editor.variant(id)?.let { v -> LineForm().withVariant(VariantChoice(v, draft.storeId?.let { store -> editor.lastListPrice(id, store) })) }
+                    }
+                ui.value = EditorState(loading = false, draft = draft, line = line)
             }
         }
 

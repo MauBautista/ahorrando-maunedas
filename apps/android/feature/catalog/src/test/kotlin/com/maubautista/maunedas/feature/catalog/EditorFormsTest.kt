@@ -75,6 +75,24 @@ class EditorFormsTest {
     }
 
     @Test
+    fun theScannerPrefillsContentAndKeepsTheCodeAsScanned() {
+        // 10 §2.2 gives base units: "6 x 1 l" is 1000 ml in a pack of 6.
+        val f = VariantForm.prefilled(Measure.VOLUME, "7501020515350", unitAmount = 1000.0, packCount = 6)
+        assertEquals(listOf("1", "6", "6 × 1 L"), listOf(f.amount, f.pack, f.label))
+        assertEquals(ContentUnit.L, f.unit)
+        val draft = f.validate().first!!
+        assertEquals(listOf("7501020515350") to mapOf("7501020515350" to "scan"), draft.codes to draft.codeSources)
+        // Taking the code away forgets where it came from.
+        assertEquals(emptyMap<String, String>(), f.withoutCode("7501020515350").codeSources)
+        // A code read later in S-10 keeps its source too; a typed one does not get one.
+        val more = f.withCodeInput("12345678", source = "scan").withCode("12345678").withCodeInput("87654321").withCode("87654321")
+        assertEquals(mapOf("7501020515350" to "scan", "12345678" to "scan"), more.codeSources)
+        // Without catalog data only the code is there.
+        val bare = VariantForm.prefilled(Measure.MASS, "12345678")
+        assertEquals(Triple("", Measure.MASS, listOf("12345678")), Triple(bare.amount, bare.measure, bare.codes))
+    }
+
+    @Test
     fun theDisplayUnitFollowsTheFirstVariantUntilChosen() {
         val p = ProductForm()
         assertEquals(DisplayUnit.KG, p.followingMeasure(Measure.MASS).displayUnit)

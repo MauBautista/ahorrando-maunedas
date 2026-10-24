@@ -57,6 +57,7 @@
     <string name="editor_codes">Códigos de barras</string>
     <string name="editor_no_codes">Sin códigos.</string>
     <string name="editor_new_code">Agregar código</string>
+    <string name="editor_scan_code">Escanear código</string>
     <string name="editor_remove_code">Quitar el código %1$s</string>
     <string name="editor_code_format">Un código tiene de 6 a 14 dígitos.</string>
     <string name="editor_code_repeated">Ese código ya está en la lista.</string>

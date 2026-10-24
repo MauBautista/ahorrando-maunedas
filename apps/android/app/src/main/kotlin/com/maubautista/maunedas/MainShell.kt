@@ -29,6 +29,8 @@ import com.maubautista.maunedas.feature.catalog.CatalogRoute
 import com.maubautista.maunedas.feature.home.HomeActions
 import com.maubautista.maunedas.feature.home.HomeRoute
 import com.maubautista.maunedas.feature.purchases.PurchasesRoute
+import com.maubautista.maunedas.feature.scan.ScanActions
+import com.maubautista.maunedas.feature.scan.ScanRoute
 import com.maubautista.maunedas.feature.settings.SettingsRoute
 import com.maubautista.maunedas.feature.settings.SyncMessagesHost
 import kotlinx.serialization.Serializable
@@ -73,6 +75,7 @@ fun MainShell(
     onNewProduct: () -> Unit,
     onOpenPurchase: (String?) -> Unit,
     onOpenSync: () -> Unit,
+    scanActions: ScanActions,
 ) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
@@ -111,7 +114,7 @@ fun MainShell(
                 )
             }
             composable<PurchasesTab> { PurchasesRoute(onOpenPurchase = onOpenPurchase, onNewPurchase = { onOpenPurchase(null) }) }
-            composable<ScanTab> { ComingSoon(stringResource(R.string.tab_scan)) }
+            composable<ScanTab> { ScanRoute(scanActions) }
             composable<CatalogTab> { CatalogRoute(onOpenProduct = onOpenProduct, onNewProduct = onNewProduct) }
             composable<SettingsTab> { SettingsRoute(onSignedOut = onSignedOut, onOpenSync = onOpenSync) }
         }

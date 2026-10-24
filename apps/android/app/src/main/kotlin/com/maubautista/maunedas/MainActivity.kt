@@ -18,7 +18,10 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.maubautista.maunedas.core.auth.AuthService
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
+import androidx.compose.ui.res.stringResource
+import com.maubautista.maunedas.core.ui.ComingSoon
 import com.maubautista.maunedas.feature.auth.LoginRoute
+import com.maubautista.maunedas.feature.scan.ScanActions
 import com.maubautista.maunedas.feature.catalog.ProductEditorRoute
 import com.maubautista.maunedas.feature.catalog.ProductPageRoute
 import com.maubautista.maunedas.feature.catalog.VariantEditorRoute
@@ -41,27 +44,47 @@ data class ProductDestination(
     val productId: String,
 )
 
-/** S-09; null [productId] creates one. */
+/**
+ * S-09; null [productId] creates one. The scanner (S-12) prefills a new product: [code], and from an open catalog
+ * [name], [brand], [measure], [unitAmount] (base units) and [packCount] (texts, as routes carry them).
+ */
 @Serializable
 data class ProductEditorDestination(
     val productId: String? = null,
+    val code: String? = null,
+    val name: String? = null,
+    val brand: String? = null,
+    val measure: String? = null,
+    val unitAmount: String? = null,
+    val packCount: String? = null,
+)
+
+/** S-13; the shelf price screen arrives with T-125. */
+@Serializable
+data class ShelfPriceDestination(
+    val variantId: String,
 )
 
 /** S-16, sync state and "Cambios rechazados". */
 @Serializable
 object SyncDestination
 
-/** S-04; null [purchaseId] starts a new purchase. */
+/** S-04; null [purchaseId] starts a new purchase; [addVariantId] opens the line sheet with that variant (S-12). */
 @Serializable
 data class PurchaseEditorDestination(
     val purchaseId: String? = null,
+    val addVariantId: String? = null,
 )
 
-/** S-10; null [variantId] adds a variant to the product. */
+/** S-10; null [variantId] adds a variant to the product, prefilled by the scanner as [ProductEditorDestination]. */
 @Serializable
 data class VariantEditorDestination(
     val productId: String,
     val variantId: String? = null,
+    val code: String? = null,
+    val measure: String? = null,
+    val unitAmount: String? = null,
+    val packCount: String? = null,
 )
 
 /** Single activity (05 §4). With a saved session it opens at home without network (RF-AUTH-08). */
@@ -93,8 +116,31 @@ class MainActivity : ComponentActivity() {
                                     onNewProduct = { nav.navigate(ProductEditorDestination()) },
                                     onOpenPurchase = { nav.navigate(PurchaseEditorDestination(it)) },
                                     onOpenSync = { nav.navigate(SyncDestination) },
+                                    scanActions =
+                                        ScanActions(
+                                            onAddToPurchase = { draft, variant -> nav.navigate(PurchaseEditorDestination(draft, variant)) },
+                                            onShelfPrice = { nav.navigate(ShelfPriceDestination(it)) },
+                                            onOpenProduct = { nav.navigate(ProductDestination(it)) },
+                                            onNewProduct = { code, g ->
+                                                nav.navigate(
+                                                    ProductEditorDestination(
+                                                        code = code, name = g?.name, brand = g?.brand, measure = g?.measure?.wire,
+                                                        unitAmount = g?.unitAmount?.toString(), packCount = g?.packCount?.toString(),
+                                                    ),
+                                                )
+                                            },
+                                            onNewVariant = { product, code, g ->
+                                                nav.navigate(
+                                                    VariantEditorDestination(
+                                                        productId = product, code = code, measure = g?.measure?.wire,
+                                                        unitAmount = g?.unitAmount?.toString(), packCount = g?.packCount?.toString(),
+                                                    ),
+                                                )
+                                            },
+                                        ),
                                 )
                             }
+                            composable<ShelfPriceDestination> { ComingSoon(stringResource(R.string.shelf_price_title)) }
                             composable<SyncDestination> { SyncStatusRoute(onBack = { nav.popBackStack() }) }
                             composable<PurchaseEditorDestination> { PurchaseEditorRoute(onDone = { nav.popBackStack() }) }
                             composable<ProductDestination> {

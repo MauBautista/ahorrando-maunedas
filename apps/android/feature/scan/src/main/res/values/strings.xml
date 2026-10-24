@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
+    <string name="scan_hint">Apunta la cámara al código de barras.</string>
+    <string name="scan_type">Escribir el código</string>
+    <string name="scan_code">Código de barras</string>
+    <string name="scan_search">Buscar</string>
+    <string name="scan_permission">Para leer códigos, la app necesita la cámara. También puedes escribir el código.</string>
+    <string name="scan_allow">Permitir la cámara</string>
+    <string name="scan_invalid">Un código tiene de 6 a 14 dígitos.</string>
+    <string name="scan_looking">Buscando %1$s…</string>
+    <string name="scan_code_label">Código %1$s</string>
+    <string name="scan_no_prices">Sin precios registrados.</string>
+    <string name="scan_price_at">%1$s · %2$s</string>
+    <string name="scan_add_to">Agregar a la compra de %1$s</string>
+    <string name="scan_add_to_open">Agregar a la compra abierta</string>
+    <string name="scan_shelf">Precio de anaquel</string>
+    <string name="scan_open">Ver ficha</string>
+    <string name="scan_pulling">Está en el servidor: %1$s. Bajando…</string>
+    <string name="scan_catalog">Encontrado en un catálogo abierto (%1$s)</string>
+    <string name="scan_catalog_content">Contenido: %1$s</string>
+    <string name="scan_unknown">No encontramos este código.</string>
+    <string name="scan_offline">Sin internet no se puede buscar en los catálogos abiertos. Puedes registrarlo ahora.</string>
+    <string name="scan_new_product">Nuevo producto</string>
+    <string name="scan_is_variant">¿Es otra presentación de un producto que ya tienes?</string>
+    <string name="scan_find_product">Buscar el producto</string>
+    <string name="scan_no_products">Ningún producto coincide.</string>
+    <string name="scan_scan_again">Escanear otro</string>
+</resources>

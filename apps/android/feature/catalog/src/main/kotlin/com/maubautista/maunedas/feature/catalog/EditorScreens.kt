@@ -45,6 +45,7 @@ import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.maubautista.maunedas.core.camera.ScanCodeSheet
 import com.maubautista.maunedas.core.data.CategoryNode
 import com.maubautista.maunedas.core.data.TagItem
 import com.maubautista.maunedas.core.data.VariantSummary
@@ -344,6 +345,19 @@ private fun VariantFields(
         }
     }
     val codeError = form.codeError?.let { if (form.codeOwner != null) stringResource(it, form.codeOwner) else stringResource(it) }
+    var scanning by rememberSaveable { mutableStateOf(false) }
+    // S-10 "Escanear código": the read goes through the same checks as a typed one (T56).
+    OutlinedButton(onClick = { scanning = true }, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_scan_code)) }
+    if (scanning) {
+        ScanCodeSheet(
+            onCode = { code ->
+                scanning = false
+                onChange { it.withCodeInput(code, source = "scan") }
+                onAddCode()
+            },
+            onDismiss = { scanning = false },
+        )
+    }
     InputWithButton(
         value = form.codeInput,
         onValueChange = { v -> onChange { it.withCodeInput(v) } },
