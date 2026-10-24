@@ -1,4 +1,4 @@
-package com.maubautista.maunedas.feature.purchases
+package com.maubautista.maunedas.core.ui
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -29,18 +29,23 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
-import com.maubautista.maunedas.core.data.BranchChoice
-import com.maubautista.maunedas.core.data.StoreChoice
 import com.maubautista.maunedas.core.designsystem.Spacing
 import com.maubautista.maunedas.core.pricing.SearchKey
 
-/** S-14 (05 §5): stores by recent use, a search, and "Nueva tienda". */
+/** A store or branch to choose; [detail] is a branch's city. */
+data class PlaceOption(
+    val id: String,
+    val name: String,
+    val detail: String? = null,
+)
+
+/** S-14 (05 §5): stores by recent use, a search, and "Nueva tienda" (purchase editor, shelf price). */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun StoreSheet(
-    stores: List<StoreChoice>,
+    stores: List<PlaceOption>,
     selected: String?,
-    onPick: (StoreChoice) -> Unit,
+    onPick: (PlaceOption) -> Unit,
     onCreate: (name: String, kind: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
@@ -49,24 +54,24 @@ fun StoreSheet(
     var kind by rememberSaveable { mutableStateOf("physical") }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = Spacing.lg).padding(bottom = Spacing.xl), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text(stringResource(R.string.stores_search)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+            OutlinedTextField(value = query, onValueChange = { query = it }, label = { Text(stringResource(R.string.ui_stores_search)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
             val key = SearchKey.of(query)
             stores.filter { key.isEmpty() || SearchKey.of(it.name).contains(key) }.forEach { store ->
                 ChoiceRow(store.name, store.id == selected) { onPick(store) }
             }
             HorizontalDivider()
             if (!creating) {
-                TextButton(onClick = { creating = true }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.stores_new)) }
+                TextButton(onClick = { creating = true }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.ui_stores_new)) }
             } else {
                 // The search text is usually the name of the missing store.
                 var name by rememberSaveable { mutableStateOf(query.trim()) }
-                OutlinedTextField(value = name, onValueChange = { name = it.take(200) }, label = { Text(stringResource(R.string.stores_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = name, onValueChange = { name = it.take(200) }, label = { Text(stringResource(R.string.ui_stores_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
                 Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                    listOf("physical" to R.string.stores_physical, "online" to R.string.stores_online, "both" to R.string.stores_both).forEach { (k, label) ->
+                    listOf("physical" to R.string.ui_stores_physical, "online" to R.string.ui_stores_online, "both" to R.string.ui_stores_both).forEach { (k, label) ->
                         FilterChip(selected = kind == k, onClick = { kind = k }, label = { Text(stringResource(label)) })
                     }
                 }
-                Button(onClick = { onCreate(name, kind) }, enabled = name.isNotBlank(), modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.stores_add)) }
+                Button(onClick = { onCreate(name, kind) }, enabled = name.isNotBlank(), modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.ui_stores_add)) }
             }
         }
     }
@@ -76,27 +81,27 @@ fun StoreSheet(
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BranchSheet(
-    branches: List<BranchChoice>,
+    branches: List<PlaceOption>,
     selected: String?,
     defaultCity: String,
-    onPick: (BranchChoice?) -> Unit,
+    onPick: (PlaceOption?) -> Unit,
     onCreate: (name: String, city: String) -> Unit,
     onDismiss: () -> Unit,
 ) {
     var creating by rememberSaveable { mutableStateOf(false) }
     ModalBottomSheet(onDismissRequest = onDismiss, sheetState = rememberModalBottomSheetState(skipPartiallyExpanded = true)) {
         Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = Spacing.lg).padding(bottom = Spacing.xl), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-            ChoiceRow(stringResource(R.string.editor_no_branch), selected == null) { onPick(null) }
-            branches.forEach { b -> ChoiceRow(listOfNotNull(b.name, b.city).joinToString(" · "), b.id == selected) { onPick(b) } }
+            ChoiceRow(stringResource(R.string.ui_no_branch), selected == null) { onPick(null) }
+            branches.forEach { b -> ChoiceRow(listOfNotNull(b.name, b.detail).joinToString(" · "), b.id == selected) { onPick(b) } }
             HorizontalDivider()
             if (!creating) {
-                TextButton(onClick = { creating = true }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.branches_new)) }
+                TextButton(onClick = { creating = true }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.ui_branches_new)) }
             } else {
                 var name by rememberSaveable { mutableStateOf("") }
                 var city by rememberSaveable { mutableStateOf(defaultCity) }
-                OutlinedTextField(value = name, onValueChange = { name = it.take(200) }, label = { Text(stringResource(R.string.branches_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                OutlinedTextField(value = city, onValueChange = { city = it.take(100) }, label = { Text(stringResource(R.string.branches_city)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
-                Button(onClick = { onCreate(name, city) }, enabled = name.isNotBlank(), modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.stores_add)) }
+                OutlinedTextField(value = name, onValueChange = { name = it.take(200) }, label = { Text(stringResource(R.string.ui_branches_name)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                OutlinedTextField(value = city, onValueChange = { city = it.take(100) }, label = { Text(stringResource(R.string.ui_branches_city)) }, singleLine = true, modifier = Modifier.fillMaxWidth())
+                Button(onClick = { onCreate(name, city) }, enabled = name.isNotBlank(), modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.ui_stores_add)) }
             }
         }
     }

@@ -75,6 +75,7 @@ fun MainShell(
     onNewProduct: () -> Unit,
     onOpenPurchase: (String?) -> Unit,
     onOpenSync: () -> Unit,
+    onShelfPrice: () -> Unit,
     scanActions: ScanActions,
 ) {
     val nav = rememberNavController()
@@ -99,13 +100,12 @@ fun MainShell(
     ) { padding ->
         NavHost(navController = nav, startDestination = HomeTab, modifier = Modifier.padding(padding)) {
             composable<HomeTab> {
-                // Until their screens exist, the receipt photo, shelf price and scan open the tab that will hold them
-                // (T-116, T-123, T-125).
+                // Until its screen exists, the receipt photo opens the tab that will hold it (T-123).
                 HomeRoute(
                     HomeActions(
                         newPurchase = { onOpenPurchase(null) },
                         receiptPhoto = { nav.openTab(Tab.PURCHASES) },
-                        shelfPrice = { nav.openTab(Tab.SCAN) },
+                        shelfPrice = onShelfPrice,
                         scan = { nav.openTab(Tab.SCAN) },
                         openPurchase = { onOpenPurchase(it) },
                         openDrafts = { nav.openTab(Tab.PURCHASES) },

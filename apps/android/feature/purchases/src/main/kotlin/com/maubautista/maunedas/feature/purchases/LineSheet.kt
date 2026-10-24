@@ -1,22 +1,17 @@
 package com.maubautista.maunedas.feature.purchases
 
-import androidx.annotation.StringRes
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.ExperimentalLayoutApi
-import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.FilledTonalButton
-import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
@@ -30,32 +25,17 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.text.input.KeyboardType
 import com.maubautista.maunedas.core.designsystem.Spacing
 import com.maubautista.maunedas.core.designsystem.component.MoneyField
 import com.maubautista.maunedas.core.designsystem.component.QuantityField
 import com.maubautista.maunedas.core.designsystem.component.label
 import com.maubautista.maunedas.core.model.Money
-import com.maubautista.maunedas.core.pricing.PromoParams
 import com.maubautista.maunedas.core.pricing.PromoType
+import com.maubautista.maunedas.core.ui.PromotionFields
 import com.maubautista.maunedas.core.designsystem.R as DesignR
 
-@StringRes
-internal fun PromoType.label(): Int =
-    when (this) {
-        PromoType.PRICE_CUT -> R.string.promo_price_cut
-        PromoType.PERCENT -> R.string.promo_percent
-        PromoType.NXM -> R.string.promo_nxm
-        PromoType.NTH_UNIT_DISCOUNT -> R.string.promo_nth
-        PromoType.MEMBER_PRICE -> R.string.promo_member
-        PromoType.COUPON -> R.string.promo_coupon
-        PromoType.MSI -> R.string.promo_msi
-        PromoType.BUNDLE -> R.string.promo_bundle
-        PromoType.OTHER -> R.string.promo_other
-    }
-
 /** S-05 (05 §5): the variant, quantity (whole pieces, or kilos when sold by weight), list price and promotion. */
-@OptIn(ExperimentalMaterial3Api::class, ExperimentalLayoutApi::class)
+@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun LineSheet(
     form: LineForm,
@@ -119,13 +99,19 @@ fun LineSheet(
                 modifier = Modifier.fillMaxWidth(),
             )
             Text(stringResource(R.string.line_promo), style = MaterialTheme.typography.titleSmall)
-            FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                FilterChip(selected = form.promoType == null, onClick = { onChange { it.withPromo(null) } }, label = { Text(stringResource(R.string.promo_none)) })
-                PromoType.entries.forEach { type ->
-                    FilterChip(selected = form.promoType == type, onClick = { onChange { it.withPromo(type) } }, label = { Text(stringResource(type.label())) })
+            PromotionFields(form.promoType, form.params, onType = { t -> onChange { it.withPromo(t) } }, onParams = { change -> onChange { it.withParams(change) } })
+            // S-05 only: the discount it gives, which can be typed by hand (then saved as `other`).
+            if (form.promoType != null && form.promoType != PromoType.MSI) {
+                form.computedDiscount()?.takeIf { form.manualDiscountCents == null }?.let {
+                    Text(stringResource(R.string.promo_discount, Money.format(it)), style = MaterialTheme.typography.bodyLarge)
                 }
+                MoneyField(
+                    cents = form.manualDiscountCents,
+                    onCentsChange = { c -> onChange { it.withManualDiscount(c) } },
+                    label = stringResource(R.string.promo_override),
+                    modifier = Modifier.fillMaxWidth(),
+                )
             }
-            form.promoType?.let { type -> PromoFields(type, form, onChange) }
             form.error?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyLarge) }
             form.preview()?.let { line ->
                 Text(stringResource(R.string.line_total, Money.format(line.amounts.finalCents)), style = MaterialTheme.typography.titleMedium)
@@ -141,65 +127,4 @@ fun LineSheet(
             }
         }
     }
-}
-
-/** The parameters of each promotion type (09 §6.1) and the discount they give, which can be typed by hand. */
-@Composable
-private fun PromoFields(
-    type: PromoType,
-    form: LineForm,
-    onChange: ((LineForm) -> LineForm) -> Unit,
-) {
-    val p = form.params
-    fun set(change: (PromoParams) -> PromoParams) = onChange { it.withParams(change) }
-    fun money(cents: Long?) = cents?.toDouble()
-    when (type) {
-        PromoType.PRICE_CUT ->
-            MoneyField(cents = p.toCents?.toLong(), onCentsChange = { c -> set { it.copy(toCents = money(c)) } }, label = stringResource(R.string.promo_to_price), modifier = Modifier.fillMaxWidth())
-        PromoType.PERCENT -> NumberField(p.percent, R.string.promo_percent_value) { v -> set { it.copy(percent = v) } }
-        PromoType.NXM ->
-            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
-                NumberField(p.n, R.string.promo_take, Modifier.weight(1f)) { v -> set { it.copy(n = v) } }
-                NumberField(p.m, R.string.promo_pay, Modifier.weight(1f)) { v -> set { it.copy(m = v) } }
-            }
-        PromoType.NTH_UNIT_DISCOUNT -> {
-            NumberField(p.nth, R.string.promo_every) { v -> set { it.copy(nth = v) } }
-            NumberField(p.percent, R.string.promo_percent_value) { v -> set { it.copy(percent = v) } }
-        }
-        PromoType.MEMBER_PRICE ->
-            MoneyField(cents = p.memberCents?.toLong(), onCentsChange = { c -> set { it.copy(memberCents = money(c)) } }, label = stringResource(R.string.promo_member_price), modifier = Modifier.fillMaxWidth())
-        PromoType.COUPON, PromoType.BUNDLE, PromoType.OTHER ->
-            MoneyField(cents = p.amountCents?.toLong(), onCentsChange = { c -> set { it.copy(amountCents = money(c)) } }, label = stringResource(R.string.promo_amount), modifier = Modifier.fillMaxWidth())
-        PromoType.MSI -> NumberField(p.months, R.string.promo_months) { v -> set { it.copy(months = v) } }
-    }
-    if (type != PromoType.MSI) {
-        form.computedDiscount()?.takeIf { form.manualDiscountCents == null }?.let {
-            Text(stringResource(R.string.promo_discount, Money.format(it)), style = MaterialTheme.typography.bodyLarge)
-        }
-        MoneyField(
-            cents = form.manualDiscountCents,
-            onCentsChange = { c -> onChange { it.withManualDiscount(c) } },
-            label = stringResource(R.string.promo_override),
-            modifier = Modifier.fillMaxWidth(),
-        )
-    }
-}
-
-/** A whole or decimal number for promotion parameters (n, m, percent, months). */
-@Composable
-private fun NumberField(
-    value: Double?,
-    @StringRes label: Int,
-    modifier: Modifier = Modifier,
-    onValue: (Double?) -> Unit,
-) {
-    val text = value?.let { if (it == kotlin.math.floor(it)) it.toLong().toString() else it.toString() }.orEmpty()
-    OutlinedTextField(
-        value = text,
-        onValueChange = { s -> onValue(s.replace(',', '.').toDoubleOrNull()?.takeIf { it >= 0 }) },
-        label = { Text(stringResource(label)) },
-        singleLine = true,
-        keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
-        modifier = modifier.fillMaxWidth(),
-    )
 }

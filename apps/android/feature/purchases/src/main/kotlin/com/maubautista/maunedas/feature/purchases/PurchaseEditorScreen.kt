@@ -64,12 +64,17 @@ import com.maubautista.maunedas.core.designsystem.component.MoneyField
 import com.maubautista.maunedas.core.designsystem.component.label
 import com.maubautista.maunedas.core.model.HouseholdTime
 import com.maubautista.maunedas.core.model.Money
+import com.maubautista.maunedas.core.ui.BranchSheet
 import com.maubautista.maunedas.core.ui.Dates
+import com.maubautista.maunedas.core.ui.PlaceOption
+import com.maubautista.maunedas.core.ui.StoreSheet
+import com.maubautista.maunedas.core.ui.label
 import com.maubautista.maunedas.core.ui.clock24h
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneOffset
 import com.maubautista.maunedas.core.designsystem.R as DesignR
+import com.maubautista.maunedas.core.ui.R as UiR
 
 /** Everything the editor can ask for. */
 data class EditorActions(
@@ -199,7 +204,7 @@ fun PurchaseEditorScreen(
                         }
                         HeaderButton(stores.firstOrNull { it.id == draft.storeId }?.name ?: stringResource(R.string.editor_store_pick)) { picker = Picker.STORE }
                         if (draft.storeId != null) {
-                            HeaderButton(stringResource(R.string.editor_branch, branches.firstOrNull { it.id == draft.branchId }?.name ?: stringResource(R.string.editor_no_branch))) {
+                            HeaderButton(stringResource(R.string.editor_branch, branches.firstOrNull { it.id == draft.branchId }?.name ?: stringResource(UiR.string.ui_no_branch))) {
                                 picker = Picker.BRANCH
                             }
                         }
@@ -268,9 +273,23 @@ fun PurchaseEditorScreen(
         SnackbarHost(snackbar, Modifier.align(Alignment.BottomCenter).padding(bottom = Spacing.xxl))
     }
     when (picker) {
-        Picker.STORE -> StoreSheet(stores, draft.storeId, onPick = { actions.onStore(it); picker = null }, onCreate = { n, k -> actions.onNewStore(n, k); picker = null }, onDismiss = { picker = null })
+        Picker.STORE ->
+            StoreSheet(
+                stores.map { PlaceOption(it.id, it.name) },
+                draft.storeId,
+                onPick = { o -> actions.onStore(StoreChoice(o.id, o.name)); picker = null },
+                onCreate = { n, k -> actions.onNewStore(n, k); picker = null },
+                onDismiss = { picker = null },
+            )
         Picker.BRANCH ->
-            BranchSheet(branches, draft.branchId, defaultCity, onPick = { actions.onBranch(it); picker = null }, onCreate = { n, c -> actions.onNewBranch(n, c); picker = null }, onDismiss = { picker = null })
+            BranchSheet(
+                branches.map { PlaceOption(it.id, it.name, it.city) },
+                draft.branchId,
+                defaultCity,
+                onPick = { o -> actions.onBranch(o?.let { BranchChoice(it.id, it.name, it.detail) }); picker = null },
+                onCreate = { n, c -> actions.onNewBranch(n, c); picker = null },
+                onDismiss = { picker = null },
+            )
         Picker.DATE -> DateDialog(draft.purchasedAt, onPick = { actions.onDate(it); picker = null }, onDismiss = { picker = null })
         Picker.TIME -> TimeDialog(draft.purchasedAt, onPick = { actions.onTime(it); picker = null }, onDismiss = { picker = null })
         null -> Unit

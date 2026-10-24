@@ -12,6 +12,8 @@ dependencies {
     api(libs.kotlinx.coroutines.android)
     implementation(libs.kotlinx.serialization.json)
     api(libs.androidx.paging.runtime)
+    // Turning photos upright (LocalPhotos, 10 §4.2).
+    implementation(libs.androidx.exifinterface)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)

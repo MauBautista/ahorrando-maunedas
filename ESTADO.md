@@ -53,6 +53,12 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-125 (2026-10-24):** precio de anaquel en Android:
+  - el producto viene del escáner, de una búsqueda o de escanear ahí mismo;
+  - tu última tienda y sucursal ya vienen puestas;
+  - se escribe el precio, con promoción opcional (muestra cuánto sale cada pieza con un 2x1, por ejemplo) y foto opcional del anaquel, que se sube sola;
+  - "Guardar y otro" deja la tienda para seguir con el recorrido;
+  - el precio entra de inmediato a la ficha, el comparador y el historial.
 - **T-116 (2026-10-24):** escáner de códigos en Android:
   - con la cámara (también sin internet), linterna, vibración y sonido; o escribiendo el código;
   - si el producto ya existe, muestra sus últimos precios y permite agregarlo a la compra abierta o verlo;
@@ -63,7 +69,7 @@
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Pantallas de Android: T-125 (precio de anaquel), T-122 (escaneo continuo en compras) y T-117 (fotos de producto).
+1. Pantallas de Android: T-122 (escaneo continuo en compras), T-117 (fotos de producto) y T-123/T-124 (tickets).
 2. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
 3. Antes del primer despliegue a producción: T-004 (Firebase prod) y la decisión pendiente de T41.
 
@@ -133,6 +139,7 @@
 | T60 | **Editor de compra.** Barra fija solo con el total y los botones; el resto del pie se desplaza. Productos en el orden de captura (reordenar va con T-124); quitar con botón además de deslizar. Autoguardado al salir y al pasar a segundo plano, serializado. El cupón de línea es por monto. Tienda y sucursal en hojas separadas | Un pie fijo completo no cabe con letra al 200 %. El orden importa sobre todo al revisar un ticket. Deslizar no es accesible con TalkBack. Salir y pasar a segundo plano coinciden y no deben crear dos compras. El porcentaje ya tiene su tipo |
 | T61 | **Ajustes y sincronización.** La última sincronización exitosa se guarda en el teléfono y se olvida al cerrar sesión. El diálogo del código repetido sale sobre cualquier pantalla. "Usar esa presentación" mueve solo lo que un miembro puede cambiar (no precios web ni alertas ajenas) y deja mi presentación. Los rechazos se resuelven con "Entendido". "Liberar espacio" conserva las fotos sin subir | S-16 pide "última sincronización", y en memoria se perdía al reabrir. El servidor rechazaría (FORBIDDEN) mover filas que el miembro no puede tocar, y borrar una presentación es del admin. Una foto sin subir solo existe en el teléfono |
 | T62 | **Escáner.** Solo códigos numéricos de 6 a 14 dígitos; el mismo código se ignora mientras siga a la vista (2 s). Hay una opción para escribir el código. "¿Es otra presentación…?" también para códigos desconocidos o sin red. Los códigos leídos van con `source = 'scan'`. Los prellenados viajan como texto en la ruta. La foto del catálogo abierto va con T-117 | `barcodes.code` exige dígitos. Sin la opción de escribirlo, una etiqueta dañada o un permiso negado dejan sin salida. Un código nuevo de un producto conocido es común. Las rutas tipadas no garantizan `Int?`/`Double?`. Importar la foto necesita el flujo de imágenes de T-117 |
+| T63 | **Precio de anaquel.** El efectivo es el de una pieza a la cantidad mínima que activa la promoción, con las fórmulas de S-05; MSI no cambia el precio. La fila de `promotions` lleva `observation_id` y el descuento por pieza. `promo_text` se arma del tipo y sus parámetros. "Recuerda la última" usa mis observaciones `shelf`. La foto se toma con la app de cámara del teléfono, se reduce a 2048 px sin EXIF y se sube por `UploadQueue`. El selector de promociones y las hojas de tienda pasan a `core:ui` | Un precio de anaquel compara piezas sueltas: un 2x1 en el anaquel vale lo que una pieza comprada en 2x1. Un texto armado es uniforme para las alertas y la web. Las tiendas de anaquel y de compra no siempre coinciden. La app de cámara enfoca y usa el flash mejor que una captura propia, y la reducción sirve igual a T-117 y T-123. Sin EXIF no sale la ubicación |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -240,3 +247,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-23** — T-121: editor de compra y de línea en Android con promociones según fixtures, granel, descuentos de ticket, validación del total, cascadas y autoguardado (T60).
 - **2026-10-23** — T-126: Ajustes, estado de sincronización, cambios rechazados y diálogo de código repetido en Android; cambio de contraseña y liberar espacio (T61).
 - **2026-10-24** — T-116: escáner (CameraX + ML Kit) y los cuatro caminos de S-12; prellenado de editores y "Agregar a la compra abierta" (T62).
+- **2026-10-24** — T-125: precio de anaquel (S-13) con promoción, foto y "Guardar y otro"; fotos locales reutilizables y selector de promociones compartido (T63).
