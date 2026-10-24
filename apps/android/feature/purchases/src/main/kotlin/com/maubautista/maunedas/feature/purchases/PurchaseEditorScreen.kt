@@ -52,7 +52,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
@@ -100,6 +102,7 @@ data class EditorActions(
     val onStorePickerShown: () -> Unit = {},
     val onEditLine: (Int) -> Unit = {},
     val onRemoveLine: (Int) -> Unit = {},
+    val onMoveLine: (index: Int, delta: Int) -> Unit = { _, _ -> },
     val onUndoRemove: () -> Unit = {},
     val onNewDiscount: () -> Unit = {},
     val onEditDiscount: (Int) -> Unit = {},
@@ -156,6 +159,7 @@ fun PurchaseEditorRoute(
                 onStorePickerShown = viewModel::storePickerShown,
                 onEditLine = viewModel::editLine,
                 onRemoveLine = viewModel::removeLine,
+                onMoveLine = viewModel::moveLine,
                 onUndoRemove = viewModel::undoRemove,
                 onNewDiscount = viewModel::newDiscount,
                 onEditDiscount = viewModel::editDiscount,
@@ -223,6 +227,7 @@ fun PurchaseEditorScreen(
     val draft = state.draft
     val totals = state.totals
     var picker by rememberSaveable { mutableStateOf<Picker?>(null) }
+    var reordering by rememberSaveable { mutableStateOf(false) }
     // "Foto de ticket" without a store opens the store sheet first.
     LaunchedEffect(state.pickStore) {
         if (state.pickStore) {
@@ -260,12 +265,20 @@ fun PurchaseEditorScreen(
                             HeaderButton(stringResource(R.string.editor_time, Dates.time(draft.purchasedAt, clock24h())), Modifier.weight(1f)) { picker = Picker.TIME }
                         }
                         state.problem?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyLarge) }
-                        Text(stringResource(R.string.editor_lines), style = MaterialTheme.typography.titleMedium, modifier = Modifier.semantics { heading() })
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Text(stringResource(R.string.editor_lines), style = MaterialTheme.typography.titleMedium, modifier = Modifier.weight(1f).semantics { heading() })
+                            if (draft.lines.size > 1 || reordering) {
+                                TextButton(onClick = { reordering = !reordering }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
+                                    Text(stringResource(if (reordering) R.string.editor_reorder_done else R.string.editor_reorder))
+                                }
+                            }
+                        }
                         if (draft.lines.isEmpty()) Text(stringResource(R.string.editor_no_lines), style = MaterialTheme.typography.bodyLarge)
                     }
                 }
                 itemsIndexed(draft.lines, key = { i, line -> line.id ?: "new:$i:${line.hashCode()}" }) { i, line ->
-                    SwipeableLine(line, onOpen = { actions.onEditLine(i) }, onRemove = { actions.onRemoveLine(i) })
+                    val moves = LineMoves(up = i > 0, down = i < draft.lines.lastIndex, showing = reordering) { delta -> actions.onMoveLine(i, delta) }
+                    SwipeableLine(line, moves, onOpen = { actions.onEditLine(i) }, onRemove = { actions.onRemoveLine(i) })
                 }
                 item {
                     Column(Modifier.padding(horizontal = Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
@@ -388,10 +401,19 @@ private fun AmountRow(
     }
 }
 
-/** A line of S-04; swiping it away (or its button) removes it, with "Deshacer". */
+/** Where a line can go: [showing] puts ↑ and ↓ on it ("Ordenar"); TalkBack offers them always. */
+private data class LineMoves(
+    val up: Boolean,
+    val down: Boolean,
+    val showing: Boolean,
+    val move: (delta: Int) -> Unit,
+)
+
+/** A line of S-04; swiping it away (or its button) removes it, with "Deshacer". While ordering it does not swipe. */
 @Composable
 private fun SwipeableLine(
     line: PurchaseLine,
+    moves: LineMoves,
     onOpen: () -> Unit,
     onRemove: () -> Unit,
 ) {
@@ -400,10 +422,11 @@ private fun SwipeableLine(
         state = swipe,
         backgroundContent = { Box(Modifier.fillMaxSize().background(MaterialTheme.colorScheme.errorContainer)) },
         enableDismissFromStartToEnd = false,
+        enableDismissFromEndToStart = !moves.showing,
         onDismiss = { if (it == SwipeToDismissBoxValue.EndToStart) onRemove() },
     ) {
         Surface {
-            LineRow(line, onOpen, onRemove)
+            LineRow(line, moves, onOpen, onRemove)
         }
     }
 }
@@ -412,12 +435,20 @@ private fun SwipeableLine(
 @Composable
 private fun LineRow(
     line: PurchaseLine,
+    moves: LineMoves,
     onOpen: () -> Unit,
     onRemove: () -> Unit,
 ) {
     val unlinked = line.variant == null
     val a = line.amounts
     val title = line.title()
+    val upLabel = stringResource(R.string.editor_move_up)
+    val downLabel = stringResource(R.string.editor_move_down)
+    val actions =
+        listOfNotNull(
+            CustomAccessibilityAction(upLabel) { moves.move(-1); true }.takeIf { moves.up },
+            CustomAccessibilityAction(downLabel) { moves.move(1); true }.takeIf { moves.down },
+        )
     Row(
         Modifier
             .fillMaxWidth()
@@ -426,8 +457,12 @@ private fun LineRow(
             .padding(start = Spacing.lg, top = Spacing.sm, bottom = Spacing.sm),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Column(Modifier.weight(1f).semantics(mergeDescendants = true) {}, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
+        Column(Modifier.weight(1f).semantics(mergeDescendants = true) { customActions = actions }, verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(title, style = MaterialTheme.typography.bodyLarge)
+            // A ticket line without a product (T-124): its sheet searches for the variant.
+            if (unlinked) {
+                TextButton(onClick = onOpen, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_link)) }
+            }
             FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
                 if (line.unitPriceCents == 0L) {
                     Text(stringResource(R.string.editor_no_price), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.error)
@@ -447,8 +482,17 @@ private fun LineRow(
                 Text(stringResource(DesignR.string.ds_per_unit, Money.format(perUnit), unit.label()), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
             }
         }
-        IconButton(onClick = onRemove) {
-            Icon(painterResource(DesignR.drawable.ic_close), contentDescription = stringResource(R.string.editor_remove_line, title))
+        if (moves.showing) {
+            IconButton(onClick = { moves.move(-1) }, enabled = moves.up) {
+                Icon(painterResource(DesignR.drawable.ic_arrow_upward), contentDescription = stringResource(R.string.editor_move_line_up, title))
+            }
+            IconButton(onClick = { moves.move(1) }, enabled = moves.down) {
+                Icon(painterResource(DesignR.drawable.ic_arrow_downward), contentDescription = stringResource(R.string.editor_move_line_down, title))
+            }
+        } else {
+            IconButton(onClick = onRemove) {
+                Icon(painterResource(DesignR.drawable.ic_close), contentDescription = stringResource(R.string.editor_remove_line, title))
+            }
         }
     }
 }

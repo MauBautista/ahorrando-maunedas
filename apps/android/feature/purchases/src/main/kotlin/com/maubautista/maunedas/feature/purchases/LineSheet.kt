@@ -51,6 +51,8 @@ fun LineSheet(
         ) {
             Text(stringResource(R.string.line_title), style = MaterialTheme.typography.titleLarge)
             val variant = form.variant
+            // "Vincular": what the ticket said, to find its product.
+            form.rawText?.let { Text(stringResource(R.string.line_ticket_text, it), style = MaterialTheme.typography.bodyLarge) }
             if (variant == null) {
                 OutlinedTextField(
                     value = form.query,

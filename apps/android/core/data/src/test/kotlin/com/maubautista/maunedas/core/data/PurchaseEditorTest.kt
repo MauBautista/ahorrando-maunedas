@@ -9,6 +9,7 @@ import com.maubautista.maunedas.core.database.entity.ProductEntity
 import com.maubautista.maunedas.core.database.entity.StoreEntity
 import com.maubautista.maunedas.core.database.entity.VariantEntity
 import com.maubautista.maunedas.core.model.Clock
+import com.maubautista.maunedas.core.model.Uuids
 import com.maubautista.maunedas.core.pricing.PromoParams
 import com.maubautista.maunedas.core.pricing.PromoType
 import com.maubautista.maunedas.core.pricing.Promotions
@@ -188,4 +189,47 @@ class PurchaseEditorTest {
         }
 
     private suspend fun outbox() = db.outbox().nextBatch(100, Long.MAX_VALUE).map { it.tableName }.sorted()
+
+    private suspend fun aliases() = db.openHelper.readableDatabase.query("SELECT id, store_id, raw_text_norm, variant_id, updated_at FROM receipt_aliases WHERE deleted_at IS NULL ORDER BY raw_text_norm").use { c ->
+        buildList { while (c.moveToNext()) add(listOf<Any?>(c.getString(0), c.getString(1), c.getString(2), c.getString(3), c.getLong(4))) }
+    }
+
+    @Test
+    fun aConfirmedTicketLineTeachesItsStoreTheText() =
+        runTest {
+            val lines =
+                listOf(
+                    // Linked by hand ("Vincular"): the text is normalized as the alias (09 §5.1).
+                    PurchaseLine(variant = shampoo, rawText = "2 @ SHAMPOO HERBAL 400ML 89.00 178.00", quantity = 2.0, unitPriceCents = 8_900),
+                    PurchaseLine(variant = queso, rawText = "ILEGIBLE", quantity = 0.5, unitPriceCents = 15_000),
+                    PurchaseLine(variant = tele, quantity = 1.0, unitPriceCents = 899_900),
+                    PurchaseLine(variant = null, rawText = "BOLSA", quantity = 1.0, unitPriceCents = 100),
+                )
+            // A draft teaches nothing yet.
+            val id = editor.save(PurchaseDraft(storeId = "soriana", purchasedAt = now, lines = lines))
+            assertEquals(emptyList<Any>(), aliases())
+            editor.save(editor.load(id)!!, confirm = true)
+            val alias = Uuids.receiptAliasId("soriana", "SHAMPOO HERBAL 400ML")
+            assertEquals(listOf(listOf<Any?>(alias, "soriana", "SHAMPOO HERBAL 400ML", "v1", now)), aliases())
+            // Confirming again writes nothing new.
+            now += 1_000
+            editor.save(editor.load(id)!!, confirm = true)
+            assertEquals(now - 1_000, aliases().single()[4])
+            // Linked to another variant, the alias moves with it.
+            val relinked = editor.load(id)!!.let { d -> d.copy(lines = d.lines.map { if (it.variant?.id == "v1") it.copy(variant = tele) else it }) }
+            editor.save(relinked, confirm = true)
+            assertEquals("v3", aliases().single()[3])
+        }
+
+    @Test
+    fun linesAreNumberedInTheOrderTheyAreGiven() =
+        runTest {
+            val draft = PurchaseDraft(storeId = "soriana", purchasedAt = now, lines = listOf(PurchaseLine(variant = shampoo, quantity = 1.0, unitPriceCents = 100), PurchaseLine(variant = tele, quantity = 1.0, unitPriceCents = 200)))
+            val id = editor.save(draft)
+            val loaded = editor.load(id)!!
+            editor.save(loaded.copy(lines = loaded.lines.reversed()))
+            val rows = db.purchaseItems().liveOfPurchase(id).sortedBy { it.lineNo }
+            assertEquals(listOf("v3" to 1L, "v1" to 2L), rows.map { it.variantId to it.lineNo })
+            assertEquals(listOf("v3", "v1"), editor.load(id)!!.lines.map { it.variant?.id })
+        }
 }

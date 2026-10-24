@@ -260,6 +260,16 @@ class PurchaseEditorViewModel
             ui.update { it.copy(removed = index to line) }
         }
 
+        /** Moves a line up ([delta] −1) or down (+1); the order is saved as `line_no` (S-04 "lista reordenable"). */
+        fun moveLine(
+            index: Int,
+            delta: Int,
+        ) = change { d ->
+            val to = index + delta
+            if (index !in d.lines.indices || to !in d.lines.indices) return@change d
+            d.copy(lines = d.lines.toMutableList().also { it.add(to, it.removeAt(index)) })
+        }
+
         fun undoRemove() {
             val (index, line) = ui.value.removed ?: return
             change { d -> d.copy(lines = d.lines.toMutableList().also { it.add(index.coerceAtMost(it.size), line) }) }

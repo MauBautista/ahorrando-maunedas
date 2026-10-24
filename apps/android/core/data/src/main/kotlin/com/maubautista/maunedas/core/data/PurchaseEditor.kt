@@ -6,6 +6,7 @@ import com.maubautista.maunedas.core.database.dao.LineVariantRow
 import com.maubautista.maunedas.core.database.entity.PromotionEntity
 import com.maubautista.maunedas.core.database.entity.PurchaseEntity
 import com.maubautista.maunedas.core.database.entity.PurchaseItemEntity
+import com.maubautista.maunedas.core.database.entity.ReceiptAliasEntity
 import com.maubautista.maunedas.core.database.entity.StoreBranchEntity
 import com.maubautista.maunedas.core.database.entity.StoreEntity
 import com.maubautista.maunedas.core.model.Clock
@@ -16,14 +17,15 @@ import com.maubautista.maunedas.core.pricing.LineAmounts
 import com.maubautista.maunedas.core.pricing.PromoParams
 import com.maubautista.maunedas.core.pricing.PromoType
 import com.maubautista.maunedas.core.pricing.PurchaseMath
+import com.maubautista.maunedas.core.pricing.ReceiptText
 import com.maubautista.maunedas.core.pricing.SearchKey
 import com.maubautista.maunedas.core.pricing.Units
 import com.maubautista.maunedas.core.sync.LocalWriter
 import com.maubautista.maunedas.core.sync.SyncTables
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /** The variant a purchase line points to, with what the line shows and computes. */
 data class LineVariant(
@@ -128,6 +130,7 @@ class PurchaseEditor
         private val promotions = SyncTables.of<PromotionEntity>("promotions")
         private val stores = SyncTables.of<StoreEntity>("stores")
         private val branches = SyncTables.of<StoreBranchEntity>("store_branches")
+        private val aliases = SyncTables.of<ReceiptAliasEntity>("receipt_aliases")
 
         suspend fun load(id: String): PurchaseDraft? {
             val p = db.purchases().byId(id)?.takeIf { it.deletedAt == null } ?: return null
@@ -251,8 +254,34 @@ class PurchaseEditor
                         }
                 writer.write(promotions, promoRows)
                 writer.delete(promotions, livePromos.filter { it.id !in keptPromos && (it.purchaseId == purchase.id || rows.any { r -> r.id == it.purchaseItemId }) })
+                if (status == "confirmed") learnAliases(storeId, draft.lines, now)
                 purchase.id
             }
+
+        /**
+         * RF-TIC-03/05 (09 §7.4): a confirmed ticket line with a variant teaches its store that text. The id is
+         * UUIDv5 of store and text, so confirming again changes nothing, and linking the text to another variant
+         * moves the alias. Unreadable lines teach nothing.
+         */
+        private suspend fun learnAliases(
+            storeId: String,
+            lines: List<PurchaseLine>,
+            now: Long,
+        ) {
+            val learned =
+                lines.mapNotNull { line ->
+                    val variant = line.variant ?: return@mapNotNull null
+                    val norm = line.rawText?.let(ReceiptText::normalize)?.takeIf { it.isNotEmpty() && it != ReceiptText.ILLEGIBLE } ?: return@mapNotNull null
+                    val id = Uuids.receiptAliasId(storeId, norm)
+                    val current = db.receiptAliases().byId(id)
+                    when {
+                        current == null -> ReceiptAliasEntity(id = id, storeId = storeId, rawTextNorm = norm, variantId = variant.id, createdAt = now, updatedAt = now)
+                        current.deletedAt == null && current.variantId == variant.id -> null
+                        else -> current.copy(variantId = variant.id, deletedAt = null)
+                    }
+                }.distinctBy { it.id }
+            writer.write(aliases, learned)
+        }
 
         /** RF-COM-08: anyone may; its lines, promotions and receipt images go too (04 §6.2). */
         suspend fun delete(id: String) {
