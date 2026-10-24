@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.lifecycle.SavedStateHandle
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
+import com.maubautista.maunedas.core.data.LocalPhotos
 import com.maubautista.maunedas.core.data.PurchaseEditor
 import com.maubautista.maunedas.core.data.StoreChoice
 import com.maubautista.maunedas.core.database.AppDatabase
@@ -34,6 +35,7 @@ import org.robolectric.RobolectricTestRunner
 class PurchaseEditorViewModelTest {
     /** Room and the view model on one test dispatcher: `advanceUntilIdle` finishes every write. */
     private val dispatcher = StandardTestDispatcher()
+    private val context = ApplicationProvider.getApplicationContext<Context>()
     private val db =
         Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java)
             .setQueryCoroutineContext(dispatcher)
@@ -50,7 +52,7 @@ class PurchaseEditorViewModelTest {
             db.stores().upsertAll(listOf(StoreEntity(id = "s", name = "Soriana", kind = "physical", defaultCheckIntervalMin = 480, createdAt = 1, updatedAt = 1)))
             db.products().upsertAll(listOf(ProductEntity(id = "p", name = "Leche", displayUnit = "L", searchKey = "leche", createdAt = 1, updatedAt = 1)))
             db.variants().upsertAll(listOf(VariantEntity(id = "v", productId = "p", label = "1 L", measure = "volume", unitAmount = 1000.0, packCount = 1, soldByWeight = 0, createdAt = 1, updatedAt = 1)))
-            vm = PurchaseEditorViewModel(SavedStateHandle(), editor, scanRepository(db, clock), clock)
+            vm = PurchaseEditorViewModel(SavedStateHandle(), editor, scanRepository(db, clock), receiptPhotos(db, clock), LocalPhotos(context), clock)
             advanceUntilIdle()
         }
 

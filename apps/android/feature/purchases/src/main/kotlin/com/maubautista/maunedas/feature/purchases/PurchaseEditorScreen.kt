@@ -13,6 +13,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.material3.AlertDialog
@@ -49,15 +50,21 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.maubautista.maunedas.core.camera.rememberScanReceipt
 import com.maubautista.maunedas.core.data.BranchChoice
 import com.maubautista.maunedas.core.data.PurchaseLine
+import com.maubautista.maunedas.core.data.ReceiptPage
+import com.maubautista.maunedas.core.data.ReceiptPhotos
 import com.maubautista.maunedas.core.data.StoreChoice
 import com.maubautista.maunedas.core.designsystem.Spacing
 import com.maubautista.maunedas.core.designsystem.component.MoneyField
@@ -67,9 +74,10 @@ import com.maubautista.maunedas.core.model.Money
 import com.maubautista.maunedas.core.ui.BranchSheet
 import com.maubautista.maunedas.core.ui.Dates
 import com.maubautista.maunedas.core.ui.PlaceOption
+import com.maubautista.maunedas.core.ui.ProductPhoto
 import com.maubautista.maunedas.core.ui.StoreSheet
-import com.maubautista.maunedas.core.ui.label
 import com.maubautista.maunedas.core.ui.clock24h
+import com.maubautista.maunedas.core.ui.label
 import java.time.Instant
 import java.time.LocalTime
 import java.time.ZoneOffset
@@ -87,6 +95,9 @@ data class EditorActions(
     val onTime: (LocalTime) -> Unit = {},
     val onNewLine: () -> Unit = {},
     val onScan: () -> Unit = {},
+    val onReceipt: () -> Unit = {},
+    val onRemoveReceiptPage: (imageId: String) -> Unit = {},
+    val onStorePickerShown: () -> Unit = {},
     val onEditLine: (Int) -> Unit = {},
     val onRemoveLine: (Int) -> Unit = {},
     val onUndoRemove: () -> Unit = {},
@@ -112,7 +123,10 @@ fun PurchaseEditorRoute(
     val state by viewModel.state.collectAsStateWithLifecycle()
     val stores by viewModel.stores.collectAsStateWithLifecycle()
     val branches by viewModel.branches.collectAsStateWithLifecycle()
+    val receiptPages by viewModel.receiptPages.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.done.collect { onDone() } }
+    val scanReceipt = rememberScanReceipt(viewModel::onReceiptPages)
+    LaunchedEffect(viewModel) { viewModel.receiptScans.collect { scanReceipt(it) } }
     // "Autoguardado al salir" (05 §5): Back saves first, and so does sending the app to the background.
     BackHandler(onBack = viewModel::leave)
     LifecycleEventEffect(Lifecycle.Event.ON_STOP) { viewModel.autosave() }
@@ -125,6 +139,7 @@ fun PurchaseEditorRoute(
         branches = branches,
         defaultCity = defaultCity,
         now = viewModel.now(),
+        receiptPages = receiptPages,
         actions =
             EditorActions(
                 onBack = viewModel::leave,
@@ -136,6 +151,9 @@ fun PurchaseEditorRoute(
                 onTime = viewModel::setTime,
                 onNewLine = viewModel::newLine,
                 onScan = viewModel::startScanning,
+                onReceipt = viewModel::requestReceipt,
+                onRemoveReceiptPage = viewModel::removeReceiptPage,
+                onStorePickerShown = viewModel::storePickerShown,
                 onEditLine = viewModel::editLine,
                 onRemoveLine = viewModel::removeLine,
                 onUndoRemove = viewModel::undoRemove,
@@ -200,10 +218,18 @@ fun PurchaseEditorScreen(
     defaultCity: String,
     now: Long,
     actions: EditorActions,
+    receiptPages: List<ReceiptPage> = emptyList(),
 ) {
     val draft = state.draft
     val totals = state.totals
     var picker by rememberSaveable { mutableStateOf<Picker?>(null) }
+    // "Foto de ticket" without a store opens the store sheet first.
+    LaunchedEffect(state.pickStore) {
+        if (state.pickStore) {
+            picker = Picker.STORE
+            actions.onStorePickerShown()
+        }
+    }
     val snackbar = remember { SnackbarHostState() }
     val removedMessage = state.removed?.let { stringResource(R.string.editor_line_removed, it.second.title()) }
     val undo = stringResource(R.string.editor_undo)
@@ -245,6 +271,7 @@ fun PurchaseEditorScreen(
                     Column(Modifier.padding(horizontal = Spacing.lg), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                         OutlinedButton(onClick = actions.onNewLine, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_add_line)) }
                         OutlinedButton(onClick = actions.onScan, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_scan)) }
+                        ReceiptSection(receiptPages, actions)
                         HorizontalDivider()
                         AmountRow(stringResource(R.string.editor_lines_sum), totals.linesCents)
                         Text(stringResource(R.string.editor_ticket_discounts), style = MaterialTheme.typography.titleSmall)
@@ -494,4 +521,31 @@ private fun TimeDialog(
         confirmButton = { TextButton(onClick = { onPick(LocalTime.of(state.hour, state.minute)) }) { Text(stringResource(R.string.purchases_ok)) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.purchases_cancel)) } },
     )
+}
+
+/** RF-TIC-01: "Foto de ticket" (1 to 4 pages) and the pages taken, each with a way to take it away. */
+@Composable
+private fun ReceiptSection(
+    pages: List<ReceiptPage>,
+    actions: EditorActions,
+) {
+    val full = pages.size >= ReceiptPhotos.MAX_PAGES
+    OutlinedButton(onClick = actions.onReceipt, enabled = !full, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) {
+        Text(stringResource(if (pages.isEmpty()) R.string.editor_receipt else R.string.editor_receipt_more))
+    }
+    if (pages.isEmpty()) return
+    Text(pluralStringResource(R.plurals.editor_receipt_pages, pages.size, pages.size), style = MaterialTheme.typography.titleSmall)
+    Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        pages.forEachIndexed { i, page ->
+            val number = i + 1
+            // The button goes under the page: over it, it hid the receipt (seen on a Galaxy A53).
+            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                ProductPhoto(page.photo, "$number", Modifier.size(72.dp))
+                IconButton(onClick = { actions.onRemoveReceiptPage(page.imageId) }) {
+                    Icon(painterResource(DesignR.drawable.ic_close), contentDescription = stringResource(R.string.editor_receipt_remove, number))
+                }
+            }
+        }
+    }
+    if (full) Text(stringResource(R.string.editor_receipt_full), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
 }

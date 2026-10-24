@@ -172,7 +172,13 @@ Acciones:
   - **Confirmar** pide tienda y un producto. Si el total no cuadra por más de $1.00, aparece "El total no cuadra por $X. ¿Confirmar de todos modos?".
   - **Autoguardado:** al salir (Atrás) o al pasar la app a segundo plano, si hay tienda y algo cambió; un `Mutex` evita crear la compra dos veces.
   - **Fecha y hora** son de la Ciudad de México; la hora se teclea (`TimeInput`).
-  - **Llegan después:** "Foto de ticket" con T-123, "Extraer" y "Vincular" con T-124.
+  - **Llegan después:** "Extraer" y "Vincular" con T-124.
+- **Implementación de "Foto de ticket" (T-123, decisión T66):**
+  - **Escáner:** el escáner de documentos de ML Kit (Google Play services, sin permiso de cámara) toma de 1 a 4 páginas recortadas y enderezadas, también de la galería. Si Play services no puede abrirlo (el módulo no se ha descargado y no hay red, o no hay Play services), la app de cámara toma una página.
+  - **Tienda primero**, como en "Escanear productos", porque `purchases.store_id` es obligatorio. Desde Inicio se abre la hoja de tiendas y luego el escáner.
+  - **Guardado inmediato:** las páginas se reducen como ticket (≤ 1600 px, JPEG 80, sin EXIF). Una compra nueva se guarda como borrador antes de agregarlas, para que tengan dueño. Se escriben en ese momento: una fila `images` por página (`owner_type='purchase'`, `role='receipt'`, en orden por `created_at`) y su original en la cola de subida. Sobreviven sin red y aunque se cierre la app (RF-TIC-01).
+  - **Páginas:** se ven en S-04 con un botón para quitar cada una. Con 4 ya no se agregan más.
+  - **`purchases.receipt_image_id`** no se usa: las páginas se leen por dueño y rol, como `receipt_images` (03 §7).
 - **Implementación de "Escanear productos" (T-122, decisión T64):**
   - **Vista:** la cámara ocupa la parte de arriba sobre el editor y nunca se pausa; el mismo código se ignora 2 s mientras siga a la vista. Abajo queda un panel con desplazamiento propio. Pide la tienda primero, para conocer el último precio.
   - **Cada lectura** de un código que ya está aquí agrega una línea de una pieza al último precio de lista en esa tienda (o sin precio) y enfoca su campo de precio. El panel también tiene −/+, o kilos si se pesa.

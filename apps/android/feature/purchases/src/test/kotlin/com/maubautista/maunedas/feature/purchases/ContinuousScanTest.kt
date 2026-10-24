@@ -8,6 +8,7 @@ import androidx.work.Configuration
 import androidx.work.WorkManager
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.maubautista.maunedas.core.data.LocalPhotos
 import com.maubautista.maunedas.core.data.PurchaseDraft
 import com.maubautista.maunedas.core.data.PurchaseEditor
 import com.maubautista.maunedas.core.data.PurchaseLine
@@ -78,7 +79,7 @@ class ContinuousScanTest {
             // The milk's last price at Soriana is $28.50.
             val milk = editor.variant("v")!!
             editor.save(PurchaseDraft(storeId = "s", purchasedAt = 1_000, lines = listOf(PurchaseLine(variant = milk, quantity = 1.0, unitPriceCents = 2_850))), confirm = true)
-            vm = PurchaseEditorViewModel(SavedStateHandle(), editor, scanRepository(db, clock, server.url("/").toString()), clock)
+            vm = PurchaseEditorViewModel(SavedStateHandle(), editor, scanRepository(db, clock, server.url("/").toString()), receiptPhotos(db, clock), LocalPhotos(context), clock)
             advanceUntilIdle()
         }
 
