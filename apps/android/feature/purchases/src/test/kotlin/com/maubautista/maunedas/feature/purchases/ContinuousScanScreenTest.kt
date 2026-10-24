@@ -87,7 +87,7 @@ class ContinuousScanScreenTest {
         show(
             ScanSession(looking = "7501000000024"),
             listOf(PendingCode("7501000000017", "Café Legal · 400 g"), PendingCode("12345678", null), PendingCode("87654321", null, offline = true)),
-            ScanPanelActions(onRegister = { registered += it }),
+            ScanPanelActions(onRegister = { registered += it }, onDismiss = { registered += "x$it" }),
         )
         compose.onNodeWithText("Apunta al código de barras de cada producto.").assertExists()
         compose.onNodeWithText("Buscando 7501000000024…").assertExists()
@@ -99,7 +99,9 @@ class ContinuousScanScreenTest {
         register.assertCountEquals(2)
         register[0].performClick()
         register[1].performScrollTo().performClick()
-        assertEquals(listOf("12345678", "87654321"), registered)
+        // A code read by mistake can be taken off the list.
+        compose.onNodeWithContentDescription("Quitar 7501000000017").performClick()
+        assertEquals(listOf("12345678", "87654321", "x7501000000017"), registered)
     }
 
     @Test

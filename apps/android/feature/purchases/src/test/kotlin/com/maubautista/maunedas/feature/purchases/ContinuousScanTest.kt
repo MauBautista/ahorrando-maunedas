@@ -206,7 +206,13 @@ class ContinuousScanTest {
             db.barcodes().upsertAll(listOf(BarcodeEntity(id = "b4", variantId = "v", code = "12345678", source = "scan", createdAt = 1, updatedAt = 1)))
             advanceUntilIdle()
             assertEquals(listOf(listOf<Any?>("v", 1.0, 2_850L)), lines())
-            // What still waits stays for the next time the camera opens.
+            // What still waits stays for the next time the camera opens, until it is taken off the list.
             assertEquals(listOf("87654321"), vm.state.value.pending.map { it.code })
+            vm.dismissPending("87654321")
+            db.barcodes().upsertAll(listOf(BarcodeEntity(id = "b5", variantId = "v", code = "87654321", source = "scan", createdAt = 1, updatedAt = 1)))
+            advanceUntilIdle()
+            assertEquals(emptyList<PendingCode>(), vm.state.value.pending)
+            // Not waited for any more: the purchase stays as it was.
+            assertEquals(listOf(listOf<Any?>("v", 1.0, 2_850L)), lines())
         }
 }

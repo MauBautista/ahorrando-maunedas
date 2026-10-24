@@ -13,6 +13,8 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.Button
 import androidx.compose.material3.FilledTonalButton
+import androidx.compose.material3.Icon
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Surface
@@ -25,6 +27,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.focus.FocusRequester
 import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
@@ -40,6 +43,7 @@ import com.maubautista.maunedas.core.designsystem.Spacing
 import com.maubautista.maunedas.core.designsystem.component.MoneyField
 import com.maubautista.maunedas.core.designsystem.component.QuantityField
 import com.maubautista.maunedas.core.model.Money
+import com.maubautista.maunedas.core.designsystem.R as DesignR
 
 data class ScanPanelActions(
     val onDone: () -> Unit = {},
@@ -47,6 +51,7 @@ data class ScanPanelActions(
     val onStep: (Int) -> Unit = {},
     val onKilos: (Double?) -> Unit = {},
     val onRegister: (code: String) -> Unit = {},
+    val onDismiss: (code: String) -> Unit = {},
 )
 
 /**
@@ -127,14 +132,21 @@ internal fun ScanPanel(
             }
             session.looking?.let { Text(stringResource(R.string.continuous_looking, it), style = MaterialTheme.typography.bodyMedium) }
             pending.forEach { p ->
-                if (p.name != null) {
-                    Text(stringResource(R.string.continuous_pulling, p.name), style = MaterialTheme.typography.bodyMedium)
-                } else {
-                    Text(
-                        stringResource(if (p.offline) R.string.continuous_unknown_offline else R.string.continuous_unknown, p.code),
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.error,
-                    )
+                val dismiss = stringResource(R.string.continuous_dismiss, p.code)
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    if (p.name != null) {
+                        Text(stringResource(R.string.continuous_pulling, p.name), style = MaterialTheme.typography.bodyMedium, modifier = Modifier.weight(1f))
+                    } else {
+                        Text(
+                            stringResource(if (p.offline) R.string.continuous_unknown_offline else R.string.continuous_unknown, p.code),
+                            style = MaterialTheme.typography.bodyLarge,
+                            color = MaterialTheme.colorScheme.error,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                    IconButton(onClick = { actions.onDismiss(p.code) }) { Icon(painterResource(DesignR.drawable.ic_close), contentDescription = dismiss) }
+                }
+                if (p.name == null) {
                     OutlinedButton(onClick = { actions.onRegister(p.code) }, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) {
                         Text(stringResource(R.string.continuous_register))
                     }

@@ -271,6 +271,12 @@ class PurchaseEditorViewModel
             }
         }
 
+        /** Takes a waiting code off the list (a code read by mistake, or one not wanted any more). */
+        fun dismissPending(code: String) {
+            watching.remove(code)?.cancel()
+            ui.update { s -> s.copy(pending = s.pending.filter { it.code != code }) }
+        }
+
         /** The price of the line just scanned; empty means it has none yet. */
         fun onScanPrice(cents: Long?) = changeScanned { it.copy(unitPriceCents = cents ?: 0) }
 

@@ -179,6 +179,7 @@ Acciones:
   - **La misma presentación otra vez:** sin promoción y que no se pesa, suma una pieza a su línea.
   - **Código que no está aquí:** se busca en el servidor (excepción de §3). Si el servidor lo tiene, se pide un sync y la línea se agrega al bajar. Si no está en el catálogo o no hay red, "Darlo de alta" abre S-12 para ese código (`ScanCodeDestination`, con sus cuatro caminos). La compra espera el código, aun con la cámara cerrada, y agrega la línea en cuanto existe.
   - **Línea sin precio:** queda en $0 con "Sin precio" en la lista. Se puede guardar como borrador, pero **Confirmar** la rechaza: entraría al historial a $0.
+  - **Quitar:** cada código en espera tiene una ✕ que lo saca de la lista y deja de esperarlo.
 
 ### S-05 Editor de línea (bottom sheet)
 - Variante: búsqueda por texto o código; cada resultado muestra el último precio en **esta** tienda.
@@ -254,6 +255,7 @@ Nombre, marca, categoría (árbol), etiquetas (chips con alta rápida), unidad d
 ### S-11 Escáner
 - Vista de cámara (CameraX `PreviewView` + `ImageAnalysis`) con ML Kit; formatos EAN-13, EAN-8, UPC-A, UPC-E, Code 128.
 - Linterna, vibración y sonido corto al leer. Ignora el mismo código durante 2 s.
+- **Confirmación de lectura (T-122, decisión T64):** un código cuenta cuando se lee dos veces en menos de 1 s. En un Galaxy A53 con poca luz, una sola etiqueta dio en cuadros sueltos varios códigos distintos con dígito verificador válido (`7503006698316`, `4513466698316`, `4597466698316`); una etiqueta real se vuelve a leer en milisegundos.
 - Modo continuo (desde el editor de compra): cada lectura crea una línea y abre el campo de precio (implementación en S-04, T-122).
 
 ### S-12 Resultado del escaneo (sheet)

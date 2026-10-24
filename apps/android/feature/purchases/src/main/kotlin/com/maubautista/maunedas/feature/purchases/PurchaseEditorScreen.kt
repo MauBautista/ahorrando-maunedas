@@ -179,6 +179,7 @@ fun PurchaseEditorRoute(
                     onStep = viewModel::onScanStep,
                     onKilos = viewModel::onScanKilos,
                     onRegister = onRegisterCode,
+                    onDismiss = viewModel::dismissPending,
                 ),
         )
     }

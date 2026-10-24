@@ -104,6 +104,7 @@
     <string name="continuous_unknown">%1$s no está en tu catálogo.</string>
     <string name="continuous_unknown_offline">%1$s no está en tu catálogo y no hay internet para buscarlo.</string>
     <string name="continuous_register">Darlo de alta</string>
+    <string name="continuous_dismiss">Quitar %1$s</string>
     <plurals name="continuous_count">
         <item quantity="one">%1$d producto en la compra · %2$s</item>
         <item quantity="many">%1$d productos en la compra · %2$s</item>
