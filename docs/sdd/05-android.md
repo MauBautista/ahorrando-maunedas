@@ -269,6 +269,16 @@ Nombre, marca, categoría (árbol), etiquetas (chips con alta rápida), unidad d
 ### S-13 Precio de anaquel (RF-PRE-01)
 Variante (buscar/escanear), tienda y sucursal (recuerda la última), precio, promoción opcional (mismo selector que S-05, calcula `effective_price_cents`), foto opcional del anaquel. Guarda `price_observations` con `source='shelf'`, `observed_at = ahora`.
 
+**Implementación (T-125, decisión T63):**
+- **Precio efectivo:** `effective_price_cents` es lo que cuesta una pieza con la promoción, a la cantidad mínima que la activa: `n` en NxM y la n-ésima pieza en `nth_unit_discount`; una pieza en los demás tipos. Se calcula con las fórmulas de S-05 (`ShelfPrices`), y en `price_cut` el precio "de" es el del anaquel. MSI deja `effective_price_cents` en null.
+- **Fila de `promotions`:** con `observation_id`; su `discount_cents` es por pieza (precio − efectivo) y `affects_price = 0` en MSI.
+- **Texto de la promoción:** `promo_text` se arma del tipo y sus parámetros ("2x1", "15 % de descuento", "12 meses sin intereses"…); no hay campo libre. Sin promoción queda null.
+- **"Recuerda la última":** la tienda y sucursal de mi observación `shelf` más reciente (`updated_by` = yo).
+- **Variante:** si un código escaneado no está en el catálogo, se avisa que se dé de alta desde Escanear; S-13 no crea productos.
+- **"Guardar y otro":** conserva la tienda y la sucursal para el siguiente precio del mismo recorrido.
+- **Foto:** con la app de cámara del teléfono (`TakePicture` con el FileProvider de `core:camera`; antes pide el permiso de cámara, que la app declara por el escáner). Se reduce como foto de producto (≤ 2048 px, JPEG 85) con el giro de EXIF aplicado; la copia no lleva EXIF, así que no sale la ubicación.
+- **Guardado de la foto:** queda en `filesDir/images/{id}/original.jpg`, con una fila `images` (`owner_type='observation'`, `role='shelf_photo'`, `source='user'`), `photo_image_id` en la observación y un pendiente en `UploadQueue`. Salir sin guardar borra la foto tomada.
+
 ### S-14 Selector de tienda (sheet)
 Tiendas ordenadas por uso reciente; buscador; "Nueva tienda" (nombre, tipo). Sucursales de la tienda con "Nueva sucursal" (nombre, ciudad; por defecto Puebla o San Pedro Cholula según lo último usado).
 - **Implementación (T-121):** tienda y sucursal son dos hojas: la sucursal se elige después de la tienda. "Nueva tienda" toma como nombre lo que se buscó. La ciudad por omisión es la de la sucursal de la compra más reciente que tenga una, o Puebla.

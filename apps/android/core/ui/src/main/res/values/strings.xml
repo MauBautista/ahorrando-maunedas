@@ -2,4 +2,44 @@
 <!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
 <resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
     <string name="ui_coming_soon">Esta sección llega en una próxima versión.</string>
+    <!-- Promotion selector (S-05, S-13) and store sheets (S-14) -->
+    <string name="ui_promo_none">Ninguna</string>
+    <string name="ui_promo_price_cut">Rebaja</string>
+    <string name="ui_promo_percent">Porcentaje</string>
+    <string name="ui_promo_nxm">2x1, 3x2…</string>
+    <string name="ui_promo_nth">N-ésima con descuento</string>
+    <string name="ui_promo_member">Precio de socio</string>
+    <string name="ui_promo_coupon">Cupón</string>
+    <string name="ui_promo_msi">Meses sin intereses</string>
+    <string name="ui_promo_bundle">Paquete</string>
+    <string name="ui_promo_other">Otra</string>
+    <string name="ui_promo_to_price">Precio con rebaja</string>
+    <string name="ui_promo_percent_value">Porcentaje de descuento</string>
+    <string name="ui_promo_take">Llevas</string>
+    <string name="ui_promo_pay">Pagas</string>
+    <string name="ui_promo_every">Cada cuántas</string>
+    <string name="ui_promo_member_price">Precio de socio</string>
+    <string name="ui_promo_amount">Monto del descuento</string>
+    <string name="ui_promo_months">Meses</string>
+    <string name="ui_stores_search">Buscar tienda</string>
+    <string name="ui_stores_new">Nueva tienda</string>
+    <string name="ui_stores_name">Nombre de la tienda</string>
+    <string name="ui_stores_physical">Física</string>
+    <string name="ui_stores_online">En línea</string>
+    <string name="ui_stores_both">Ambas</string>
+    <string name="ui_stores_add">Agregar</string>
+    <string name="ui_branches_new">Nueva sucursal</string>
+    <string name="ui_branches_name">Nombre de la sucursal</string>
+    <string name="ui_branches_city">Ciudad</string>
+    <string name="ui_no_branch">Sin sucursal</string>
+    <!-- How a shelf promotion reads (price_observations.promo_text) -->
+    <string name="ui_promo_text_price_cut">Rebaja a %1$s</string>
+    <string name="ui_promo_text_percent">%1$s %% de descuento</string>
+    <string name="ui_promo_text_nxm">%1$sx%2$s</string>
+    <string name="ui_promo_text_nth">La %1$s.ª con %2$s %% de descuento</string>
+    <string name="ui_promo_text_member">Precio de socio %1$s</string>
+    <string name="ui_promo_text_coupon">Cupón de %1$s</string>
+    <string name="ui_promo_text_msi">%1$s meses sin intereses</string>
+    <string name="ui_promo_text_bundle">Paquete con %1$s de descuento</string>
+    <string name="ui_promo_text_other">Promoción de %1$s</string>
 </resources>

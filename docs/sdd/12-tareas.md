@@ -287,6 +287,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - 15 pruebas: lectura y filtro de 2 s, `ScanRepository` con Room y MockWebServer, ViewModel en los cuatro caminos (incluido el pull pedido), pantalla con letra al 200 % y prellenado (T62).
 ### [ ] T-117 · Foto de producto e importación del catálogo (S-18)
 - **Depende de:** T-105, T-116
+- **Nota (T-125):** `LocalPhotos` (reducir y guardar, 10 §4.2) y `rememberTakePhoto` (app de cámara con permiso) ya existen; falta la galería.
 - **Incluye (T62):** la foto del catálogo abierto al crear un producto desde el escáner (`image_url` ya llega en `CatalogGuess`).
 - **Incluye:** la miniatura de la tarjeta del catálogo (Coil 3 con el `AuthInterceptor`, archivo local primero, prioridad de 10 §1), pospuesta de T-112 (T55).
 ### [ ] T-118 · Recorte en el teléfono (opcional)
@@ -316,13 +317,21 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Nota (T-116):** `BarcodeScanner(onCode, paused)` ya filtra el mismo código 2 s; en modo continuo cada lectura agrega una línea sin pausar la cámara.
 ### [ ] T-123 · Foto de ticket (escáner de documentos)
 - **Depende de:** T-121, T-105
+- **Nota (T-125):** `LocalPhotos.Size.RECEIPT` ya reduce a 1600 px JPEG 80 (10 §4.2).
 ### [ ] T-124 · Revisión de ticket (S-06)
 - **Incluye (T60):** reordenar las líneas de S-04 (hoy quedan en el orden en que se capturan) y "Vincular" en las líneas sin vincular.
 - **Docs:** 09 §7 · **Depende de:** T-123, T-040, T-101
 - **Hecho cuando:** estados de línea, aceptar sugerencia, crear producto desde una línea, confirmar crea compra + alias + códigos; segunda compra se vincula sola.
-### [ ] T-125 · Precio de anaquel (S-13)
+### [x] T-125 · Precio de anaquel (S-13)
 - **Depende de:** T-121
 - **Nota (T-116):** `ShelfPriceDestination(variantId)` ya existe y la abre "Precio de anaquel" del escáner y de Inicio; hoy muestra "llega pronto".
+- **Resultado (2026-10-24):**
+  - **S-13 (`feature:shelf`):** variante (la del escáner, búsqueda por palabras o código, o "Escanear código"), tienda y sucursal (mis últimas de anaquel), precio, promoción opcional y foto opcional. "Guardar y otro" conserva la tienda y la sucursal. Inicio abre S-13 sin variante.
+  - **Precio efectivo (`ShelfPrices`, `core:pricing`):** lo que cuesta una pieza con la promoción, a la cantidad mínima que la activa (2x1 → dos), con las fórmulas de S-05. MSI no cambia el precio.
+  - **Guardado (`ShelfRepository`):** la observación `shelf` con la hora actual, su fila de `promotions` (`observation_id`) y la imagen `shelf_photo`, en una transacción. La foto queda en la cola de subida.
+  - **Fotos (`LocalPhotos`, `rememberTakePhoto`):** la app de cámara del teléfono, reducción de 10 §4.2 con el giro de EXIF aplicado y sin EXIF en la copia. Quedan listas para T-117 y T-123.
+  - **Compartido con S-05:** el selector de promociones y las hojas de tienda y sucursal pasaron a `core:ui`.
+  - 18 pruebas (T63).
 ### [x] T-126 · Ajustes y sincronización (S-15 a S-17)
 - **Depende de:** T-104, T-110 · **Hecho cuando:** estado de sync, "Sincronizar ahora", cambios rechazados y diálogo `BARCODE_TAKEN` con sus dos opciones.
 - **Resultado (2026-10-23):**

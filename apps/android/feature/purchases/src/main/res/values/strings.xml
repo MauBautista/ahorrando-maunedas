@@ -32,7 +32,6 @@
     <string name="editor_back">Volver</string>
     <string name="editor_store_pick">Elegir tienda</string>
     <string name="editor_branch">Sucursal: %1$s</string>
-    <string name="editor_no_branch">Sin sucursal</string>
     <string name="editor_date">Fecha: %1$s</string>
     <string name="editor_time">Hora: %1$s</string>
     <string name="editor_lines">Productos</string>
@@ -67,16 +66,6 @@
     <string name="editor_default_discount">Descuento</string>
     <string name="editor_time_title">Hora de la compra</string>
     <!-- S-14 -->
-    <string name="stores_search">Buscar tienda</string>
-    <string name="stores_new">Nueva tienda</string>
-    <string name="stores_name">Nombre de la tienda</string>
-    <string name="stores_physical">Física</string>
-    <string name="stores_online">En línea</string>
-    <string name="stores_both">Ambas</string>
-    <string name="stores_add">Agregar</string>
-    <string name="branches_new">Nueva sucursal</string>
-    <string name="branches_name">Nombre de la sucursal</string>
-    <string name="branches_city">Ciudad</string>
     <!-- S-05 -->
     <string name="line_title">Producto de la compra</string>
     <string name="line_search">Buscar producto o código</string>
@@ -90,24 +79,6 @@
     <string name="line_unit_price">Precio unitario</string>
     <string name="line_kilo_price">Precio por kilo</string>
     <string name="line_promo">Promoción</string>
-    <string name="promo_none">Ninguna</string>
-    <string name="promo_price_cut">Rebaja</string>
-    <string name="promo_percent">Porcentaje</string>
-    <string name="promo_nxm">2x1, 3x2…</string>
-    <string name="promo_nth">N-ésima con descuento</string>
-    <string name="promo_member">Precio de socio</string>
-    <string name="promo_coupon">Cupón</string>
-    <string name="promo_msi">Meses sin intereses</string>
-    <string name="promo_bundle">Paquete</string>
-    <string name="promo_other">Otra</string>
-    <string name="promo_to_price">Precio con rebaja</string>
-    <string name="promo_percent_value">Porcentaje de descuento</string>
-    <string name="promo_take">Llevas</string>
-    <string name="promo_pay">Pagas</string>
-    <string name="promo_every">Cada cuántas</string>
-    <string name="promo_member_price">Precio de socio</string>
-    <string name="promo_amount">Monto del descuento</string>
-    <string name="promo_months">Meses</string>
     <string name="promo_discount">Descuento: %1$s</string>
     <string name="promo_override">Ajustar el descuento a mano</string>
     <string name="promo_missing">Completa los datos de la promoción.</string>

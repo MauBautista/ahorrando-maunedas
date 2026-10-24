@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
+    <string name="shelf_title">Precio de anaquel</string>
+    <string name="shelf_back">Volver</string>
+    <string name="shelf_search">Buscar producto o código</string>
+    <string name="shelf_scan">Escanear código</string>
+    <string name="shelf_no_results">Nada coincide. Si es un producto nuevo, escanéalo desde Escanear para darlo de alta.</string>
+    <string name="shelf_unknown_code">El código %1$s no está en tu catálogo. Escanéalo desde Escanear para darlo de alta.</string>
+    <string name="shelf_change">Cambiar</string>
+    <string name="shelf_store_pick">Elegir tienda</string>
+    <string name="shelf_branch">Sucursal: %1$s</string>
+    <string name="shelf_price">Precio en el anaquel</string>
+    <string name="shelf_kilo_price">Precio por kilo en el anaquel</string>
+    <string name="shelf_promo">Promoción</string>
+    <string name="shelf_per_unit">Por unidad: %1$s</string>
+    <string name="shelf_with_promo">Con la promoción: %1$s cada uno · %2$s</string>
+    <string name="shelf_msi">Los meses sin intereses no cambian el precio.</string>
+    <string name="shelf_photo_add">Tomar foto del anaquel</string>
+    <string name="shelf_photo">Foto del anaquel</string>
+    <string name="shelf_photo_remove">Quitar foto</string>
+    <string name="shelf_photo_failed">No se pudo leer la foto. Intenta otra vez.</string>
+    <string name="shelf_need_variant">Elige el producto.</string>
+    <string name="shelf_need_store">Elige la tienda.</string>
+    <string name="shelf_need_price">Escribe el precio.</string>
+    <string name="shelf_save">Guardar</string>
+    <string name="shelf_save_another">Guardar y otro</string>
+    <string name="shelf_saved">Precio guardado</string>
+</resources>

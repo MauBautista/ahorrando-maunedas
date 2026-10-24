@@ -18,15 +18,14 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
 import com.maubautista.maunedas.core.auth.AuthService
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
-import androidx.compose.ui.res.stringResource
-import com.maubautista.maunedas.core.ui.ComingSoon
 import com.maubautista.maunedas.feature.auth.LoginRoute
-import com.maubautista.maunedas.feature.scan.ScanActions
 import com.maubautista.maunedas.feature.catalog.ProductEditorRoute
 import com.maubautista.maunedas.feature.catalog.ProductPageRoute
 import com.maubautista.maunedas.feature.catalog.VariantEditorRoute
 import com.maubautista.maunedas.feature.purchases.PurchaseEditorRoute
+import com.maubautista.maunedas.feature.scan.ScanActions
 import com.maubautista.maunedas.feature.settings.SyncStatusRoute
+import com.maubautista.maunedas.feature.shelf.ShelfRoute
 import dagger.hilt.android.AndroidEntryPoint
 import kotlinx.serialization.Serializable
 import javax.inject.Inject
@@ -59,10 +58,10 @@ data class ProductEditorDestination(
     val packCount: String? = null,
 )
 
-/** S-13; the shelf price screen arrives with T-125. */
+/** S-13; [variantId] comes from the scanner (S-12), null from Inicio. */
 @Serializable
 data class ShelfPriceDestination(
-    val variantId: String,
+    val variantId: String? = null,
 )
 
 /** S-16, sync state and "Cambios rechazados". */
@@ -116,6 +115,7 @@ class MainActivity : ComponentActivity() {
                                     onNewProduct = { nav.navigate(ProductEditorDestination()) },
                                     onOpenPurchase = { nav.navigate(PurchaseEditorDestination(it)) },
                                     onOpenSync = { nav.navigate(SyncDestination) },
+                                    onShelfPrice = { nav.navigate(ShelfPriceDestination()) },
                                     scanActions =
                                         ScanActions(
                                             onAddToPurchase = { draft, variant -> nav.navigate(PurchaseEditorDestination(draft, variant)) },
@@ -140,7 +140,7 @@ class MainActivity : ComponentActivity() {
                                         ),
                                 )
                             }
-                            composable<ShelfPriceDestination> { ComingSoon(stringResource(R.string.shelf_price_title)) }
+                            composable<ShelfPriceDestination> { ShelfRoute(onDone = { nav.popBackStack() }) }
                             composable<SyncDestination> { SyncStatusRoute(onBack = { nav.popBackStack() }) }
                             composable<PurchaseEditorDestination> { PurchaseEditorRoute(onDone = { nav.popBackStack() }) }
                             composable<ProductDestination> {
