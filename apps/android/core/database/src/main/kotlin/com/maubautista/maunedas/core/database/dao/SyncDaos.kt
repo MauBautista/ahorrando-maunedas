@@ -3,6 +3,7 @@ package com.maubautista.maunedas.core.database.dao
 import androidx.room.Dao
 import androidx.room.Query
 import com.maubautista.maunedas.core.database.entity.*
+import kotlinx.coroutines.flow.Flow
 
 @Dao
 interface UserDao : SyncDao<UserEntity> {
@@ -81,6 +82,10 @@ interface ImageDao : SyncDao<ImageEntity> {
         ownerId: String,
         role: String,
     ): List<ImageEntity>
+
+    /** A purchase's receipt pages in page order (03 §7: `receipt_images` by `created_at`). */
+    @Query("SELECT * FROM images WHERE owner_type = 'purchase' AND owner_id = :purchaseId AND role = 'receipt' AND deleted_at IS NULL ORDER BY created_at, id")
+    fun receiptPages(purchaseId: String): Flow<List<ImageEntity>>
 }
 
 @Dao

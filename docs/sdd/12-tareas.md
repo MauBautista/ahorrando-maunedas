@@ -334,9 +334,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Probado en un Galaxy A53 (Android 16):** la misma presentación sumó una pieza, se enfocó el precio, y un código del catálogo abierto se dio de alta y volvió solo a la compra. La prueba mostró lecturas falsas con poca luz; ahora un código cuenta al leerse dos veces en menos de 1 s, y los códigos en espera se pueden quitar.
   - **Corrección:** tres textos de compras (`editor_delete`, `editor_back`, `editor_save`) se llamaban igual que en catálogo, así que en la app uno pisaba al otro y se mostraba "Eliminar" en vez de "Eliminar compra". Se renombraron, y `StringNamesTest` falla si dos módulos repiten un nombre.
   - 12 pruebas.
-### [ ] T-123 · Foto de ticket (escáner de documentos)
+### [x] T-123 · Foto de ticket (escáner de documentos)
 - **Depende de:** T-121, T-105
 - **Nota (T-125):** `LocalPhotos.Size.RECEIPT` ya reduce a 1600 px JPEG 80 (10 §4.2).
+- **Resultado (2026-10-24):**
+  - **"Foto de ticket" en S-04 y en Inicio:** escáner de documentos de ML Kit con 1 a 4 páginas; si no está disponible, la app de cámara. Pide la tienda primero.
+  - **Las páginas se guardan al tomarlas:** el borrador se guarda primero y cada página queda en la cola de subida. Se pueden quitar.
+  - **Probado en un Galaxy A53:** el ticket de Sam's Club se recortó a 488 × 1600 y llegó a R2 sin EXIF. La ✕ sobre la miniatura tapaba el ticket y se movió abajo.
+  - 7 pruebas (T66).
 ### [ ] T-124 · Revisión de ticket (S-06)
 - **Incluye (T60):** reordenar las líneas de S-04 (hoy quedan en el orden en que se capturan) y "Vincular" en las líneas sin vincular.
 - **Docs:** 09 §7 · **Depende de:** T-123, T-040, T-101

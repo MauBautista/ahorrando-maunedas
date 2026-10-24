@@ -82,11 +82,15 @@ data class ScanCodeDestination(
 @Serializable
 object SyncDestination
 
-/** S-04; null [purchaseId] starts a new purchase; [addVariantId] opens the line sheet with that variant (S-12). */
+/**
+ * S-04; null [purchaseId] starts a new purchase; [addVariantId] opens the line sheet with that variant (S-12);
+ * [receipt] opens the document scanner once there is a store ("Foto de ticket" in Inicio, T-123).
+ */
 @Serializable
 data class PurchaseEditorDestination(
     val purchaseId: String? = null,
     val addVariantId: String? = null,
+    val receipt: Boolean = false,
 )
 
 /** S-10; null [variantId] adds a variant to the product, prefilled by the scanner as [ProductEditorDestination]. */
@@ -130,6 +134,7 @@ class MainActivity : ComponentActivity() {
                                     onOpenPurchase = { nav.navigate(PurchaseEditorDestination(it)) },
                                     onOpenSync = { nav.navigate(SyncDestination) },
                                     onShelfPrice = { nav.navigate(ShelfPriceDestination()) },
+                                    onReceiptPhoto = { nav.navigate(PurchaseEditorDestination(receipt = true)) },
                                     scanActions =
                                         ScanActions(
                                             onAddToPurchase = { draft, variant -> nav.navigate(PurchaseEditorDestination(draft, variant)) },

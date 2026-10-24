@@ -92,6 +92,17 @@
     <string name="editor_need_prices">Hay productos sin precio: escríbelo antes de confirmar.</string>
     <string name="editor_no_price">Sin precio</string>
     <string name="editor_scan">Escanear productos</string>
+    <!-- RF-TIC-01 -->
+    <string name="editor_receipt">Foto de ticket</string>
+    <string name="editor_receipt_more">Agregar página del ticket</string>
+    <plurals name="editor_receipt_pages">
+        <item quantity="one">Ticket: %1$d página</item>
+        <item quantity="many">Ticket: %1$d páginas</item>
+        <item quantity="other">Ticket: %1$d páginas</item>
+    </plurals>
+    <string name="editor_receipt_remove">Quitar la página %1$d del ticket</string>
+    <string name="editor_receipt_full">El ticket ya tiene 4 páginas, el máximo.</string>
+    <string name="editor_receipt_failed">No se pudo leer el ticket. Intenta otra vez.</string>
     <!-- Continuous scanning (RF-COM-09) -->
     <string name="continuous_title">Escaneando</string>
     <string name="continuous_done">Listo</string>

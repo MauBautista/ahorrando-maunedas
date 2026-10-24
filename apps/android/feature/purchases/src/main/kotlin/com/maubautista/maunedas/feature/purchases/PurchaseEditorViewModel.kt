@@ -6,9 +6,12 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.maubautista.maunedas.core.data.BranchChoice
 import com.maubautista.maunedas.core.data.LineVariant
+import com.maubautista.maunedas.core.data.LocalPhotos
 import com.maubautista.maunedas.core.data.PurchaseDraft
 import com.maubautista.maunedas.core.data.PurchaseEditor
 import com.maubautista.maunedas.core.data.PurchaseLine
+import com.maubautista.maunedas.core.data.ReceiptPage
+import com.maubautista.maunedas.core.data.ReceiptPhotos
 import com.maubautista.maunedas.core.data.RemoteLookup
 import com.maubautista.maunedas.core.data.ScanRepository
 import com.maubautista.maunedas.core.data.StoreChoice
@@ -19,6 +22,11 @@ import com.maubautista.maunedas.core.model.HouseholdTime
 import com.maubautista.maunedas.core.pricing.PurchaseMath
 import com.maubautista.maunedas.core.pricing.PurchaseTotals
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
+import java.time.Instant
+import java.time.LocalDate
+import java.time.LocalTime
+import javax.inject.Inject
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
@@ -28,6 +36,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filterNotNull
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
@@ -39,10 +48,6 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.sync.Mutex
 import kotlinx.coroutines.sync.withLock
-import java.time.Instant
-import java.time.LocalDate
-import java.time.LocalTime
-import javax.inject.Inject
 
 /** A ticket discount being typed. */
 data class DiscountForm(
@@ -86,6 +91,8 @@ data class EditorState(
     val scan: ScanSession? = null,
     /** Codes read that are not here yet; they wait with the camera closed too, and each becomes a line when it arrives. */
     val pending: List<PendingCode> = emptyList(),
+    /** "Foto de ticket" without a store: the store sheet opens. */
+    val pickStore: Boolean = false,
 ) {
     val isNew: Boolean get() = draft.id == null
 
@@ -100,12 +107,17 @@ class PurchaseEditorViewModel
         savedState: SavedStateHandle,
         private val editor: PurchaseEditor,
         private val scans: ScanRepository,
+        private val receipts: ReceiptPhotos,
+        private val localPhotos: LocalPhotos,
         private val clock: Clock,
     ) : ViewModel() {
         private val purchaseId: String? = savedState["purchaseId"]
 
         /** "Agregar a la compra abierta" from the scanner (S-12): the line sheet opens with this variant. */
         private val addVariantId: String? = savedState["addVariantId"]
+
+        /** "Foto de ticket" from Inicio: the scanner opens as soon as there is a store. */
+        private var wantsReceipt: Boolean = savedState["receipt"] ?: false
         private val ui = MutableStateFlow(EditorState())
         val state: StateFlow<EditorState> = ui.asStateFlow()
 
@@ -118,6 +130,17 @@ class PurchaseEditorViewModel
 
         private val finished = Channel<Unit>(Channel.BUFFERED)
         val done: Flow<Unit> = finished.receiveAsFlow()
+
+        /** The receipt's pages, once the purchase is saved (RF-TIC-01). */
+        @OptIn(ExperimentalCoroutinesApi::class)
+        val receiptPages: StateFlow<List<ReceiptPage>> =
+            ui.map { it.draft.id }.distinctUntilChanged().flatMapLatest { id -> id?.let(receipts::pages) ?: flowOf(emptyList()) }
+                .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+        private val scanRequests = Channel<Int>(Channel.CONFLATED)
+
+        /** Open the document scanner for up to this many pages. */
+        val receiptScans: Flow<Int> = scanRequests.receiveAsFlow()
 
         /** What was last written, so leaving without changes writes nothing. */
         private var saved: PurchaseDraft? = null
@@ -138,6 +161,7 @@ class PurchaseEditorViewModel
                         editor.variant(id)?.let { v -> LineForm().withVariant(VariantChoice(v, draft.storeId?.let { store -> editor.lastListPrice(id, store) })) }
                     }
                 ui.value = EditorState(loading = false, draft = draft, line = line)
+                if (wantsReceipt) requestReceipt()
             }
         }
 
@@ -145,7 +169,10 @@ class PurchaseEditorViewModel
 
         private fun change(block: (PurchaseDraft) -> PurchaseDraft) = ui.update { it.copy(draft = block(it.draft), problem = null, removed = null) }
 
-        fun chooseStore(store: StoreChoice) = change { if (it.storeId == store.id) it else it.copy(storeId = store.id, branchId = null) }
+        fun chooseStore(store: StoreChoice) {
+            change { if (it.storeId == store.id) it else it.copy(storeId = store.id, branchId = null) }
+            if (wantsReceipt) requestReceipt()
+        }
 
         fun chooseBranch(branch: BranchChoice?) = change { it.copy(branchId = branch?.id) }
 
@@ -236,6 +263,46 @@ class PurchaseEditorViewModel
         fun undoRemove() {
             val (index, line) = ui.value.removed ?: return
             change { d -> d.copy(lines = d.lines.toMutableList().also { it.add(index.coerceAtMost(it.size), line) }) }
+        }
+
+        // Receipt photo (RF-TIC-01)
+
+        /** "Foto de ticket": needs the store first, like scanning; the scanner gets the pages still free. */
+        fun requestReceipt() {
+            if (ui.value.draft.storeId == null) {
+                wantsReceipt = true
+                ui.update { it.copy(problem = R.string.editor_store_first, pickStore = true) }
+                return
+            }
+            wantsReceipt = false
+            ui.update { it.copy(pickStore = false) }
+            val free = ReceiptPhotos.MAX_PAGES - receiptPages.value.size
+            if (free > 0) scanRequests.trySend(free)
+        }
+
+        fun storePickerShown() = ui.update { it.copy(pickStore = false) }
+
+        /**
+         * The scanned pages, reduced as receipts (1600 px, 10 §4.2). A new purchase is saved first so the pages have
+         * an owner; they are written right away, so they survive without network or a closed app.
+         */
+        fun onReceiptPages(taken: List<File>) {
+            viewModelScope.launch {
+                val reduced = taken.mapNotNull { localPhotos.reduce(it, LocalPhotos.Size.RECEIPT) }
+                if (reduced.isEmpty()) return@launch ui.update { it.copy(problem = R.string.editor_receipt_failed) }
+                val id =
+                    writing.withLock {
+                        ui.value.draft.id ?: run {
+                            persist(ui.value.draft, confirm = false)
+                            ui.value.draft.id
+                        }
+                    } ?: return@launch
+                receipts.attach(id, reduced)
+            }
+        }
+
+        fun removeReceiptPage(imageId: String) {
+            viewModelScope.launch { receipts.remove(imageId) }
         }
 
         // Continuous scanning (RF-COM-09, S-11)
