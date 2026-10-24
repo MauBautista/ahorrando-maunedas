@@ -5,9 +5,12 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.maubautista.maunedas.core.data.BranchChoice
+import com.maubautista.maunedas.core.data.LineVariant
 import com.maubautista.maunedas.core.data.PurchaseDraft
 import com.maubautista.maunedas.core.data.PurchaseEditor
 import com.maubautista.maunedas.core.data.PurchaseLine
+import com.maubautista.maunedas.core.data.RemoteLookup
+import com.maubautista.maunedas.core.data.ScanRepository
 import com.maubautista.maunedas.core.data.StoreChoice
 import com.maubautista.maunedas.core.data.TicketDiscount
 import com.maubautista.maunedas.core.data.VariantChoice
@@ -25,6 +28,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.filterNotNull
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
@@ -46,6 +51,25 @@ data class DiscountForm(
     val amountCents: Long? = null,
 )
 
+/** A code read in continuous mode that is not here yet. */
+data class PendingCode(
+    val code: String,
+    /** "Producto · presentación" when the server has it and it is being pulled; null when it is not in the catalog. */
+    val name: String?,
+    val offline: Boolean = false,
+)
+
+/**
+ * Continuous scanning (RF-COM-09): each code read becomes a line, or adds one to the same product already in the
+ * purchase, and [lineIndex] is the line whose price is typed next.
+ */
+data class ScanSession(
+    val lineIndex: Int? = null,
+    /** Grows with each line added or counted, so the price field starts over and takes the focus. */
+    val reads: Int = 0,
+    val looking: String? = null,
+)
+
 data class EditorState(
     val loading: Boolean = true,
     val draft: PurchaseDraft = PurchaseDraft(purchasedAt = 0),
@@ -58,6 +82,10 @@ data class EditorState(
     val mismatchCents: Long? = null,
     val confirmDelete: Boolean = false,
     val busy: Boolean = false,
+    /** Continuous scanning is open. */
+    val scan: ScanSession? = null,
+    /** Codes read that are not here yet; they wait with the camera closed too, and each becomes a line when it arrives. */
+    val pending: List<PendingCode> = emptyList(),
 ) {
     val isNew: Boolean get() = draft.id == null
 
@@ -71,6 +99,7 @@ class PurchaseEditorViewModel
     constructor(
         savedState: SavedStateHandle,
         private val editor: PurchaseEditor,
+        private val scans: ScanRepository,
         private val clock: Clock,
     ) : ViewModel() {
         private val purchaseId: String? = savedState["purchaseId"]
@@ -96,6 +125,9 @@ class PurchaseEditorViewModel
         /** One write at a time: leaving and going to the background both autosave, and a new purchase must be created once. */
         private val writing = Mutex()
         private var search: Job? = null
+
+        /** Codes waiting to be here (pulled, or added to the catalog meanwhile); each becomes a line when it arrives. */
+        private val watching = mutableMapOf<String, Job>()
 
         init {
             viewModelScope.launch {
@@ -206,6 +238,86 @@ class PurchaseEditorViewModel
             change { d -> d.copy(lines = d.lines.toMutableList().also { it.add(index.coerceAtMost(it.size), line) }) }
         }
 
+        // Continuous scanning (RF-COM-09, S-11)
+
+        fun startScanning() {
+            if (ui.value.draft.storeId == null) {
+                ui.update { it.copy(problem = R.string.editor_store_first) }
+                return
+            }
+            ui.update { it.copy(scan = ScanSession(), problem = null) }
+        }
+
+        fun stopScanning() = ui.update { it.copy(scan = null) }
+
+        /** A code read: a line if the code is here; otherwise the server is asked and the code waits for its product. */
+        fun onScannedCode(code: String) {
+            if (ui.value.scan == null || ui.value.pending.any { it.code == code }) return
+            viewModelScope.launch {
+                editor.variantOfCode(code)?.let { return@launch addScanned(it) }
+                updateScan { it.copy(looking = code) }
+                val pending =
+                    when (val found = scans.lookup(code)) {
+                        is RemoteLookup.Match -> {
+                            scans.pullNow()
+                            PendingCode(code, "${found.productName} · ${found.variantLabel}")
+                        }
+                        RemoteLookup.NoNetwork -> PendingCode(code, null, offline = true)
+                        else -> PendingCode(code, null)
+                    }
+                updateScan { it.copy(looking = null) }
+                ui.update { s -> s.copy(pending = s.pending.filter { it.code != code } + pending) }
+                watch(code)
+            }
+        }
+
+        /** The price of the line just scanned; empty means it has none yet. */
+        fun onScanPrice(cents: Long?) = changeScanned { it.copy(unitPriceCents = cents ?: 0) }
+
+        /** Whole pieces, at least one. */
+        fun onScanStep(delta: Int) = changeScanned { it.copy(quantity = (it.quantity + delta).coerceAtLeast(1.0)) }
+
+        fun onScanKilos(kilos: Double?) = changeScanned { if (kilos != null && kilos > 0) it.copy(quantity = kilos) else it }
+
+        private fun updateScan(block: (ScanSession) -> ScanSession) = ui.update { s -> s.copy(scan = s.scan?.let(block)) }
+
+        private fun changeScanned(block: (PurchaseLine) -> PurchaseLine) {
+            val index = ui.value.scan?.lineIndex ?: return
+            change { d -> d.copy(lines = d.lines.mapIndexed { i, line -> if (i == index) block(line) else line }) }
+        }
+
+        /**
+         * The same product again counts one more on its line (if it has no promotion and is not weighed); anything else
+         * is a new line of one piece at its last price at this store, or with no price yet.
+         */
+        private suspend fun addScanned(variant: LineVariant) {
+            val store = ui.value.draft.storeId
+            val price = store?.let { editor.lastListPrice(variant.id, it) }
+            ui.update { s ->
+                val lines = s.draft.lines
+                val same = if (variant.soldByWeight) -1 else lines.indexOfLast { it.variant?.id == variant.id && it.promotion == null }
+                val updated =
+                    if (same >= 0) {
+                        lines.mapIndexed { i, line -> if (i == same) line.copy(quantity = line.quantity + 1) else line }
+                    } else {
+                        lines + PurchaseLine(variant = variant, quantity = 1.0, unitPriceCents = price ?: 0)
+                    }
+                val index = if (same >= 0) same else lines.size
+                s.copy(draft = s.draft.copy(lines = updated), problem = null, removed = null, scan = s.scan?.let { it.copy(lineIndex = index, reads = it.reads + 1) })
+            }
+        }
+
+        private fun watch(code: String) {
+            if (code in watching) return
+            watching[code] =
+                viewModelScope.launch {
+                    val variant = editor.watchCode(code).filterNotNull().first()
+                    watching.remove(code)
+                    ui.update { s -> s.copy(pending = s.pending.filter { it.code != code }) }
+                    addScanned(variant)
+                }
+        }
+
         // Ticket discounts (RF-COM-05)
 
         fun newDiscount() = ui.update { it.copy(discount = DiscountForm()) }
@@ -249,6 +361,8 @@ class PurchaseEditorViewModel
                 when {
                     s.draft.storeId == null -> R.string.editor_need_store
                     s.draft.lines.isEmpty() -> R.string.editor_need_lines
+                    // A scanned line without a price would enter the price history at $0 (decision T64).
+                    s.draft.lines.any { it.unitPriceCents == 0L } -> R.string.editor_need_prices
                     else -> null
                 }
             if (problem != null) {

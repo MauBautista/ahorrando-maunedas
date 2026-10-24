@@ -50,7 +50,7 @@ class PurchaseEditorViewModelTest {
             db.stores().upsertAll(listOf(StoreEntity(id = "s", name = "Soriana", kind = "physical", defaultCheckIntervalMin = 480, createdAt = 1, updatedAt = 1)))
             db.products().upsertAll(listOf(ProductEntity(id = "p", name = "Leche", displayUnit = "L", searchKey = "leche", createdAt = 1, updatedAt = 1)))
             db.variants().upsertAll(listOf(VariantEntity(id = "v", productId = "p", label = "1 L", measure = "volume", unitAmount = 1000.0, packCount = 1, soldByWeight = 0, createdAt = 1, updatedAt = 1)))
-            vm = PurchaseEditorViewModel(SavedStateHandle(), editor, clock)
+            vm = PurchaseEditorViewModel(SavedStateHandle(), editor, scanRepository(db, clock), clock)
             advanceUntilIdle()
         }
 

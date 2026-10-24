@@ -172,7 +172,13 @@ Acciones:
   - **Confirmar** pide tienda y un producto. Si el total no cuadra por más de $1.00, aparece "El total no cuadra por $X. ¿Confirmar de todos modos?".
   - **Autoguardado:** al salir (Atrás) o al pasar la app a segundo plano, si hay tienda y algo cambió; un `Mutex` evita crear la compra dos veces.
   - **Fecha y hora** son de la Ciudad de México; la hora se teclea (`TimeInput`).
-  - **Llegan después:** "Escanear" con T-122, "Foto de ticket" con T-123, "Extraer" y "Vincular" con T-124.
+  - **Llegan después:** "Foto de ticket" con T-123, "Extraer" y "Vincular" con T-124.
+- **Implementación de "Escanear productos" (T-122, decisión T64):**
+  - **Vista:** la cámara ocupa la parte de arriba sobre el editor y nunca se pausa; el mismo código se ignora 2 s mientras siga a la vista. Abajo queda un panel con desplazamiento propio. Pide la tienda primero, para conocer el último precio.
+  - **Cada lectura** de un código que ya está aquí agrega una línea de una pieza al último precio de lista en esa tienda (o sin precio) y enfoca su campo de precio. El panel también tiene −/+, o kilos si se pesa.
+  - **La misma presentación otra vez:** sin promoción y que no se pesa, suma una pieza a su línea.
+  - **Código que no está aquí:** se busca en el servidor (excepción de §3). Si el servidor lo tiene, se pide un sync y la línea se agrega al bajar. Si no está en el catálogo o no hay red, "Darlo de alta" abre S-12 para ese código (`ScanCodeDestination`, con sus cuatro caminos). La compra espera el código, aun con la cámara cerrada, y agrega la línea en cuanto existe.
+  - **Línea sin precio:** queda en $0 con "Sin precio" en la lista. Se puede guardar como borrador, pero **Confirmar** la rechaza: entraría al historial a $0.
 
 ### S-05 Editor de línea (bottom sheet)
 - Variante: búsqueda por texto o código; cada resultado muestra el último precio en **esta** tienda.
@@ -248,7 +254,7 @@ Nombre, marca, categoría (árbol), etiquetas (chips con alta rápida), unidad d
 ### S-11 Escáner
 - Vista de cámara (CameraX `PreviewView` + `ImageAnalysis`) con ML Kit; formatos EAN-13, EAN-8, UPC-A, UPC-E, Code 128.
 - Linterna, vibración y sonido corto al leer. Ignora el mismo código durante 2 s.
-- Modo continuo (desde el editor de compra): cada lectura crea una línea y abre el campo de precio.
+- Modo continuo (desde el editor de compra): cada lectura crea una línea y abre el campo de precio (implementación en S-04, T-122).
 
 ### S-12 Resultado del escaneo (sheet)
 1. Código normalizado → `barcodes` local.

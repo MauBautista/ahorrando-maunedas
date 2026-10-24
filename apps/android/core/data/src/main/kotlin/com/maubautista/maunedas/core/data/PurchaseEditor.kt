@@ -261,6 +261,12 @@ class PurchaseEditor
 
         suspend fun variant(id: String): LineVariant? = variants(listOf(id))[id]
 
+        /** The variant of a scanned code here (RF-COM-09), or null. */
+        suspend fun variantOfCode(code: String): LineVariant? = db.purchaseEdits().variantOfBarcode(code)?.let { variant(it) }
+
+        /** The variant of [code] once it is here: after a pull, or once someone adds it to the catalog. */
+        fun watchCode(code: String): Flow<LineVariant?> = db.scan().hit(code).map { hit -> hit?.let { variant(it.variantId) } }
+
         suspend fun lastListPrice(
             variantId: String,
             storeId: String,

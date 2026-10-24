@@ -16,7 +16,9 @@ import androidx.compose.ui.Modifier
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.maubautista.maunedas.core.auth.AuthService
+import com.maubautista.maunedas.core.data.CatalogGuess
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
 import com.maubautista.maunedas.feature.auth.LoginRoute
 import com.maubautista.maunedas.feature.catalog.ProductEditorRoute
@@ -24,6 +26,7 @@ import com.maubautista.maunedas.feature.catalog.ProductPageRoute
 import com.maubautista.maunedas.feature.catalog.VariantEditorRoute
 import com.maubautista.maunedas.feature.purchases.PurchaseEditorRoute
 import com.maubautista.maunedas.feature.scan.ScanActions
+import com.maubautista.maunedas.feature.scan.ScanCodeRoute
 import com.maubautista.maunedas.feature.settings.SyncStatusRoute
 import com.maubautista.maunedas.feature.shelf.ShelfRoute
 import dagger.hilt.android.AndroidEntryPoint
@@ -62,6 +65,12 @@ data class ProductEditorDestination(
 @Serializable
 data class ShelfPriceDestination(
     val variantId: String? = null,
+)
+
+/** S-12 for a code of a purchase's continuous scanning that is not in the catalog (T-122). */
+@Serializable
+data class ScanCodeDestination(
+    val code: String,
 )
 
 /** S-16, sync state and "Cambios rechazados". */
@@ -121,28 +130,33 @@ class MainActivity : ComponentActivity() {
                                             onAddToPurchase = { draft, variant -> nav.navigate(PurchaseEditorDestination(draft, variant)) },
                                             onShelfPrice = { nav.navigate(ShelfPriceDestination(it)) },
                                             onOpenProduct = { nav.navigate(ProductDestination(it)) },
-                                            onNewProduct = { code, g ->
-                                                nav.navigate(
-                                                    ProductEditorDestination(
-                                                        code = code, name = g?.name, brand = g?.brand, measure = g?.measure?.wire,
-                                                        unitAmount = g?.unitAmount?.toString(), packCount = g?.packCount?.toString(),
-                                                    ),
-                                                )
-                                            },
-                                            onNewVariant = { product, code, g ->
-                                                nav.navigate(
-                                                    VariantEditorDestination(
-                                                        productId = product, code = code, measure = g?.measure?.wire,
-                                                        unitAmount = g?.unitAmount?.toString(), packCount = g?.packCount?.toString(),
-                                                    ),
-                                                )
-                                            },
+                                            onNewProduct = { code, g -> nav.navigate(productEditor(code, g)) },
+                                            onNewVariant = { product, code, g -> nav.navigate(variantEditor(product, code, g)) },
                                         ),
                                 )
                             }
                             composable<ShelfPriceDestination> { ShelfRoute(onDone = { nav.popBackStack() }) }
                             composable<SyncDestination> { SyncStatusRoute(onBack = { nav.popBackStack() }) }
-                            composable<PurchaseEditorDestination> { PurchaseEditorRoute(onDone = { nav.popBackStack() }) }
+                            composable<PurchaseEditorDestination> {
+                                PurchaseEditorRoute(onDone = { nav.popBackStack() }, onRegisterCode = { nav.navigate(ScanCodeDestination(it)) })
+                            }
+                            composable<ScanCodeDestination> { entry ->
+                                // The editor opened from here replaces this screen, so saving it goes back to the purchase.
+                                fun replace(route: Any) = nav.navigate(route) { popUpTo<ScanCodeDestination> { inclusive = true } }
+                                ScanCodeRoute(
+                                    code = entry.toRoute<ScanCodeDestination>().code,
+                                    actions =
+                                        ScanActions(
+                                            // Found meanwhile: the purchase adds it by itself.
+                                            onAddToPurchase = { _, _ -> nav.popBackStack() },
+                                            onShelfPrice = { replace(ShelfPriceDestination(it)) },
+                                            onOpenProduct = { replace(ProductDestination(it)) },
+                                            onNewProduct = { code, g -> replace(productEditor(code, g)) },
+                                            onNewVariant = { product, code, g -> replace(variantEditor(product, code, g)) },
+                                        ),
+                                    onClose = { nav.popBackStack() },
+                                )
+                            }
                             composable<ProductDestination> {
                                 ProductPageRoute(
                                     onBack = { nav.popBackStack() },
@@ -166,3 +180,22 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+/** S-09 prefilled from a scanned code and what an open catalog knows (T-116). */
+private fun productEditor(
+    code: String,
+    g: CatalogGuess?,
+) = ProductEditorDestination(
+    code = code, name = g?.name, brand = g?.brand, measure = g?.measure?.wire,
+    unitAmount = g?.unitAmount?.toString(), packCount = g?.packCount?.toString(),
+)
+
+/** S-10 of an existing product with a scanned code. */
+private fun variantEditor(
+    productId: String,
+    code: String,
+    g: CatalogGuess?,
+) = VariantEditorDestination(
+    productId = productId, code = code, measure = g?.measure?.wire,
+    unitAmount = g?.unitAmount?.toString(), packCount = g?.packCount?.toString(),
+)

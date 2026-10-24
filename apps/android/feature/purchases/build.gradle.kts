@@ -9,6 +9,7 @@ android {
 
 dependencies {
     implementation(project(":core:pricing"))
+    implementation(project(":core:camera"))
     implementation(libs.androidx.paging.compose)
     // BackHandler: leaving the editor saves the draft first (05 §5).
     implementation(libs.androidx.activity.compose)
@@ -21,5 +22,9 @@ dependencies {
     // The view model test runs the real editor over Room in memory.
     testImplementation(project(":core:database"))
     testImplementation(project(":core:sync"))
+    // Continuous scanning asks the Worker for unknown codes (a mock server) and pulls with WorkManager.
+    testImplementation(project(":core:network"))
+    testImplementation(libs.okhttp.mockwebserver)
+    testImplementation(libs.androidx.work.testing)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
 }

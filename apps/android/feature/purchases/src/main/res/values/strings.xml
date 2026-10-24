@@ -29,7 +29,7 @@
     <!-- S-04 -->
     <string name="editor_new_title">Nueva compra</string>
     <string name="editor_title">Compra</string>
-    <string name="editor_back">Volver</string>
+    <string name="editor_back_purchase">Volver</string>
     <string name="editor_store_pick">Elegir tienda</string>
     <string name="editor_branch">Sucursal: %1$s</string>
     <string name="editor_date">Fecha: %1$s</string>
@@ -51,13 +51,13 @@
     <string name="editor_ticket_total">Total del ticket</string>
     <string name="editor_difference">No cuadra por %1$s</string>
     <string name="editor_save_draft">Guardar borrador</string>
-    <string name="editor_save">Guardar</string>
+    <string name="editor_save_purchase">Guardar</string>
     <string name="editor_confirm">Confirmar</string>
     <string name="editor_need_store">Elige la tienda para confirmar.</string>
     <string name="editor_need_lines">Agrega al menos un producto para confirmar.</string>
     <string name="editor_mismatch">El total no cuadra por %1$s. ¿Confirmar de todos modos?</string>
     <string name="editor_confirm_anyway">Confirmar</string>
-    <string name="editor_delete">Eliminar compra</string>
+    <string name="editor_delete_purchase">Eliminar compra</string>
     <string name="editor_delete_confirm">¿Eliminar esta compra con sus productos y descuentos? No se puede deshacer.</string>
     <string name="editor_delete_yes">Eliminar</string>
     <string name="editor_discount_title">Descuento del ticket</string>
@@ -89,4 +89,24 @@
     <string name="line_need_variant">Elige el producto.</string>
     <string name="line_need_quantity">Escribe una cantidad mayor que cero.</string>
     <string name="line_need_price">Escribe el precio.</string>
+    <string name="editor_need_prices">Hay productos sin precio: escríbelo antes de confirmar.</string>
+    <string name="editor_no_price">Sin precio</string>
+    <string name="editor_scan">Escanear productos</string>
+    <!-- Continuous scanning (RF-COM-09) -->
+    <string name="continuous_title">Escaneando</string>
+    <string name="continuous_done">Listo</string>
+    <string name="continuous_aim">Apunta al código de barras de cada producto.</string>
+    <string name="continuous_price">Precio</string>
+    <string name="continuous_kilo_price">Precio por kilo</string>
+    <string name="continuous_kilos">Kilos</string>
+    <string name="continuous_looking">Buscando %1$s…</string>
+    <string name="continuous_pulling">Bajando «%1$s» del servidor…</string>
+    <string name="continuous_unknown">%1$s no está en tu catálogo.</string>
+    <string name="continuous_unknown_offline">%1$s no está en tu catálogo y no hay internet para buscarlo.</string>
+    <string name="continuous_register">Darlo de alta</string>
+    <plurals name="continuous_count">
+        <item quantity="one">%1$d producto en la compra · %2$s</item>
+        <item quantity="many">%1$d productos en la compra · %2$s</item>
+        <item quantity="other">%1$d productos en la compra · %2$s</item>
+    </plurals>
 </resources>
