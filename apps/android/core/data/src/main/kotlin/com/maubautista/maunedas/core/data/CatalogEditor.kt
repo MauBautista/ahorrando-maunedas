@@ -3,6 +3,7 @@ package com.maubautista.maunedas.core.data
 import androidx.room.withTransaction
 import com.maubautista.maunedas.core.database.AppDatabase
 import com.maubautista.maunedas.core.database.entity.BarcodeEntity
+import com.maubautista.maunedas.core.database.entity.ImageEntity
 import com.maubautista.maunedas.core.database.entity.ProductEntity
 import com.maubautista.maunedas.core.database.entity.ProductTagEntity
 import com.maubautista.maunedas.core.database.entity.TagEntity
@@ -14,10 +15,12 @@ import com.maubautista.maunedas.core.model.Uuids
 import com.maubautista.maunedas.core.pricing.SearchKey
 import com.maubautista.maunedas.core.sync.LocalWriter
 import com.maubautista.maunedas.core.sync.SyncTables
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import com.maubautista.maunedas.core.sync.UploadQueue
+import java.io.File
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /** What S-09 edits. [newTags] are names typed with "alta rápida"; they become tags when the product is saved. */
 data class ProductDraft(
@@ -29,7 +32,27 @@ data class ProductDraft(
     val newTags: List<String> = emptyList(),
     val displayUnit: DisplayUnit = DisplayUnit.PZ,
     val notes: String = "",
+    /** Its photo now (`products.primary_image_id`); a change is saved with [PhotoChange]. */
+    val primaryImageId: String? = null,
 )
+
+/** A change to a product's photo, saved with the product (S-18). */
+sealed interface PhotoChange {
+    /** Taken or picked on the phone, already reduced by [LocalPhotos.reduce]. */
+    data class Taken(
+        val path: String,
+    ) : PhotoChange
+
+    /** The open catalog's photo (10 §2.3): the Worker imports it once the row is up. */
+    data class OpenCatalog(
+        val imageUrl: String,
+        val license: String?,
+        val attribution: String?,
+        val sourceUrl: String?,
+    ) : PhotoChange
+
+    data object Removed : PhotoChange
+}
 
 /** What S-10 edits, already in base units; [codes] are the variant's live barcodes. */
 data class VariantDraft(
@@ -72,8 +95,11 @@ class CatalogEditor
         private val db: AppDatabase,
         private val writer: LocalWriter,
         private val clock: Clock,
+        private val photos: LocalPhotos,
+        private val uploads: UploadQueue,
     ) {
         private val products = SyncTables.of<ProductEntity>("products")
+        private val images = SyncTables.of<ImageEntity>("images")
         private val variants = SyncTables.of<VariantEntity>("variants")
         private val barcodes = SyncTables.of<BarcodeEntity>("barcodes")
         private val tags = SyncTables.of<TagEntity>("tags")
@@ -89,6 +115,7 @@ class CatalogEditor
                 tagIds = db.catalogEdits().liveTagIds(id).toSet(),
                 displayUnit = DisplayUnit.fromWire(p.displayUnit),
                 notes = p.notes.orEmpty(),
+                primaryImageId = p.primaryImageId,
             )
         }
 
@@ -117,39 +144,84 @@ class CatalogEditor
                 BarcodeOwner(it.variantId, it.productName, it.variantLabel)
             }
 
-        /** Saves the product, its tags and, for a new product, its first variant; returns the product id. */
+        /**
+         * Saves the product, its tags, its [photo] change and, for a new product, its first variant; returns the
+         * product id. A new photo is an `images` row (`role='catalog'`, owner the product) that becomes
+         * `primary_image_id`; the one it replaces is tombstoned. Its original then waits in the upload queue: a taken
+         * photo as a blob (moved into place first, so no row points to a missing file), an open catalog one as an
+         * import.
+         */
         suspend fun saveProduct(
             draft: ProductDraft,
             firstVariant: VariantDraft? = null,
-        ): String =
-            db.withTransaction {
-                val now = clock.nowMillis()
-                val name = draft.name.trim()
-                val brand = draft.brand.trim().ifEmpty { null }
-                val row =
-                    draft.id?.let { db.products().byId(it) }?.copy(
-                        name = name,
-                        brand = brand,
-                        categoryId = draft.categoryId,
-                        displayUnit = draft.displayUnit.wire,
-                        notes = draft.notes.trim().ifEmpty { null },
-                    ) ?: ProductEntity(
-                        id = Uuids.v7(now),
-                        name = name,
-                        brand = brand,
-                        categoryId = draft.categoryId,
-                        displayUnit = draft.displayUnit.wire,
-                        notes = draft.notes.trim().ifEmpty { null },
-                        searchKey = "",
-                        createdAt = now,
-                        updatedAt = now,
-                    )
-                // The server derives it too; computing it here makes the product findable offline (03 §7).
-                writer.write(products, listOf(row.copy(searchKey = SearchKey.of("$name ${brand.orEmpty()}"))))
-                saveTags(row.id, draft.tagIds + tagIdsFor(draft.newTags, now), now)
-                firstVariant?.let { saveVariantInTransaction(row.id, it, now) }
-                row.id
+            photo: PhotoChange? = null,
+        ): String {
+            val now = clock.nowMillis()
+            val taken = (photo as? PhotoChange.Taken)?.let { Uuids.v7(now).let { id -> id to photos.keep(id, File(it.path)) } }
+            var image: ImageEntity? = null
+            val productId =
+                db.withTransaction {
+                    val name = draft.name.trim()
+                    val brand = draft.brand.trim().ifEmpty { null }
+                    val row =
+                        draft.id?.let { db.products().byId(it) }?.copy(
+                            name = name,
+                            brand = brand,
+                            categoryId = draft.categoryId,
+                            displayUnit = draft.displayUnit.wire,
+                            notes = draft.notes.trim().ifEmpty { null },
+                        ) ?: ProductEntity(
+                            id = Uuids.v7(now),
+                            name = name,
+                            brand = brand,
+                            categoryId = draft.categoryId,
+                            displayUnit = draft.displayUnit.wire,
+                            notes = draft.notes.trim().ifEmpty { null },
+                            searchKey = "",
+                            createdAt = now,
+                            updatedAt = now,
+                        )
+                    image = photo?.let { imageRow(it, taken?.first, row.id, now) }
+                    val primary = if (photo == null) row.primaryImageId else image?.id
+                    // The server derives it too; computing it here makes the product findable offline (03 §7).
+                    writer.write(products, listOf(row.copy(searchKey = SearchKey.of("$name ${brand.orEmpty()}"), primaryImageId = primary)))
+                    image?.let { writer.write(images, listOf(it)) }
+                    // The photo replaced or removed goes too; its blobs stay in R2.
+                    row.primaryImageId?.takeIf { photo != null && it != primary }?.let { db.images().byId(it) }?.takeIf { it.deletedAt == null }?.let { writer.delete(images, listOf(it)) }
+                    saveTags(row.id, draft.tagIds + tagIdsFor(draft.newTags, now), now)
+                    firstVariant?.let { saveVariantInTransaction(row.id, it, now) }
+                    row.id
+                }
+            taken?.let { (id, file) -> uploads.enqueueBlob(id, LocalPhotos.ORIGINAL, file.path) }
+            (photo as? PhotoChange.OpenCatalog)?.let { open -> image?.let { uploads.enqueueImport(it.id, LocalPhotos.ORIGINAL, open.imageUrl) } }
+            return productId
+        }
+
+        private fun imageRow(
+            photo: PhotoChange,
+            takenId: String?,
+            productId: String,
+            now: Long,
+        ): ImageEntity? {
+            fun row(
+                id: String,
+                source: String,
+            ) = ImageEntity(
+                id = id,
+                ownerType = "product",
+                ownerId = productId,
+                role = "catalog",
+                source = source,
+                originalKey = "images/$id/${LocalPhotos.ORIGINAL}",
+                createdAt = now,
+                updatedAt = now,
+            )
+            return when (photo) {
+                is PhotoChange.Taken -> row(takenId!!, "user")
+                is PhotoChange.OpenCatalog -> row(Uuids.v7(now), "off").copy(license = photo.license, attribution = photo.attribution, sourceUrl = photo.sourceUrl)
+                PhotoChange.Removed -> null
             }
+        }
 
         suspend fun saveVariant(
             productId: String,

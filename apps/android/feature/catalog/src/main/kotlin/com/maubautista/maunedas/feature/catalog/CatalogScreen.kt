@@ -50,6 +50,7 @@ import com.maubautista.maunedas.core.designsystem.Spacing
 import com.maubautista.maunedas.core.designsystem.component.PriceSource
 import com.maubautista.maunedas.core.designsystem.component.UnitPriceText
 import com.maubautista.maunedas.core.ui.Dates
+import com.maubautista.maunedas.core.ui.ProductPhoto
 import com.maubautista.maunedas.core.designsystem.R as DesignR
 
 /** What the catalog screen can ask for. */
@@ -199,12 +200,7 @@ private fun ProductCard(
             .semantics(mergeDescendants = true) {},
         horizontalArrangement = Arrangement.spacedBy(Spacing.md),
     ) {
-        // The photo arrives with T-117; until then the initial stands in for it.
-        Surface(color = MaterialTheme.colorScheme.secondaryContainer, shape = MaterialTheme.shapes.medium, modifier = Modifier.size(56.dp)) {
-            Box(contentAlignment = Alignment.Center) {
-                Text(item.name.take(1).uppercase(), style = MaterialTheme.typography.titleLarge)
-            }
-        }
+        ProductPhoto(item.photo, item.name, Modifier.size(56.dp))
         Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(Spacing.xs)) {
             Text(item.name, style = MaterialTheme.typography.titleMedium)
             Text(

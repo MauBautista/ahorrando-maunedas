@@ -17,7 +17,9 @@ import com.maubautista.maunedas.core.database.entity.TagEntity
 import com.maubautista.maunedas.core.database.entity.VariantEntity
 import com.maubautista.maunedas.core.model.Clock
 import com.maubautista.maunedas.core.model.DisplayUnit
+import com.maubautista.maunedas.core.network.ApiConfig
 import com.maubautista.maunedas.core.pricing.SearchKey
+import java.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -27,7 +29,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.time.Instant
 
 /**
  * The data of `apps/api/test/catalog.test.ts` in Room: the same searches, filters and best prices as
@@ -39,7 +40,7 @@ class CatalogRepositoryTest {
     private val day = 86_400_000L
     private val db =
         Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java).allowMainThreadQueries().build()
-    private val catalog = CatalogRepository(db, Clock { now })
+    private val catalog = CatalogRepository(db, Clock { now }, ProductPhotos(ApplicationProvider.getApplicationContext(), db, ApiConfig("https://api.test")))
 
     @After
     fun close() = db.close()

@@ -33,6 +33,8 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.input.PasswordVisualTransformation
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
+import androidx.lifecycle.Lifecycle
+import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.maubautista.maunedas.core.auth.SessionUser
 import com.maubautista.maunedas.core.designsystem.Spacing
@@ -63,6 +65,8 @@ fun SettingsRoute(
     val message by viewModel.message.collectAsStateWithLifecycle()
     val confirmSignOut by viewModel.confirmSignOut.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { onSignedOut() } }
+    // The tab keeps its view model; photos taken or freed meanwhile change the size, so it is read each time it shows.
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshPhotos() }
     SettingsScreen(
         user = user,
         sync = sync,

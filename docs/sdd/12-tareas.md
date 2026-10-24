@@ -285,9 +285,21 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Códigos leídos:** se guardan con `source = 'scan'`.
   - **S-10 "Escanear código" (T56):** una hoja de lectura única con el permiso incluido (`ScanCodeSheet`); el código pasa por las mismas revisiones que uno escrito.
   - 15 pruebas: lectura y filtro de 2 s, `ScanRepository` con Room y MockWebServer, ViewModel en los cuatro caminos (incluido el pull pedido), pantalla con letra al 200 % y prellenado (T62).
-### [ ] T-117 · Foto de producto e importación del catálogo (S-18)
+### [x] T-117 · Foto de producto e importación del catálogo (S-18)
 - **Depende de:** T-105, T-116
 - **Nota (T-125):** `LocalPhotos` (reducir y guardar, 10 §4.2) y `rememberTakePhoto` (app de cámara con permiso) ya existen; falta la galería.
+- **Resultado (2026-10-24):**
+  - **Sección "Foto" en S-09:** cámara, galería y quitar. La foto se guarda con el producto como su `primary_image_id`, y la anterior recibe tombstone.
+  - **Catálogo abierto:** la foto se importa al guardar un producto creado desde el escáner, con licencia y atribución.
+  - **Miniaturas en el catálogo y foto grande en la ficha:** Coil 3 con la sesión; primero el archivo del teléfono, en el orden de 10 §1.
+  - **Probado en un Galaxy A53 (Android 16):**
+    - Foto con la cámara: en R2 quedó un JPEG de 1153 × 2048, sin EXIF, y reemplazó a la anterior.
+    - Después de "Liberar espacio", la miniatura bajó del Worker con la sesión.
+    - La foto de Open Food Facts se importó al guardar una leche.
+  - **Corregido en la prueba:**
+    - Coil guardaba el 404 de una foto que aún no se importaba. Ahora solo guarda fotos, y no se pide una imagen que sigue en la cola.
+    - Ajustes no recalculaba "Fotos guardadas en el teléfono" al volver (de T-126).
+  - 11 pruebas nuevas, más el prellenado de la foto en la prueba de formularios (T65).
 - **Incluye (T62):** la foto del catálogo abierto al crear un producto desde el escáner (`image_url` ya llega en `CatalogGuess`).
 - **Incluye:** la miniatura de la tarjeta del catálogo (Coil 3 con el `AuthInterceptor`, archivo local primero, prioridad de 10 §1), pospuesta de T-112 (T55).
 ### [ ] T-118 · Recorte en el teléfono (opcional)

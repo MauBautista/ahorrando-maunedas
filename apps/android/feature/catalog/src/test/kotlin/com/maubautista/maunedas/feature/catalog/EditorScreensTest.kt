@@ -23,6 +23,7 @@ import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import com.maubautista.maunedas.core.data.CategoryNode
+import com.maubautista.maunedas.core.data.PhotoChange
 import com.maubautista.maunedas.core.data.TagItem
 import com.maubautista.maunedas.core.data.VariantSummary
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
@@ -77,6 +78,9 @@ class EditorScreensTest {
                                 onOpenVariant = { calls += "variant:$it" },
                                 onSave = { calls += "save" },
                                 onAskDelete = { calls += "delete" },
+                                onTakePhoto = { calls += "take" },
+                                onPickPhoto = { calls += "pick" },
+                                onRemovePhoto = { calls += "remove" },
                             ),
                     )
                 }
@@ -133,6 +137,26 @@ class EditorScreensTest {
         val taken = newProduct.copy(firstVariant = VariantForm(codeInput = "7501020515350").withCodeProblem(R.string.editor_code_taken, "Leche Lala · 1 L"))
         showProduct(taken)
         compose.onNodeWithText("Ese código ya es de «Leche Lala · 1 L».").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun aProductWithoutAPhotoOffersTheCameraAndTheGallery() {
+        val calls = mutableListOf<String>()
+        showProduct(existing, calls = calls)
+        compose.onNodeWithText("Sin foto").assertExists()
+        compose.onNodeWithText("Quitar foto").assertDoesNotExist()
+        compose.onNodeWithText("Tomar foto").performScrollTo().performClick()
+        compose.onNodeWithText("Elegir de la galería").performScrollTo().performClick()
+        assertEquals(listOf("take", "pick"), calls)
+    }
+
+    @Test
+    fun anOpenCatalogPhotoIsNamedAndCanBeLeftOut() {
+        val calls = mutableListOf<String>()
+        showProduct(newProduct.copy(photoChange = PhotoChange.OpenCatalog("https://images.openfoodfacts.org/f.jpg", "CC BY-SA 3.0", "Open Food Facts contributors", null)), calls = calls)
+        compose.onNodeWithText("Al guardar se importará la foto de Open Food Facts contributors.").assertExists()
+        compose.onNodeWithText("Quitar foto").performScrollTo().performClick()
+        assertEquals(listOf("remove"), calls)
     }
 
     @Test

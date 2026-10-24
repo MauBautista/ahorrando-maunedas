@@ -50,7 +50,7 @@ class ScanRepositoryTest {
         val tokens = IdTokenProvider { "token" }
         val client = ClientInfo(1, "test")
         val api = createMaunedasApi(ApiConfig(server.url("/").toString()), createOkHttpClient(AuthInterceptor(tokens, client), TokenAuthenticator(tokens)), MaunedasJson)
-        scan = ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, Clock { 10_000 }))
+        scan = ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, Clock { 10_000 }, ProductPhotos(context, db, ApiConfig("https://api.test"))))
     }
 
     @After
@@ -95,7 +95,7 @@ class ScanRepositoryTest {
             )
             val catalog = (scan.lookup("75010205153") as RemoteLookup.Catalog).guess
             assertEquals(
-                CatalogGuess("Leche entera", "Lala", "6 x 1 l", Measure.VOLUME, 1000.0, 6, "https://img/x.jpg", "Open Food Facts contributors"),
+                CatalogGuess("Leche entera", "Lala", "6 x 1 l", Measure.VOLUME, 1000.0, 6, "https://img/x.jpg", "Open Food Facts contributors", "CC BY-SA 3.0", "https://off/p/1"),
                 catalog,
             )
             server.enqueue(json(200, """{"code":"1","match":null,"catalog":null}"""))

@@ -9,6 +9,8 @@ import androidx.sqlite.db.SimpleSQLiteQuery
 import androidx.sqlite.db.SupportSQLiteQuery
 import com.maubautista.maunedas.core.database.entity.BarcodeEntity
 import com.maubautista.maunedas.core.database.entity.CategoryEntity
+import com.maubautista.maunedas.core.database.entity.ImageEntity
+import com.maubautista.maunedas.core.database.entity.PendingUploadEntity
 import com.maubautista.maunedas.core.database.entity.PriceObservationEntity
 import com.maubautista.maunedas.core.database.entity.ProductEntity
 import com.maubautista.maunedas.core.database.entity.ProductTagEntity
@@ -99,6 +101,8 @@ interface CatalogQueryDao {
         observedEntities = [
             ProductEntity::class, VariantEntity::class, ProductTagEntity::class, BarcodeEntity::class, CategoryEntity::class,
             PurchaseEntity::class, PurchaseItemEntity::class, PriceObservationEntity::class, StoreEntity::class,
+            // The thumbnail appears once its upload or import leaves the queue (T-117).
+            PendingUploadEntity::class, ImageEntity::class,
         ],
     )
     fun products(query: SupportSQLiteQuery): PagingSource<Int, CatalogProductRow>
