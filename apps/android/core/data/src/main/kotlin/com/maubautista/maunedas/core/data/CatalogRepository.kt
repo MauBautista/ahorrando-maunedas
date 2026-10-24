@@ -15,10 +15,10 @@ import com.maubautista.maunedas.core.model.trimJs
 import com.maubautista.maunedas.core.pricing.BestPrices
 import com.maubautista.maunedas.core.pricing.SearchKey
 import com.maubautista.maunedas.core.pricing.Units
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 
 /** Lowest price per [unit] among the product's recent points (03 §3); [source] is purchase, shelf or web. */
 data class BestPrice(
@@ -36,6 +36,8 @@ data class CatalogItem(
     val brand: String?,
     val variants: Int,
     val best: BestPrice?,
+    /** Its thumbnail for Coil (10 §1), or null without a photo. */
+    val photo: Any? = null,
 )
 
 /** A category of the tree, in display order; [depth] 0 is a top-level one. */
@@ -57,8 +59,9 @@ class CatalogRepository
     constructor(
         private val db: AppDatabase,
         private val clock: Clock,
+        private val photos: ProductPhotos,
     ) {
-        /** Products matching the search like `GET /v1/products` (03 §7), each with its best price. */
+        /** Products matching the search like `GET /v1/products` (03 §7), each with its best price and thumbnail. */
         fun products(
             query: String,
             categoryId: String?,
@@ -70,7 +73,7 @@ class CatalogRepository
                 .map { page ->
                     page.map { row ->
                         val unit = DisplayUnit.fromWire(row.displayUnit)
-                        CatalogItem(row.id, row.name, row.brand, row.variantCount, best(row.id, unit))
+                        CatalogItem(row.id, row.name, row.brand, row.variantCount, best(row.id, unit), photos.thumb(row.primaryImageId))
                     }
                 }
         }

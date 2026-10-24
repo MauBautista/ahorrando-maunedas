@@ -308,6 +308,16 @@ Cuenta (nombre, usuario, cambiar contraseña), Sincronización (S-16), Almacenam
 ### S-18 Foto de producto (RF-IMG-02, 03)
 Cámara o galería → reducir a ≤ 2048 px (JPEG 85) → (opcional E1) quitar fondo en el teléfono → vista previa con interruptor "Sin fondo" → guardar. Flujo técnico en `10-imagenes.md` §4–5.
 
+**Implementación (T-117, decisión T65):**
+- **Dónde:** S-18 es la sección "Foto" de S-09, con "Tomar foto" (la app de cámara, `rememberTakePhoto`), "Elegir de la galería" (el selector de fotos del sistema, sin permiso de almacenamiento, `rememberPickPhoto`) y "Quitar foto". "Sin fondo" llega con T-118.
+- **Guardado:** la foto se reduce al elegirla y se guarda con el producto (`CatalogEditor.saveProduct(…, PhotoChange)`). Se crea una fila `images` (`owner_type='product'`, `role='catalog'`) que pasa a ser `products.primary_image_id`; la foto que reemplaza o quita recibe tombstone. El original queda en la cola de subida.
+- **Catálogo abierto:** un producto nuevo creado desde el escáner trae la foto de Open Food Facts con su licencia, atribución y enlace (`ProductEditorDestination`). Al guardar se crea la fila con `source='off'` y la importación va a la cola (`kind='import'`), que espera a que la fila esté en el servidor (10 §2.3). Antes de la importación no se muestra, porque la app no descarga de Open Food Facts, así que el editor dice de dónde vendrá; se puede quitar o reemplazar.
+- **Mostrar (`ProductPhotos` + `ProductPhoto`):** la miniatura del catálogo y la foto grande de S-08 siguen la prioridad de 10 §1. Gana el primer archivo de esa lista que esté en el teléfono; si ninguno está, se usa `/v1/images/{id}/blobs/{name}`. Coil 3 usa el cliente HTTP de la API (Bearer) y un caché en disco de 100 MB, porque las claves son inmutables. Sin foto, o si no carga, se ve la inicial.
+- **Fotos que aún no están en el servidor:**
+  - Si la imagen sigue en la cola de este teléfono (subida o importación), no se pide. La lista y la ficha observan la cola, así que la foto aparece en cuanto sale de ella.
+  - La caché de Coil guarda solo respuestas 2xx (`PhotoCacheStrategy`) e ignora un error guardado antes. En un Galaxy A53, la foto de un producto importado se pidió antes de que terminara la importación, Coil guardó el 404 y la tarjeta se quedó con la inicial.
+- **Fotos de presentación** (`variants.primary_image_id`): no se editan en E1.
+
 ### E2 · S-20 a S-23
 - **S-20 Seguimiento**: listings de la variante con tienda, último precio, última revisión, estado, intervalo; "Revisar ahora".
 - **S-21 Agregar URL**: campo URL (o llega por *Compartir* desde el navegador o la app de la tienda: `intent-filter` `ACTION_SEND` `text/plain`) → `POST /v1/listings/resolve` → seleccionar variante → guardar listing por sync.

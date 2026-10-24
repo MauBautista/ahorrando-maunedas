@@ -58,6 +58,15 @@
     <string name="editor_no_codes">Sin códigos.</string>
     <string name="editor_new_code">Agregar código</string>
     <string name="editor_scan_code">Escanear código</string>
+    <!-- S-18 -->
+    <string name="editor_photo">Foto</string>
+    <string name="editor_photo_take">Tomar foto</string>
+    <string name="editor_photo_pick">Elegir de la galería</string>
+    <string name="editor_photo_remove">Quitar foto</string>
+    <string name="editor_photo_none">Sin foto</string>
+    <string name="editor_photo_open_catalog">catálogo abierto</string>
+    <string name="editor_photo_catalog">Al guardar se importará la foto de %1$s.</string>
+    <string name="editor_photo_failed">No se pudo leer la foto. Intenta otra vez.</string>
     <string name="editor_remove_code">Quitar el código %1$s</string>
     <string name="editor_code_format">Un código tiene de 6 a 14 dígitos.</string>
     <string name="editor_code_repeated">Ese código ya está en la lista.</string>

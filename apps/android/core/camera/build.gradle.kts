@@ -12,6 +12,8 @@ dependencies {
     // The bundled model: scanning works without Play Services nor network (RF-SYN-01).
     implementation(libs.mlkit.barcode.scanning)
     implementation(libs.androidx.lifecycle.runtime.compose)
-    // The camera permission request.
+    // The camera permission request and the photo picker.
     implementation(libs.androidx.activity.compose)
+    testImplementation(libs.robolectric)
+    testImplementation(libs.androidx.test.core)
 }

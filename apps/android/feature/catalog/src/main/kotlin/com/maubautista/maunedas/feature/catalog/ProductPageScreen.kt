@@ -8,6 +8,7 @@ import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
@@ -32,11 +33,13 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.maubautista.maunedas.core.data.PageComparison
@@ -50,6 +53,7 @@ import com.maubautista.maunedas.core.designsystem.component.UnitPriceText
 import com.maubautista.maunedas.core.designsystem.component.label
 import com.maubautista.maunedas.core.model.Money
 import com.maubautista.maunedas.core.ui.Dates
+import com.maubautista.maunedas.core.ui.ProductPhoto
 import com.maubautista.maunedas.core.designsystem.R as DesignR
 
 /** Where the product page leads. */
@@ -142,6 +146,7 @@ fun ProductPageScreen(
                     }
                     Text(page.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
                 }
+                page.photo?.let { ProductPhoto(it, page.name, Modifier.fillMaxWidth().height(220.dp), contentScale = ContentScale.Fit) }
                 listOfNotNull(page.brand, page.categoryPath).takeIf { it.isNotEmpty() }?.let {
                     Text(it.joinToString(" · "), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

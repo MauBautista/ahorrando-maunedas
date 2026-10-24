@@ -14,10 +14,10 @@ import com.maubautista.maunedas.core.pricing.ParsedQuantity
 import com.maubautista.maunedas.core.pricing.PriceComparison
 import com.maubautista.maunedas.core.pricing.PricePoint
 import com.maubautista.maunedas.core.pricing.QuantityParser
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 import javax.inject.Singleton
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 
 /** A price as the product page shows it; [source] is purchase, shelf or web. */
 data class PagePrice(
@@ -69,6 +69,8 @@ data class ProductPage(
     val displayUnit: DisplayUnit,
     val variants: List<PageVariant>,
     val comparison: List<PageComparison>,
+    /** The big photo for Coil (10 §1), or null without one. */
+    val photo: Any? = null,
 )
 
 /** S-08 from Room: what `GET /v1/products/:id` and `/compare` (03 §7) give the web, with the same rules. */
@@ -78,6 +80,7 @@ class ProductPageRepository
     constructor(
         private val db: AppDatabase,
         private val clock: Clock,
+        private val photos: ProductPhotos,
     ) {
         /** Null when the product does not exist or was deleted (or merged into another). */
         fun page(productId: String): Flow<ProductPage?> {
@@ -90,7 +93,10 @@ class ProductPageRepository
                     page.barcodes(productId),
                     db.catalogQueries().categories(),
                 ) { product, tags, variants, codes, categories -> Parts(product, tags.map { it.name }, variants, codes.groupBy({ it.variantId }, { it.code }), categories) }
-            return combine(parts, db.catalogQueries().allPricePoints(productId)) { p, points -> p.product?.let { build(p, points) } }
+            // The queue count also brings the photo once its upload or import is done.
+            return combine(parts, db.catalogQueries().allPricePoints(productId), db.pendingUploads().observeCount()) { p, points, _ ->
+                p.product?.let { build(p, points).copy(photo = photos.large(it.primaryImageId)) }
+            }
         }
 
         private fun build(

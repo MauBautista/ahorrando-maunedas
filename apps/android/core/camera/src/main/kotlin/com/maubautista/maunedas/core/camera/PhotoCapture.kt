@@ -4,7 +4,9 @@ import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Context
 import android.content.pm.PackageManager
+import android.net.Uri
 import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.PickVisualMediaRequest
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -48,6 +50,32 @@ fun rememberTakePhoto(onTaken: (File) -> Unit): () -> Unit {
     return {
         if (ContextCompat.checkSelfPermission(context, Manifest.permission.CAMERA) == PackageManager.PERMISSION_GRANTED) launch() else ask.launch(Manifest.permission.CAMERA)
     }
+}
+
+/**
+ * "Elegir de la galería" with the system photo picker (no storage permission). The picked photo is copied to
+ * `cacheDir/capture/`, like one taken, and [onPicked] gets the copy to reduce.
+ */
+@Composable
+fun rememberPickPhoto(onPicked: (File) -> Unit): () -> Unit {
+    val context = LocalContext.current
+    val pick =
+        rememberLauncherForActivityResult(ActivityResultContracts.PickVisualMedia()) { uri ->
+            uri?.let { copyToCapture(context, it) }?.let(onPicked)
+        }
+    return { pick.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly)) }
+}
+
+/** A copy of [uri] in `cacheDir/capture/`, or null when it cannot be read. */
+fun copyToCapture(
+    context: Context,
+    uri: Uri,
+): File? {
+    val file = captureFile(context)
+    return runCatching {
+        context.contentResolver.openInputStream(uri)?.use { input -> file.outputStream().use { input.copyTo(it) } } ?: return null
+        file.takeIf { it.length() > 0 }
+    }.getOrNull() ?: null.also { file.delete() }
 }
 
 private fun captureFile(context: Context): File = File(context.cacheDir, "capture").apply { mkdirs() }.resolve("${UUID.randomUUID()}.jpg")

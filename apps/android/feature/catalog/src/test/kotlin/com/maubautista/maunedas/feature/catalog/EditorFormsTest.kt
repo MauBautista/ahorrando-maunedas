@@ -1,5 +1,7 @@
 package com.maubautista.maunedas.feature.catalog
 
+import androidx.lifecycle.SavedStateHandle
+import com.maubautista.maunedas.core.data.PhotoChange
 import com.maubautista.maunedas.core.data.ProductDraft
 import com.maubautista.maunedas.core.data.TagItem
 import com.maubautista.maunedas.core.data.VariantDraft
@@ -87,6 +89,10 @@ class EditorFormsTest {
         // A code read later in S-10 keeps its source too; a typed one does not get one.
         val more = f.withCodeInput("12345678", source = "scan").withCode("12345678").withCodeInput("87654321").withCode("87654321")
         assertEquals(mapOf("7501020515350" to "scan", "12345678" to "scan"), more.codeSources)
+        // The open catalog's photo travels in the route, with its license (T-117).
+        val route = SavedStateHandle(mapOf("imageUrl" to "https://images.openfoodfacts.org/f.jpg", "imageLicense" to "CC BY-SA 3.0", "imageAttribution" to "Open Food Facts contributors", "imageSourceUrl" to "https://world.openfoodfacts.org/product/1"))
+        assertEquals(PhotoChange.OpenCatalog("https://images.openfoodfacts.org/f.jpg", "CC BY-SA 3.0", "Open Food Facts contributors", "https://world.openfoodfacts.org/product/1"), Prefill.from(route).photo)
+        assertEquals(null, Prefill.from(SavedStateHandle()).photo)
         // Without catalog data only the code is there.
         val bare = VariantForm.prefilled(Measure.MASS, "12345678")
         assertEquals(Triple("", Measure.MASS, listOf("12345678")), Triple(bare.amount, bare.measure, bare.codes))

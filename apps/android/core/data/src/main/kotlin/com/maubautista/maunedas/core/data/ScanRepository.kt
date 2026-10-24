@@ -5,15 +5,15 @@ import com.maubautista.maunedas.core.model.Measure
 import com.maubautista.maunedas.core.network.ApiException
 import com.maubautista.maunedas.core.network.MaunedasApi
 import com.maubautista.maunedas.core.sync.SyncScheduler
+import java.io.IOException
+import javax.inject.Inject
+import javax.inject.Singleton
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import java.io.IOException
-import javax.inject.Inject
-import javax.inject.Singleton
 
 /** A code of the catalog here (S-12, path 2): the variant and its latest price per store and source. */
 data class ScanHit(
@@ -35,6 +35,9 @@ data class CatalogGuess(
     val packCount: Int?,
     val imageUrl: String?,
     val attribution: String,
+    /** For the imported photo (10 §2.3). */
+    val license: String? = null,
+    val sourceUrl: String? = null,
 )
 
 /** `GET /v1/barcodes/:code` as S-12 reads it. */
@@ -110,6 +113,8 @@ class ScanRepository
                                 packCount = catalog.parsed?.packCount,
                                 imageUrl = catalog.imageUrl,
                                 attribution = catalog.attribution,
+                                license = catalog.license,
+                                sourceUrl = catalog.sourceUrl,
                             ),
                         )
                     else -> RemoteLookup.NotFound

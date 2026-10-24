@@ -6,6 +6,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.maubautista.maunedas.core.database.AppDatabase
 import com.maubautista.maunedas.core.database.entity.BarcodeEntity
 import com.maubautista.maunedas.core.database.entity.CategoryEntity
+import com.maubautista.maunedas.core.database.entity.ImageEntity
 import com.maubautista.maunedas.core.database.entity.PriceObservationEntity
 import com.maubautista.maunedas.core.database.entity.ProductEntity
 import com.maubautista.maunedas.core.database.entity.ProductTagEntity
@@ -16,6 +17,8 @@ import com.maubautista.maunedas.core.database.entity.TagEntity
 import com.maubautista.maunedas.core.database.entity.VariantEntity
 import com.maubautista.maunedas.core.model.Clock
 import com.maubautista.maunedas.core.model.DisplayUnit
+import com.maubautista.maunedas.core.network.ApiConfig
+import java.time.Instant
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -25,7 +28,6 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
-import java.time.Instant
 
 /**
  * The comparator data of `apps/api/test/prices.test.ts` and the latest prices of `catalog.test.ts`, in Room:
@@ -37,7 +39,7 @@ class ProductPageRepositoryTest {
     private val day = 86_400_000L
     private val db =
         Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java).allowMainThreadQueries().build()
-    private val pages = ProductPageRepository(db, Clock { now })
+    private val pages = ProductPageRepository(db, Clock { now }, ProductPhotos(ApplicationProvider.getApplicationContext(), db, ApiConfig("https://api.test")))
 
     @After
     fun close() = db.close()
@@ -159,6 +161,15 @@ class ProductPageRepositoryTest {
         runTest {
             // The 120-day-old $10.00 would be the minimum of 1 L at Walmart.
             assertEquals(2_600L, pages.page("leche").first()!!.comparison.first { it.variantId == "l1" }.minCents)
+        }
+
+    @Test
+    fun thePageHasTheProductsPhoto() =
+        runTest {
+            assertNull(pages.page("leche").first()!!.photo)
+            db.images().upsertAll(listOf(ImageEntity(id = "img", ownerType = "product", ownerId = "leche", role = "catalog", source = "user", originalKey = "images/img/original.jpg", createdAt = 1, updatedAt = 1)))
+            db.products().upsertAll(listOf(db.products().byId("leche")!!.copy(primaryImageId = "img")))
+            assertEquals("https://api.test/v1/images/img/blobs/original.jpg", pages.page("leche").first()!!.photo)
         }
 
     @Test

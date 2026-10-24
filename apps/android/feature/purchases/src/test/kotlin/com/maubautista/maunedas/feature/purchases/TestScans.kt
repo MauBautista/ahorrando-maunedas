@@ -3,6 +3,7 @@ package com.maubautista.maunedas.feature.purchases
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.maubautista.maunedas.core.data.ProductPageRepository
+import com.maubautista.maunedas.core.data.ProductPhotos
 import com.maubautista.maunedas.core.data.ScanRepository
 import com.maubautista.maunedas.core.database.AppDatabase
 import com.maubautista.maunedas.core.model.Clock
@@ -25,5 +26,5 @@ internal fun scanRepository(
     val context = ApplicationProvider.getApplicationContext<Context>()
     val tokens = IdTokenProvider { "token" }
     val api = createMaunedasApi(ApiConfig(baseUrl), createOkHttpClient(AuthInterceptor(tokens, ClientInfo(1, "test")), TokenAuthenticator(tokens)), MaunedasJson)
-    return ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, clock))
+    return ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, clock, ProductPhotos(context, db, ApiConfig(baseUrl))))
 }

@@ -8,13 +8,18 @@ import com.maubautista.maunedas.core.auth.SessionStore
 import com.maubautista.maunedas.core.data.BarcodeTakenException
 import com.maubautista.maunedas.core.data.CatalogEditor
 import com.maubautista.maunedas.core.data.CatalogMerger
-import com.maubautista.maunedas.core.data.MergeResult
 import com.maubautista.maunedas.core.data.CatalogRepository
 import com.maubautista.maunedas.core.data.CategoryNode
+import com.maubautista.maunedas.core.data.LocalPhotos
+import com.maubautista.maunedas.core.data.MergeResult
+import com.maubautista.maunedas.core.data.PhotoChange
+import com.maubautista.maunedas.core.data.ProductPhotos
 import com.maubautista.maunedas.core.data.TagItem
 import com.maubautista.maunedas.core.data.VariantSummary
 import com.maubautista.maunedas.core.model.Measure
 import dagger.hilt.android.lifecycle.HiltViewModel
+import java.io.File
+import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -26,7 +31,6 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import javax.inject.Inject
 
 /**
  * What the scanner hands an editor (S-12): route arguments `code`, `name`, `brand`, `measure`, `unitAmount` (base
@@ -39,6 +43,8 @@ internal data class Prefill(
     val measure: Measure?,
     val unitAmount: Double?,
     val packCount: Int?,
+    /** The open catalog's photo, imported when the product is saved (10 §2.3). */
+    val photo: PhotoChange.OpenCatalog? = null,
 ) {
     companion object {
         fun from(savedState: SavedStateHandle) =
@@ -49,6 +55,10 @@ internal data class Prefill(
                 measure = savedState.get<String>("measure")?.let { runCatching { Measure.fromWire(it) }.getOrNull() },
                 unitAmount = savedState.get<String>("unitAmount")?.toDoubleOrNull(),
                 packCount = savedState.get<String>("packCount")?.toIntOrNull(),
+                photo =
+                    savedState.get<String>("imageUrl")?.let {
+                        PhotoChange.OpenCatalog(it, savedState["imageLicense"], savedState["imageAttribution"], savedState["imageSourceUrl"])
+                    },
             )
     }
 }
@@ -63,6 +73,10 @@ data class ProductEditorState(
     val firstVariant: VariantForm? = null,
     val busy: Boolean = false,
     val confirmDelete: Boolean = false,
+    /** S-18: the photo as it is saved now (something Coil loads), and the change the save brings. */
+    val savedPhoto: Any? = null,
+    val photoChange: PhotoChange? = null,
+    @StringRes val photoError: Int? = null,
 ) {
     val isNew: Boolean get() = product.id == null
 }
@@ -76,6 +90,8 @@ class ProductEditorViewModel
         private val editor: CatalogEditor,
         catalog: CatalogRepository,
         session: SessionStore,
+        private val photos: ProductPhotos,
+        private val localPhotos: LocalPhotos,
     ) : ViewModel() {
         private val productId: String? = savedState["productId"]
 
@@ -98,12 +114,12 @@ class ProductEditorViewModel
                 val loaded = productId?.let { editor.loadProduct(it) }
                 ui.value =
                     if (loaded != null) {
-                        ProductEditorState(loading = false, product = ProductForm.of(loaded))
+                        ProductEditorState(loading = false, product = ProductForm.of(loaded), savedPhoto = photos.large(loaded.primaryImageId))
                     } else {
                         // A new product starts with one variant; its measure suggests the display unit.
                         val first = VariantForm.prefilled(prefill.measure ?: Measure.VOLUME, prefill.code, prefill.unitAmount, prefill.packCount)
                         val product = ProductForm(name = prefill.name.orEmpty(), brand = prefill.brand.orEmpty()).followingMeasure(first.measure)
-                        ProductEditorState(loading = false, product = product, firstVariant = first)
+                        ProductEditorState(loading = false, product = product, firstVariant = first, photoChange = prefill.photo)
                     }
             }
         }
@@ -117,6 +133,29 @@ class ProductEditorViewModel
             }
 
         fun addTypedTag() = onProduct { it.addTypedTag(tags.value) }
+
+        /** "Tomar foto" or "Elegir de la galería" (S-18): reduced as a product photo (10 §4.2), saved with the product. */
+        fun onPhoto(taken: File) {
+            viewModelScope.launch {
+                val reduced = localPhotos.reduce(taken, LocalPhotos.Size.PRODUCT)
+                ui.update { s ->
+                    if (reduced == null) return@update s.copy(photoError = R.string.editor_photo_failed)
+                    s.discardTaken()
+                    s.copy(photoChange = PhotoChange.Taken(reduced.path), photoError = null)
+                }
+            }
+        }
+
+        /** "Quitar foto": the saved one goes when the product is saved; a new one is just dropped. */
+        fun removePhoto() =
+            ui.update { s ->
+                s.discardTaken()
+                s.copy(photoChange = if (s.savedPhoto != null) PhotoChange.Removed else null, photoError = null)
+            }
+
+        private fun ProductEditorState.discardTaken() {
+            (photoChange as? PhotoChange.Taken)?.let { File(it.path).delete() }
+        }
 
         fun addCode() {
             val form = ui.value.firstVariant ?: return
@@ -133,7 +172,7 @@ class ProductEditorViewModel
             ui.update { it.copy(busy = true) }
             viewModelScope.launch {
                 try {
-                    editor.saveProduct(product, variant)
+                    editor.saveProduct(product, variant, s.photoChange)
                     results.send(EditorResult.SAVED)
                 } catch (e: BarcodeTakenException) {
                     ui.update { it.copy(firstVariant = it.firstVariant?.withCodeProblem(R.string.editor_code_taken, "${e.owner.productName} · ${e.owner.variantLabel}", e.owner.variantId)) }

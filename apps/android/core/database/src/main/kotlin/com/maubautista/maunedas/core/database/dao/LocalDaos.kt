@@ -114,6 +114,10 @@ interface PendingUploadDao {
 
     @Query("SELECT count(*) FROM pending_uploads")
     fun observeCount(): Flow<Int>
+
+    /** The image still has a blob or an import in the queue, so the server may not have it yet. */
+    @Query("SELECT EXISTS(SELECT 1 FROM pending_uploads WHERE image_id = :imageId)")
+    suspend fun hasImage(imageId: String): Boolean
 }
 
 @Dao

@@ -9,6 +9,7 @@ import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
 import com.maubautista.maunedas.core.data.ProductChoice
 import com.maubautista.maunedas.core.data.ProductPageRepository
+import com.maubautista.maunedas.core.data.ProductPhotos
 import com.maubautista.maunedas.core.data.ScanRepository
 import com.maubautista.maunedas.core.database.AppDatabase
 import com.maubautista.maunedas.core.database.entity.BarcodeEntity
@@ -61,7 +62,7 @@ class ScanViewModelTest {
         val client = ClientInfo(1, "test")
         val api = createMaunedasApi(ApiConfig(server.url("/").toString()), createOkHttpClient(AuthInterceptor(tokens, client), TokenAuthenticator(tokens)), MaunedasJson)
         val clock = Clock { 10_000 }
-        vm = ScanViewModel(ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, clock)), clock)
+        vm = ScanViewModel(ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, clock, ProductPhotos(context, db, ApiConfig(server.url("/").toString())))), clock)
     }
 
     @After

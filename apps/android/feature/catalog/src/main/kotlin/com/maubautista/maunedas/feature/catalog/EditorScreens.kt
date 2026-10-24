@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardActions
@@ -43,10 +44,14 @@ import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.ui.text.input.KeyboardType
+import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.maubautista.maunedas.core.camera.ScanCodeSheet
+import com.maubautista.maunedas.core.camera.rememberPickPhoto
+import com.maubautista.maunedas.core.camera.rememberTakePhoto
 import com.maubautista.maunedas.core.data.CategoryNode
+import com.maubautista.maunedas.core.data.PhotoChange
 import com.maubautista.maunedas.core.data.TagItem
 import com.maubautista.maunedas.core.data.VariantSummary
 import com.maubautista.maunedas.core.designsystem.Spacing
@@ -54,6 +59,8 @@ import com.maubautista.maunedas.core.designsystem.component.label
 import com.maubautista.maunedas.core.model.DisplayUnit
 import com.maubautista.maunedas.core.model.Measure
 import com.maubautista.maunedas.core.pricing.ContentUnit
+import com.maubautista.maunedas.core.ui.ProductPhoto
+import java.io.File
 import com.maubautista.maunedas.core.designsystem.R as DesignR
 
 @Composable
@@ -68,6 +75,8 @@ fun ProductEditorRoute(
     val variants by viewModel.variants.collectAsStateWithLifecycle()
     val isAdmin by viewModel.isAdmin.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.done.collect { onDone() } }
+    val takePhoto = rememberTakePhoto(viewModel::onPhoto)
+    val pickPhoto = rememberPickPhoto(viewModel::onPhoto)
     if (state.loading) return
     ProductEditorScreen(
         state = state,
@@ -82,6 +91,9 @@ fun ProductEditorRoute(
                 onAddTag = viewModel::addTypedTag,
                 onFirstVariant = viewModel::onFirstVariant,
                 onAddCode = viewModel::addCode,
+                onTakePhoto = takePhoto,
+                onPickPhoto = pickPhoto,
+                onRemovePhoto = viewModel::removePhoto,
                 onOpenVariant = { variantId -> state.product.id?.let { onOpenVariant(it, variantId) } },
                 onSave = viewModel::save,
                 onAskDelete = viewModel::askDelete,
@@ -97,6 +109,9 @@ data class ProductEditorActions(
     val onAddTag: () -> Unit = {},
     val onFirstVariant: ((VariantForm) -> VariantForm) -> Unit = {},
     val onAddCode: () -> Unit = {},
+    val onTakePhoto: () -> Unit = {},
+    val onPickPhoto: () -> Unit = {},
+    val onRemovePhoto: () -> Unit = {},
     val onOpenVariant: (variantId: String?) -> Unit = {},
     val onSave: () -> Unit = {},
     val onAskDelete: () -> Unit = {},
@@ -131,6 +146,7 @@ fun ProductEditorScreen(
             keyboardOptions = KeyboardOptions(imeAction = ImeAction.Next),
             modifier = Modifier.fillMaxWidth(),
         )
+        PhotoSection(state, actions)
         OutlinedTextField(
             value = form.brand,
             onValueChange = { v -> actions.onProduct { it.copy(brand = v) } },
@@ -456,4 +472,44 @@ private fun ConfirmDelete(
         confirmButton = { TextButton(onClick = onDelete) { Text(stringResource(R.string.editor_delete), color = MaterialTheme.colorScheme.error) } },
         dismissButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.editor_cancel)) } },
     )
+}
+
+/**
+ * S-18: the product's photo (the one saved, or the one the save brings) with "Tomar foto", "Elegir de la galería" and
+ * "Quitar foto". An open catalog photo cannot be shown before the Worker imports it, so it is named instead.
+ */
+@OptIn(ExperimentalLayoutApi::class)
+@Composable
+private fun PhotoSection(
+    state: ProductEditorState,
+    actions: ProductEditorActions,
+) {
+    val change = state.photoChange
+    val model =
+        when (change) {
+            is PhotoChange.Taken -> File(change.path)
+            is PhotoChange.OpenCatalog, PhotoChange.Removed -> null
+            null -> state.savedPhoto
+        }
+    Text(stringResource(R.string.editor_photo), style = MaterialTheme.typography.titleSmall)
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(Spacing.md)) {
+        ProductPhoto(model, state.product.name.ifBlank { "?" }, Modifier.size(96.dp))
+        Text(
+            when {
+                change is PhotoChange.OpenCatalog -> stringResource(R.string.editor_photo_catalog, change.attribution ?: stringResource(R.string.editor_photo_open_catalog))
+                model == null -> stringResource(R.string.editor_photo_none)
+                else -> ""
+            },
+            style = MaterialTheme.typography.bodyMedium,
+            modifier = Modifier.weight(1f),
+        )
+    }
+    FlowRow(horizontalArrangement = Arrangement.spacedBy(Spacing.sm), verticalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+        OutlinedButton(onClick = actions.onTakePhoto, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_photo_take)) }
+        OutlinedButton(onClick = actions.onPickPhoto, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_photo_pick)) }
+        if (model != null || change is PhotoChange.OpenCatalog) {
+            TextButton(onClick = actions.onRemovePhoto, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_photo_remove)) }
+        }
+    }
+    state.photoError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyLarge) }
 }

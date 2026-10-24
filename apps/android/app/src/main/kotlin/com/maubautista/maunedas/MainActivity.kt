@@ -30,8 +30,8 @@ import com.maubautista.maunedas.feature.scan.ScanCodeRoute
 import com.maubautista.maunedas.feature.settings.SyncStatusRoute
 import com.maubautista.maunedas.feature.shelf.ShelfRoute
 import dagger.hilt.android.AndroidEntryPoint
-import kotlinx.serialization.Serializable
 import javax.inject.Inject
+import kotlinx.serialization.Serializable
 
 @Serializable
 object LoginDestination
@@ -48,7 +48,8 @@ data class ProductDestination(
 
 /**
  * S-09; null [productId] creates one. The scanner (S-12) prefills a new product: [code], and from an open catalog
- * [name], [brand], [measure], [unitAmount] (base units) and [packCount] (texts, as routes carry them).
+ * [name], [brand], [measure], [unitAmount] (base units), [packCount] (texts, as routes carry them) and its photo
+ * with its license (imported when the product is saved, T-117).
  */
 @Serializable
 data class ProductEditorDestination(
@@ -59,6 +60,10 @@ data class ProductEditorDestination(
     val measure: String? = null,
     val unitAmount: String? = null,
     val packCount: String? = null,
+    val imageUrl: String? = null,
+    val imageLicense: String? = null,
+    val imageAttribution: String? = null,
+    val imageSourceUrl: String? = null,
 )
 
 /** S-13; [variantId] comes from the scanner (S-12), null from Inicio. */
@@ -188,6 +193,7 @@ private fun productEditor(
 ) = ProductEditorDestination(
     code = code, name = g?.name, brand = g?.brand, measure = g?.measure?.wire,
     unitAmount = g?.unitAmount?.toString(), packCount = g?.packCount?.toString(),
+    imageUrl = g?.imageUrl, imageLicense = g?.license, imageAttribution = g?.attribution, imageSourceUrl = g?.sourceUrl,
 )
 
 /** S-10 of an existing product with a scanned code. */

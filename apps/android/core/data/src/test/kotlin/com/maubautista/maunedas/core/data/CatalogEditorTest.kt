@@ -10,6 +10,7 @@ import com.maubautista.maunedas.core.model.DisplayUnit
 import com.maubautista.maunedas.core.model.Measure
 import com.maubautista.maunedas.core.model.Uuids
 import com.maubautista.maunedas.core.sync.LocalWriter
+import com.maubautista.maunedas.core.sync.UploadQueue
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -21,6 +22,7 @@ import org.junit.Assert.fail
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.io.File
 
 @RunWith(RobolectricTestRunner::class)
 class CatalogEditorTest {
@@ -29,7 +31,7 @@ class CatalogEditorTest {
     private val db =
         Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java).allowMainThreadQueries().build()
     private val clock = Clock { now }
-    private val editor = CatalogEditor(db, LocalWriter(db, clock, { "u1" }, { syncRequests++ }), clock)
+    private val editor = CatalogEditor(db, LocalWriter(db, clock, { "u1" }, { syncRequests++ }), clock, LocalPhotos(ApplicationProvider.getApplicationContext()), UploadQueue(db, clock) { })
 
     @After
     fun close() = db.close()
@@ -140,5 +142,59 @@ class CatalogEditorTest {
             assertEquals(emptyList<Any>(), db.variants().liveOfProducts(listOf(id)))
             assertNull(editor.barcodeOwner("7501020515350"))
             assertNull(editor.loadProduct(id))
+        }
+
+    private fun taken(name: String): String {
+        val file = File(ApplicationProvider.getApplicationContext<Context>().cacheDir, "capture/$name-reduced.jpg").apply { parentFile?.mkdirs(); writeText("jpg") }
+        return file.path
+    }
+
+    private suspend fun pending() = db.pendingUploads().next(10).map { listOf(it.kind, it.imageId, it.name, it.localPath, it.sourceUrl) }
+
+    @Test
+    fun aPhotoTakenIsTheProductsImageAndWaitsToBeUploaded() =
+        runTest {
+            val path = taken("one")
+            val id = editor.saveProduct(ProductDraft(name = "Leche", displayUnit = DisplayUnit.L), sixLiters(), PhotoChange.Taken(path))
+            val imageId = db.products().byId(id)!!.primaryImageId!!
+            val image = db.images().byId(imageId)!!
+            assertEquals(listOf("product", id, "catalog", "user", "images/$imageId/original.jpg"), listOf(image.ownerType, image.ownerId, image.role, image.source, image.originalKey))
+            val kept = File(ApplicationProvider.getApplicationContext<Context>().filesDir, "images/$imageId/original.jpg")
+            assertEquals(true to false, kept.exists() to File(path).exists())
+            assertEquals(listOf(listOf<Any?>("blob", imageId, "original.jpg", kept.path, null)), pending())
+            assertTrue("images" in outbox())
+            // Saving again without a change keeps it.
+            editor.saveProduct(editor.loadProduct(id)!!.copy(name = "Leche entera"))
+            assertEquals(imageId, db.products().byId(id)!!.primaryImageId)
+        }
+
+    @Test
+    fun anOpenCatalogPhotoIsImportedWithItsLicense() =
+        runTest {
+            val photo = PhotoChange.OpenCatalog("https://images.openfoodfacts.org/images/products/750/front.jpg", "CC BY-SA 3.0", "Open Food Facts contributors", "https://world.openfoodfacts.org/product/7501020515350")
+            val id = editor.saveProduct(ProductDraft(name = "Leche", displayUnit = DisplayUnit.L), sixLiters(), photo)
+            val image = db.images().byId(db.products().byId(id)!!.primaryImageId!!)!!
+            assertEquals(
+                listOf("off", "CC BY-SA 3.0", "Open Food Facts contributors", "https://world.openfoodfacts.org/product/7501020515350", "images/${image.id}/original.jpg"),
+                listOf(image.source, image.license, image.attribution, image.sourceUrl, image.originalKey),
+            )
+            assertEquals(listOf(listOf<Any?>("import", image.id, "original.jpg", null, photo.imageUrl)), pending())
+        }
+
+    @Test
+    fun anotherPhotoReplacesTheOldOneAndRemovingItLeavesNone() =
+        runTest {
+            val id = editor.saveProduct(ProductDraft(name = "Leche", displayUnit = DisplayUnit.L), sixLiters(), PhotoChange.Taken(taken("first")))
+            val first = db.products().byId(id)!!.primaryImageId!!
+            now = 2_000
+            editor.saveProduct(editor.loadProduct(id)!!, photo = PhotoChange.Taken(taken("second")))
+            val second = db.products().byId(id)!!.primaryImageId!!
+            assertTrue(second != first)
+            assertEquals(2_000L, db.images().byId(first)!!.deletedAt)
+            assertNull(db.images().byId(second)!!.deletedAt)
+            now = 3_000
+            editor.saveProduct(editor.loadProduct(id)!!, photo = PhotoChange.Removed)
+            assertNull(db.products().byId(id)!!.primaryImageId)
+            assertEquals(3_000L, db.images().byId(second)!!.deletedAt)
         }
 }
