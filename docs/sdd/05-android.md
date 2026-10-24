@@ -258,6 +258,14 @@ Nombre, marca, categoría (árbol), etiquetas (chips con alta rápida), unidad d
    - `catalog`: "Nuevo producto" prellenado (nombre, marca, contenido interpretado, foto). Antes de crear, pregunta "¿Es otra presentación de un producto que ya tienes?" con búsqueda por nombre.
 4. **Sin red o sin datos**: "Nuevo producto" vacío con el código ya asignado.
 
+**Implementación de S-11 y S-12 (T-116, decisión T62):**
+- **Lectura (`core:camera`):** `ScanCodes.normalize` deja solo los dígitos (6 a 14), así que un Code 128 con letras se ignora. `ScanGate` ignora el mismo código mientras sigue a la vista y pasaron menos de 2 s desde la lectura anterior.
+- **Escribir el código:** a mano, para etiquetas dañadas o sin permiso de cámara.
+- **Camino "en el servidor":** pide `sync-now` y la hoja dice "Está en el servidor… Bajando…" hasta que Room tiene el código.
+- **Camino "otra presentación":** "¿Es otra presentación…?" busca productos por palabras y abre S-10 de ese producto con el código y el contenido. "Nuevo producto" abre S-09 prellenado con el código, nombre, marca y contenido del catálogo; la foto llega con T-117.
+- **Acciones:** "Precio de anaquel" abre `ShelfPriceDestination` (T-125). "Agregar a la compra abierta" usa el borrador modificado más recientemente.
+- **S-10 "Escanear código":** abre `ScanCodeSheet` (`core:camera`), una lectura con el permiso incluido. El código pasa por las mismas revisiones que uno escrito (formato, repetido, de otra presentación) y queda con `source = 'scan'`.
+
 ### S-13 Precio de anaquel (RF-PRE-01)
 Variante (buscar/escanear), tienda y sucursal (recuerda la última), precio, promoción opcional (mismo selector que S-05, calcula `effective_price_cents`), foto opcional del anaquel. Guarda `price_observations` con `source='shelf'`, `observed_at = ahora`.
 

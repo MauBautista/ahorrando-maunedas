@@ -9,6 +9,7 @@ android {
 dependencies {
     implementation(project(":core:auth"))
     implementation(project(":core:pricing"))
+    implementation(project(":core:camera"))
     implementation(libs.androidx.paging.compose)
     implementation(libs.vico.compose.m3)
     testImplementation(platform(libs.androidx.compose.bom))

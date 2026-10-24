@@ -63,7 +63,11 @@ class CatalogEditorTest {
             assertEquals(Triple(1000.0, 6L, 0), Triple(variant.unitAmount, variant.packCount, variant.soldByWeight))
             val code = db.barcodes().liveOfVariants(listOf(variant.id)).single()
             assertEquals("7501020515350" to "manual", code.code to code.source)
-            assertEquals(listOf("barcodes", "product_tags", "product_tags", "products", "tags", "variants"), outbox())
+            // A code read by the scanner keeps its source.
+            val scanned = editor.saveProduct(ProductDraft(name = "Agua"), sixLiters(listOf("11112222")).copy(codeSources = mapOf("11112222" to "scan")))
+            val scannedVariant = db.variants().liveOfProducts(listOf(scanned)).single()
+            assertEquals("scan", db.barcodes().liveOfVariants(listOf(scannedVariant.id)).single().source)
+            assertEquals(listOf("barcodes", "barcodes", "product_tags", "product_tags", "products", "products", "tags", "variants", "variants"), outbox())
             assertTrue(syncRequests > 0)
         }
 

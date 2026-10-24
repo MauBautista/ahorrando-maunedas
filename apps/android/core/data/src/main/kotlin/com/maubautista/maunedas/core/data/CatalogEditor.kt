@@ -40,6 +40,8 @@ data class VariantDraft(
     val packCount: Int,
     val soldByWeight: Boolean,
     val codes: List<String>,
+    /** How new codes were obtained (`barcodes.source`): `scan`, `off`…; `manual` when absent. */
+    val codeSources: Map<String, String> = emptyMap(),
 )
 
 data class VariantSummary(
@@ -228,7 +230,7 @@ class CatalogEditor
             writer.write(variants, listOf(row))
             writer.write(
                 barcodes,
-                added.map { BarcodeEntity(id = Uuids.v7(now), variantId = row.id, code = it, source = "manual", createdAt = now, updatedAt = now) },
+                added.map { BarcodeEntity(id = Uuids.v7(now), variantId = row.id, code = it, source = draft.codeSources[it] ?: "manual", createdAt = now, updatedAt = now) },
             )
             writer.delete(barcodes, live.filter { it.code !in wanted })
             return row.id

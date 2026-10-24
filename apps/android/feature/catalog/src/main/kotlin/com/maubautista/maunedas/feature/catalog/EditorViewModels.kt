@@ -28,6 +28,31 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
+/**
+ * What the scanner hands an editor (S-12): route arguments `code`, `name`, `brand`, `measure`, `unitAmount` (base
+ * units) and `packCount`, all text and all optional.
+ */
+internal data class Prefill(
+    val code: String?,
+    val name: String?,
+    val brand: String?,
+    val measure: Measure?,
+    val unitAmount: Double?,
+    val packCount: Int?,
+) {
+    companion object {
+        fun from(savedState: SavedStateHandle) =
+            Prefill(
+                code = savedState["code"],
+                name = savedState["name"],
+                brand = savedState["brand"],
+                measure = savedState.get<String>("measure")?.let { runCatching { Measure.fromWire(it) }.getOrNull() },
+                unitAmount = savedState.get<String>("unitAmount")?.toDoubleOrNull(),
+                packCount = savedState.get<String>("packCount")?.toIntOrNull(),
+            )
+    }
+}
+
 /** Done editing: back to where the editor was opened from. */
 enum class EditorResult { SAVED, DELETED }
 
@@ -53,6 +78,9 @@ class ProductEditorViewModel
         session: SessionStore,
     ) : ViewModel() {
         private val productId: String? = savedState["productId"]
+
+        /** S-12 opens a new product with the scanned code and what an open catalog knew (all optional). */
+        private val prefill = Prefill.from(savedState)
         private val ui = MutableStateFlow(ProductEditorState())
         val state: StateFlow<ProductEditorState> = ui.asStateFlow()
 
@@ -73,8 +101,9 @@ class ProductEditorViewModel
                         ProductEditorState(loading = false, product = ProductForm.of(loaded))
                     } else {
                         // A new product starts with one variant; its measure suggests the display unit.
-                        val first = VariantForm()
-                        ProductEditorState(loading = false, product = ProductForm().followingMeasure(first.measure), firstVariant = first)
+                        val first = VariantForm.prefilled(prefill.measure ?: Measure.VOLUME, prefill.code, prefill.unitAmount, prefill.packCount)
+                        val product = ProductForm(name = prefill.name.orEmpty(), brand = prefill.brand.orEmpty()).followingMeasure(first.measure)
+                        ProductEditorState(loading = false, product = product, firstVariant = first)
                     }
             }
         }
@@ -150,6 +179,7 @@ class VariantEditorViewModel
     ) : ViewModel() {
         private val productId: String = checkNotNull(savedState["productId"])
         private val variantId: String? = savedState["variantId"]
+        private val prefill = Prefill.from(savedState)
         private val ui = MutableStateFlow(VariantEditorState())
         val state: StateFlow<VariantEditorState> = ui.asStateFlow()
         val isAdmin: StateFlow<Boolean> = session.user.map { it?.isAdmin == true }.stateIn(viewModelScope, SharingStarted.Eagerly, false)
@@ -162,7 +192,8 @@ class VariantEditorViewModel
                 val loaded = variantId?.let { editor.loadVariant(it) }
                 // A new variant starts in the measure of the product's display unit.
                 val measure = editor.loadProduct(productId)?.displayUnit?.measure ?: Measure.VOLUME
-                ui.value = VariantEditorState(loading = false, variant = loaded?.let(VariantForm::of) ?: VariantForm().withMeasure(measure))
+                val fresh = VariantForm.prefilled(prefill.measure ?: measure, prefill.code, prefill.unitAmount, prefill.packCount)
+                ui.value = VariantEditorState(loading = false, variant = loaded?.let(VariantForm::of) ?: fresh)
             }
         }
 

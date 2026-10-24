@@ -142,6 +142,8 @@ class EditorScreensTest {
         compose.onNodeWithText("Editar presentación").assertExists()
         compose.onNodeWithText("7501020515343").performScrollTo().assertExists()
         compose.onNodeWithText("Eliminar presentación").assertDoesNotExist()
+        // T56: codes can be read with the camera too.
+        compose.onNodeWithText("Escanear código").performScrollTo().assertExists()
     }
 
     /** RNF-08 (05 §7): at 200 % font scale on a 360 dp phone no text of the new-product form is cut. */

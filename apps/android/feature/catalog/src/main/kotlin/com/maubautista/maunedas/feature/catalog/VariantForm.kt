@@ -24,7 +24,11 @@ data class VariantForm(
     val label: String = "",
     val labelEdited: Boolean = false,
     val codes: List<String> = emptyList(),
+    /** Codes that came from the scanner keep `source = 'scan'` (05 §5 S-12). */
+    val codeSources: Map<String, String> = emptyMap(),
     val codeInput: String = "",
+    /** Where [codeInput] came from: `scan` when the camera read it, `manual` when typed. */
+    val codeInputSource: String = "manual",
     @StringRes val codeError: Int? = null,
     /** "Producto · presentación" that already has the typed code, and its id (an admin can merge into it). */
     val codeOwner: String? = null,
@@ -53,9 +57,12 @@ data class VariantForm(
     fun withLabel(value: String): VariantForm =
         if (value.isBlank()) copy(labelEdited = false, labelError = null).relabeled() else copy(label = value, labelEdited = true, labelError = null)
 
-    fun withCodeInput(value: String): VariantForm = copy(codeInput = value, codeError = null, codeOwner = null, codeOwnerId = null)
+    fun withCodeInput(
+        value: String,
+        source: String = "manual",
+    ): VariantForm = copy(codeInput = value, codeInputSource = source, codeError = null, codeOwner = null, codeOwnerId = null)
 
-    fun withoutCode(code: String): VariantForm = copy(codes = codes - code)
+    fun withoutCode(code: String): VariantForm = copy(codes = codes - code, codeSources = codeSources - code)
 
     /** The typed code as the server stores it (spaces and dashes dropped), or why it cannot be added. */
     fun checkCode(): Result<String> {
@@ -67,7 +74,16 @@ data class VariantForm(
         }
     }
 
-    fun withCode(code: String): VariantForm = copy(codes = if (code in codes) codes else codes + code, codeInput = "", codeError = null, codeOwner = null, codeOwnerId = null)
+    fun withCode(code: String): VariantForm =
+        copy(
+            codes = if (code in codes) codes else codes + code,
+            codeSources = if (codeInputSource == "manual") codeSources else codeSources + (code to codeInputSource),
+            codeInput = "",
+            codeInputSource = "manual",
+            codeError = null,
+            codeOwner = null,
+            codeOwnerId = null,
+        )
 
     fun withCodeProblem(
         @StringRes error: Int,
@@ -101,7 +117,7 @@ data class VariantForm(
                 labelError = if (label.trim().length !in 1..100) R.string.editor_error_label else null,
             )
         if (packs == null || base == null || amountProblem != null || checked.labelError != null) return null to checked
-        return VariantDraft(id, label.trim(), measure, base, packs, bulk, codes) to checked
+        return VariantDraft(id, label.trim(), measure, base, packs, bulk, codes, codeSources.filterKeys { it in codes }) to checked
     }
 
     private fun packCount(): Int? = pack.trim().toIntOrNull()?.takeIf { it >= 1 }
@@ -131,6 +147,25 @@ data class VariantForm(
                 labelEdited = true,
                 codes = draft.codes,
             )
+        }
+
+        /**
+         * A new variant from the scanner (S-12): the code read and, when an open catalog knew it, its content. Pieces
+         * are counted per unit, so `unitAmount` comes in base units as `parsed` does.
+         */
+        fun prefilled(
+            measure: Measure,
+            code: String?,
+            unitAmount: Double? = null,
+            packCount: Int? = null,
+        ): VariantForm {
+            var form = VariantForm().withMeasure(measure)
+            if (unitAmount != null && unitAmount > 0) {
+                val (unit, amount) = Content.forEditing(measure, unitAmount)
+                form = form.withUnit(unit).withAmount(plain(amount))
+            }
+            if (packCount != null && packCount >= 1) form = form.withPack(packCount.toString())
+            return if (code == null) form else form.copy(codes = listOf(code), codeSources = mapOf(code to "scan"))
         }
 
         private fun plain(x: Double): String = if (x == floor(x)) x.toLong().toString() else x.toBigDecimal().stripTrailingZeros().toPlainString()

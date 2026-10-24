@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The default resources are in Mexican Spanish (CLAUDE.md rule 14). -->
+<resources xmlns:tools="http://schemas.android.com/tools" tools:locale="es">
+    <string name="camera_torch_on">Encender la linterna</string>
+    <string name="camera_torch_off">Apagar la linterna</string>
+    <string name="camera_preview">Vista de la cámara para leer códigos de barras</string>
+    <string name="camera_permission">Para leer códigos, la app necesita la cámara.</string>
+    <string name="camera_allow">Permitir la cámara</string>
+    <string name="camera_scan_code">Lee el código de barras</string>
+    <string name="camera_cancel">Cancelar</string>
+</resources>

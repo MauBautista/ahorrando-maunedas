@@ -275,11 +275,19 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - Debajo, la lista de precios del más nuevo al más viejo con "Con promoción"; la gráfica tiene una descripción para lectores de pantalla.
   - Con los datos de la prueba de historial de la API da los mismos puntos: cupón prorrateado, solo confirmadas, otra medida en su unidad.
   - 9 pruebas (T58).
-### [ ] T-116 · Escáner y resultado (S-11, S-12)
+### [x] T-116 · Escáner y resultado (S-11, S-12)
 - **Depende de:** T-113, T-036 · **Hecho cuando:** los cuatro caminos de S-12 funcionan, incluido sin red.
 - **Incluye (T56):** el botón "Escanear código" del editor de presentación (S-10); hoy los códigos se escriben a mano (`source = 'manual'`).
+- **Resultado (2026-10-24):**
+  - **Cámara (`core:camera`):** CameraX 1.6.2 con ML Kit 17.3.0 (modelo incluido, sin red), formatos de S-11, linterna, vibración y tono. El mismo código se ignora 2 s mientras siga a la vista. Se puede escribir el código si la etiqueta no se lee o no hay permiso de cámara.
+  - **Los cuatro caminos de S-12 (`ScanRepository`):** encontrado aquí, con últimos precios; en el servidor, con pull y espera a que baje; en un catálogo abierto, que prellena "Nuevo producto"; y desconocido o sin red, con el código ya asignado. En los dos últimos se pregunta "¿Es otra presentación de un producto que ya tienes?".
+  - **Desde "Encontrado":** "Agregar a la compra abierta" abre el borrador más reciente con la línea lista.
+  - **Códigos leídos:** se guardan con `source = 'scan'`.
+  - **S-10 "Escanear código" (T56):** una hoja de lectura única con el permiso incluido (`ScanCodeSheet`); el código pasa por las mismas revisiones que uno escrito.
+  - 15 pruebas: lectura y filtro de 2 s, `ScanRepository` con Room y MockWebServer, ViewModel en los cuatro caminos (incluido el pull pedido), pantalla con letra al 200 % y prellenado (T62).
 ### [ ] T-117 · Foto de producto e importación del catálogo (S-18)
 - **Depende de:** T-105, T-116
+- **Incluye (T62):** la foto del catálogo abierto al crear un producto desde el escáner (`image_url` ya llega en `CatalogGuess`).
 - **Incluye:** la miniatura de la tarjeta del catálogo (Coil 3 con el `AuthInterceptor`, archivo local primero, prioridad de 10 §1), pospuesta de T-112 (T55).
 ### [ ] T-118 · Recorte en el teléfono (opcional)
 - **Docs:** 10 §5 · **Depende de:** T-117
@@ -305,6 +313,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - 24 pruebas: aritmética de la compra, repositorio sobre Room (incluida la vista de precios con el cupón prorrateado), formulario con los fixtures, ViewModel con Room en memoria y pantallas con letra al 200 % (T60).
 ### [ ] T-122 · Escaneo continuo en compra
 - **Depende de:** T-121, T-116
+- **Nota (T-116):** `BarcodeScanner(onCode, paused)` ya filtra el mismo código 2 s; en modo continuo cada lectura agrega una línea sin pausar la cámara.
 ### [ ] T-123 · Foto de ticket (escáner de documentos)
 - **Depende de:** T-121, T-105
 ### [ ] T-124 · Revisión de ticket (S-06)
@@ -313,6 +322,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** estados de línea, aceptar sugerencia, crear producto desde una línea, confirmar crea compra + alias + códigos; segunda compra se vincula sola.
 ### [ ] T-125 · Precio de anaquel (S-13)
 - **Depende de:** T-121
+- **Nota (T-116):** `ShelfPriceDestination(variantId)` ya existe y la abre "Precio de anaquel" del escáner y de Inicio; hoy muestra "llega pronto".
 ### [x] T-126 · Ajustes y sincronización (S-15 a S-17)
 - **Depende de:** T-104, T-110 · **Hecho cuando:** estado de sync, "Sincronizar ahora", cambios rechazados y diálogo `BARCODE_TAKEN` con sus dos opciones.
 - **Resultado (2026-10-23):**
