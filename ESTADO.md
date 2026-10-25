@@ -53,11 +53,11 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
-- **T-160, en prueba (2026-10-25):** esqueleto de la web en `maunedas-dev.maunedas.workers.dev`:
+- **T-160 (2026-10-25):** esqueleto de la web en `maunedas-dev.maunedas.workers.dev`:
   - login con usuario y contraseña o con Google;
   - Inicio, navegación que se adapta al teléfono y a la computadora, y Cuenta con "Cerrar sesión";
   - las demás pantallas dicen "llega pronto" (T-161 a T-166);
-  - falta probar el login en el teléfono y en Safari de iPhone.
+  - probado en el navegador del Samsung; falta probar en Safari de iPhone.
 - **T-039 (2026-10-25):** gateway de IA y presupuesto en el Worker:
   - toda llamada a la IA pasa por un solo lugar que elige el modelo, revisa el tope de 6 USD al mes y registra el costo real;
   - reintenta una vez y no cobra lo que no respondió;
@@ -289,4 +289,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-24** — T-123: foto de ticket con el escáner de documentos (1 a 4 páginas, cámara como respaldo), guardada al tomarla y subida sola; probada en un Galaxy A53 (T66).
 - **2026-10-24** — T-124 (primera parte): ordenar líneas, "Vincular" y alias al confirmar (T67); la extracción y S-06 siguen esperando el spike C.
 - **2026-10-25** — T-039: gateway de IA con presupuesto, reintento y costo real; `GET /v1/admin/ai-budget` (T68).
-- **2026-10-25** — T-160: esqueleto web (login, armazón, sesión, cliente HTTP) desplegado en dev; pendiente probarlo en el teléfono y en Safari de iPhone (T69).
+- **2026-10-25** — T-160: esqueleto web (login, armazón, sesión, cliente HTTP) desplegado en dev y probado en el Samsung; falta Safari de iPhone (T69).
