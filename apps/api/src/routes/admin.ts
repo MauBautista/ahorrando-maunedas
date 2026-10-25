@@ -8,6 +8,7 @@ import {
 } from '@maunedas/shared/api/admin';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import { type AiBudget, budgetSummary } from '../ai/budget';
 import { identityToolkitOf as identityOf } from '../auth/firebase-admin';
 import { requireUser } from '../auth/middleware';
 import { createUser, listUsers, setUserPassword, updateUser } from '../auth/users';
@@ -17,7 +18,7 @@ import { parseJsonBody, parseParam } from '../util/validate';
 
 const adminOnly = requireUser({ admin: true });
 
-/** Admin routes (03 §12). The AI budget arrives with T-039 and the agent status with E2. */
+/** Admin routes (03 §12). The agent status arrives with E2. */
 export const admin = new Hono<AppEnv>()
   .get('/v1/admin/users', adminOnly, async (c) =>
     c.json<{ items: AdminUser[] }>({ items: await listUsers(c.env.DB) }),
@@ -47,4 +48,7 @@ export const admin = new Hono<AppEnv>()
     const { kind, source_id, target_id } = await parseJsonBody(c, MergeRequestSchema);
     const moved = await mergeDuplicates(c.env.DB, kind, source_id, target_id, c.get('user').id, Date.now());
     return c.json<MergeResponse>({ moved });
-  });
+  })
+
+  // The month's AI spend and its soft limit (09 §2): the banner of W-13.
+  .get('/v1/admin/ai-budget', adminOnly, async (c) => c.json<AiBudget>(await budgetSummary(c.env)));

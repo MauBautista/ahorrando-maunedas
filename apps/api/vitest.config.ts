@@ -15,6 +15,8 @@ export default defineConfig({
         bindings: {
           // Test-only secret for signed image URLs (real ones live in `wrangler secret`).
           IMAGE_URL_SECRET: 'test-image-url-secret',
+          // A fake key, so a real one in .dev.vars never reaches a test (the provider is faked too).
+          OPENROUTER_API_KEY: 'test-openrouter-key',
           TEST_MIGRATIONS: await readD1Migrations(dir('./migrations')),
           REFERENCE_SCHEMA: await readD1Migrations(dir('../../docs')),
           TEST_SEEDS: await readD1Migrations(dir('./seeds')),

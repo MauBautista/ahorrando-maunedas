@@ -79,6 +79,17 @@ export class OpenRouterProvider implements AiProvider {
 
 Reintentos: un reintento ante `RetryableAiError`, timeout o `InvalidAiOutput`. El modelo elegido debe soportar salida con `json_schema` (criterio del spike C).
 
+Implementación (T-039, decisión T68): `apps/api/src/ai/` (`types.ts`, `providers/openrouter.ts`, `gateway.ts`, `budget.ts`). Toda llamada pasa por `runAi(env, fetch, { purpose, userId, run })`:
+- **Sin modelo, sin key o con un proveedor desconocido:** `503 E-AI_UNAVAILABLE` antes de llamar. Un modelo `<…>` aún no está elegido.
+- **Presupuesto:** se revisa antes de cada intento.
+- **Qué se cobra:** cada respuesta del modelo (válida o no) se registra en `ai_usage` con el costo reportado, o el estimado si no viene. Un timeout, 5xx o 429 no trajo respuesta y no se cobra.
+- **Salida no válida:** el que llama la marca lanzando `InvalidAiOutput` con su `usage` (el esquema de T-040).
+- **Después del reintento:**
+  - Una salida no válida es `422 E-EXTRACTION_FAILED` (`502` para `image_edit`).
+  - Sin respuesta, `503 E-AI_UNAVAILABLE`.
+  - Un 4xx del proveedor es `502 E-UPSTREAM_ERROR` y no se reintenta.
+- **Pedido a OpenRouter:** lleva `usage: { include: true }` para que responda el costo real.
+
 ## 2. Presupuesto
 
 - Mes = mes calendario en hora del centro de México (UTC−6 fijo, sin horario de verano).
@@ -86,6 +97,10 @@ Reintentos: un reintento ante `RetryableAiError`, timeout o `InvalidAiOutput`. E
 - Después de llamar (éxito o error de salida): registrar `ai_usage` con el costo reportado; si no viene, el estimado.
 - Al cruzar `AI_SOFT_LIMIT_PCT`: aviso al admin una vez por mes (marca `ai_soft:<YYYY-MM>` en `token_cache`). En la Etapa 1 el aviso es un banner en W-13 y en `GET /v1/admin/ai-budget` (`soft_limit_reached`); el push llega con FCM en T-213.
 - Red de seguridad: límite mensual de 6 USD configurado en la propia key de OpenRouter.
+- Implementación (T-039):
+  - **Tope:** `assertBudget` compara en micro-dólares enteros, así que llegar justo al tope se permite y un micro-dólar más no.
+  - **Marca del aviso:** la escribe la llamada que cruza el límite (`INSERT OR IGNORE`). Vence un día después de terminar el mes y la limpieza diaria la borra.
+  - **Aviso en E1:** una línea de log `ai_soft_limit_reached`. `soft_limit_reached` de `GET /v1/admin/ai-budget` se calcula del gasto del mes.
 
 ```ts
 // apps/api/src/ai/budget.ts

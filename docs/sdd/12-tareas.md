@@ -175,9 +175,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** caso de fusión de 11 §3 pasa para `variant` y `product`; `MERGE_INVALID` probado.
 - **Resultado (2026-10-19):** `POST /v1/admin/merge` en un solo batch con versión nueva para cada fila tocada; ligas de etiquetas unidas sin duplicados vivos (crea o revive el uuidv5 del destino); imágenes y foto principal pasan al destino (T44); 9 pruebas, incluida una que compara las tablas movidas con las llaves foráneas de D1.
 
-### [ ] T-039 · Gateway de IA y presupuesto
+### [x] T-039 · Gateway de IA y presupuesto
 - **Docs:** 09 §1–2 · **Depende de:** T-020, T-026
 - **Hecho cuando:** `monthWindow` probado en el cambio de mes; `assertBudget` y registro de `ai_usage`; `GET /v1/admin/ai-budget` con `soft_limit_reached`; marca del 80 % una vez por mes (el push al admin llega con T-213).
+- **Resultado (2026-10-25):**
+  - **`apps/api/src/ai/`:** tipos, proveedor de OpenRouter con salida `json_schema` y costo real, `runAi` con presupuesto, reintento y cobro de cada respuesta, y el presupuesto con `monthWindow` (UTC−6), el tope en micro-dólares y la marca del 80 % una vez al mes.
+  - **`GET /v1/admin/ai-budget`** con gasto por propósito, número de llamadas y `soft_limit_reached`.
+  - Probado con un OpenRouter simulado: no necesita la key. Las pruebas usan una key falsa, así que la de `.dev.vars` nunca llega a una prueba.
+  - 9 pruebas (T68).
 
 ### [ ] T-040 · Extracción de tickets
 - **Docs:** 09 §3–7 · **Depende de:** T-037, T-039, T-012
