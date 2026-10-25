@@ -1,5 +1,5 @@
 import { z } from 'zod';
-import type { DisplayUnit } from '../pricing/units';
+import type { DisplayUnit, Measure } from '../pricing/units';
 
 /** Common response types (03 §3). */
 export const PRICE_SOURCES = ['purchase', 'shelf', 'web'] as const;
@@ -136,4 +136,43 @@ export interface HistoryResponse {
   points: HistoryPoint[];
   /** listing_id → listing_state.last_checked_at: until when the last web price was confirmed. */
   web_confirmed_until: Record<string, number>;
+}
+
+/** `GET /v1/lookups` (03 §7): the live rows, with the fields the web reads. */
+export interface LookupsResponse {
+  stores: Array<{ id: string; name: string; kind: 'physical' | 'online' | 'both' }>;
+  store_branches: Array<{ id: string; store_id: string; name: string; city: string | null }>;
+  categories: Array<{ id: string; parent_id: string | null; name: string; sort_order: number }>;
+  tags: Array<{ id: string; name: string }>;
+}
+
+/** A variant of `GET /v1/products/:id`: its row, codes, photo and latest point per store and source. */
+export interface ProductDetailVariant {
+  id: string;
+  product_id: string;
+  label: string;
+  measure: Measure;
+  unit_amount: number;
+  pack_count: number;
+  sold_by_weight: 0 | 1;
+  primary_image_id: string | null;
+  barcodes: string[];
+  image: ImageRef | null;
+  latest: LatestPoint[];
+}
+
+/** `GET /v1/products/:id` (03 §7). */
+export interface ProductDetailResponse {
+  product: {
+    id: string;
+    name: string;
+    brand: string | null;
+    category_id: string | null;
+    display_unit: DisplayUnit;
+    notes: string | null;
+    primary_image_id: string | null;
+    tags: Array<{ id: string; name: string }>;
+    image: ImageRef | null;
+  };
+  variants: ProductDetailVariant[];
 }

@@ -166,6 +166,21 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
 - **Íconos:** el anillo sobre el verde de la marca lo dibuja `apps/web/scripts/icons.ts` (sin herramientas de imágenes). El manifiesto es `public/manifest.webmanifest`.
 - **Versión del cliente:** `__APP_VERSION__` sale de `apps/web/package.json` y `X-Client-Schema` es `CLIENT_SCHEMA = 1` (`lib/api.ts`), como Android.
 
+## 7.2 Catálogo y ficha (T-161, decisión T70)
+
+- **W-07:**
+  - **Filtros:** la búsqueda (con 250 ms de pausa), la categoría (el árbol, con sangría por nivel) y la etiqueta viven en la URL (`?q=&categoria=&etiqueta=`), así que sobreviven a "Atrás" y se pueden compartir.
+  - **Páginas:** de 30 en 30 con "Ver más" (`next_cursor`).
+  - **Tarjeta:** foto, nombre, marca, presentaciones y mejor precio con el punto de su fuente y "presentación en tienda · hace N días". Los mensajes para "sin productos" son los de Android.
+- **W-08:**
+  - Encabezado con foto grande, marca, ruta de categoría y etiquetas, y acciones "Editar", "Precio de anaquel" y, para admins, "Fusionar con otro producto". Esas pantallas llegan con W-09, T-164 y T-165.
+  - Pestañas en la URL (`?vista=presentaciones|comparar|historial`).
+  - **Comparar** es una tabla con desplazamiento horizontal, porque en la web cabe. Marca "Más barato" y deja aparte "Otras medidas (no se comparan)".
+  - **Historial** usa los filtros de Android (T58), y Recharts con una serie de puntos por fuente, sin líneas. La gráfica lleva una descripción para lectores de pantalla y debajo va la lista de precios, del más nuevo al más viejo. Recharts se carga solo al abrir esa pestaña (440 KB).
+- **Antigüedad** ("hoy", "ayer", "hace N días…"): días de calendario en la Ciudad de México, como `Dates.ago`, contados desde que llegaron los datos (`dataUpdatedAt`).
+- **Fotos** en el orden de 10 §1, con URLs firmadas; sin foto o si falla, la inicial.
+- **Tipos compartidos:** `LookupsResponse` y `ProductDetailResponse` en `packages/shared/src/api/catalog.ts`.
+
 ## 8. Pruebas
 
 - Vitest + Testing Library: editor de compra (totales, promociones, validación), revisión de ticket (estados de línea), formularios de admin.
