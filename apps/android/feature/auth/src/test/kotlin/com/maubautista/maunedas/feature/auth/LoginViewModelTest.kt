@@ -47,6 +47,8 @@ class LoginViewModelTest {
             current: String,
             new: String,
         ) = com.maubautista.maunedas.core.auth.PasswordChange.DONE
+
+        override fun signedInWithPassword() = true
     }
 
     private val auth = FakeAuth()

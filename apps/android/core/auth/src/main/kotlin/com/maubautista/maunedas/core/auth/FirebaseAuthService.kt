@@ -46,6 +46,12 @@ interface AuthService {
         current: String,
         new: String,
     ): PasswordChange
+
+    /**
+     * Whether this session signed in with username and password. Each method is its own Firebase account of the same
+     * user (02 §2), so a Google session has no password to change: reauthenticating it would fail as a wrong one.
+     */
+    fun signedInWithPassword(): Boolean
 }
 
 /** What changing one's own password gave. */
@@ -115,6 +121,9 @@ class FirebaseAuthService
         override suspend fun pendingChanges(): Int = cleaner.pendingChanges()
 
         override suspend fun signOut() = cleaner.signOut { auth.signOut() }
+
+        override fun signedInWithPassword(): Boolean =
+            auth.currentUser?.providerData.orEmpty().any { it.providerId == EmailAuthProvider.PROVIDER_ID }
 
         /** `reauthenticateWithCredential` + `updatePassword` (02 §6.5); the Worker never sees passwords. */
         override suspend fun changePassword(

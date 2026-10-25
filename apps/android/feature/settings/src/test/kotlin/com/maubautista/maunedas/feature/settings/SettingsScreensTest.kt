@@ -94,6 +94,14 @@ class SettingsScreensTest {
     }
 
     @Test
+    fun aGoogleSessionIsNotOfferedThePasswordChange() {
+        // Its Firebase account has no password: reauthenticating would answer "wrong password" (T76).
+        show { SettingsScreen(user, SyncStatus.Synced(now), 0, null, "0.1.0-dev", 1, SettingsActions(), canChangePassword = false) }
+        compose.onNodeWithText("Entraste con Google", substring = true).performScrollTo().assertExists()
+        compose.onNodeWithText("Cambiar contraseña").assertDoesNotExist()
+    }
+
+    @Test
     fun aNewPasswordNeedsEightCharactersTypedTwice() {
         assertEquals(R.string.settings_password_short, PasswordForm(current = "x", new = "corta", repeat = "corta").problem())
         assertEquals(R.string.settings_password_mismatch, PasswordForm(current = "x", new = "suficiente", repeat = "suficientE").problem())

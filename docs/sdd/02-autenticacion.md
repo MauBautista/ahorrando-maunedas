@@ -431,6 +431,7 @@ Implementación (T-103, `core:network`): el interceptor y el autenticador no dep
 - **Al cerrar sesión:** con red, borra el dispositivo; luego cierra Firebase, cancela los trabajos, vacía Room y `filesDir/images`, la sesión y el `device_id`.
 - **App:** `MainActivity` espera a leer la sesión antes de elegir la primera pantalla (sin destello del login), configura WorkManager con `HiltWorkerFactory` (sin el inicializador por omisión) y registra `ForegroundSync` en `ProcessLifecycleOwner`.
 - **Ajustes (T-126):** cerrar sesión, con el aviso de pendientes, está en S-15. "Cambiar contraseña" (RF-AUTH-06) pide la actual, la nueva dos veces (≥ 8 caracteres) y usa `reauthenticate` + `updatePassword`; traduce contraseña actual incorrecta, contraseña débil y sin red. Cerrar sesión también olvida la última sincronización.
+- **Sesión con Google (T76):** cada método de entrada es su propia cuenta de Firebase (§2), y la de Google no tiene contraseña. S-15 y W-14 ofrecen "Cambiar contraseña" solo si la cuenta de la sesión tiene el proveedor `password`; con Google explican que hay que entrar con usuario y contraseña. Antes, Android respondía "La contraseña actual no es correcta".
 
 ## 7. Web (T-160)
 
