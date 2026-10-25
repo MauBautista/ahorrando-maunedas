@@ -286,6 +286,17 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
   - **Rechazos:** misma, eliminado, distinta medida o solo admin, con los textos de Android.
 - **W-13 Gasto de IA:** el mes de la Ciudad de México con lo gastado contra el tope (barra y porcentaje), las llamadas, el desglose por propósito (tickets, edición de fotos, otros) y el aviso cuando se pasa `soft_limit_pct` (09 §2).
 
+## 7.7 Cuenta (T-166, decisión T76)
+
+- **W-14** muestra nombre, usuario, rol, si Google está vinculado y con qué se entró. El nombre y el correo de Google los cambia el admin (W-11), como en Android (S-15): no hay ruta para cambiarlos uno mismo.
+- **"Cambiar contraseña"** (RF-AUTH-06):
+  - Pide la actual y la nueva dos veces (≥ 8 caracteres).
+  - En el navegador hace `reauthenticateWithCredential` + `updatePassword` de Firebase (02 §6.5); el Worker no ve la contraseña.
+  - Traduce con los textos de Android: actual incorrecta, débil, sin red y demasiados intentos.
+  - Al terminar vacía los campos.
+- **Sesión con Google:** cada método de entrada es su propia cuenta de Firebase del mismo usuario (02 §2). Si se entró con Google, no se ofrece el cambio y se explica que hay que entrar con usuario y contraseña.
+- **"Cerrar sesión"** olvida las consultas (la web no guarda datos propios, 04 §7). Al pie, la versión y el esquema del cliente.
+
 ## 8. Pruebas
 
 - Vitest + Testing Library: editor de compra (totales, promociones, validación), revisión de ticket (estados de línea), formularios de admin.

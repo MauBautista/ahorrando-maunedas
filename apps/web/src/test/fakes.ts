@@ -7,6 +7,11 @@ export class FakeAuth implements AuthPort {
   signOuts = 0;
   forcedTokens = 0;
   googleUid = 'uid-google';
+  method: 'password' | 'google' = 'password';
+  /** The password of the session's account, "buena" until it is changed. */
+  password = 'buena';
+  /** Firebase's minimum is 6; "debil" stands for any password it refuses as weak. */
+  weak = 'debil123';
 
   constructor(user: AuthUser | null = null) {
     this.user = user;
@@ -33,15 +38,28 @@ export class FakeAuth implements AuthPort {
   }
 
   async signInWithPassword(username: string, password: string) {
-    if (password !== 'buena')
+    if (password !== this.password)
       throw Object.assign(new Error('Firebase: Error (auth/invalid-credential).'), {
         code: 'auth/invalid-credential',
       });
+    this.method = 'password';
     this.set({ uid: `uid-${username}` });
   }
 
   async signInWithGoogle() {
+    this.method = 'google';
     this.set({ uid: this.googleUid });
+  }
+
+  signInMethod() {
+    return this.user ? this.method : null;
+  }
+
+  async changePassword(current: string, next: string) {
+    const fail = (code: string) => Object.assign(new Error(`Firebase: Error (${code}).`), { code });
+    if (current !== this.password) throw fail('auth/invalid-credential');
+    if (next === this.weak) throw fail('auth/weak-password');
+    this.password = next;
   }
 
   async signOut() {
