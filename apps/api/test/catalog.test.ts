@@ -266,6 +266,7 @@ describe('GET /v1/products/:id (03 §7)', () => {
       id: string;
       label: string;
       barcodes: string[];
+      barcode_rows: Array<{ id: string; code: string; updated_at: number }>;
       latest: Array<Record<string, unknown>>;
     }>;
   }
@@ -277,6 +278,11 @@ describe('GET /v1/products/:id (03 §7)', () => {
     expect(body.product.image).not.toBeNull();
     const l1 = body.variants.find((v) => v.label === '1 L')!;
     expect(l1.barcodes).toEqual(['7501020515343']);
+    // The rows behind the codes, so the web can remove one by push.
+    const code = await env.DB.prepare(
+      `SELECT id, updated_at FROM barcodes WHERE code = '7501020515343'`,
+    ).first<{ id: string; updated_at: number }>();
+    expect(l1.barcode_rows).toEqual([{ id: code!.id, code: '7501020515343', updated_at: code!.updated_at }]);
     // Newest per (store, source): Walmart shelf $27.00 and Walmart purchase $28.50 (not the 100-day-old one).
     expect(l1.latest).toEqual([
       expect.objectContaining({

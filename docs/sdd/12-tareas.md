@@ -386,12 +386,15 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - 13 pruebas con Firebase y `fetch` falsos.
   - Probado en el navegador de un Galaxy A53: login, Inicio, navegación y cerrar sesión.
   - Falta Safari de iPhone, sobre todo el login con Google vía el proxy.
-### [ ] T-161 · Catálogo y ficha web (W-07 a W-09)
+### [x] T-161 · Catálogo y ficha web (W-07 a W-09)
 - **Depende de:** T-160, T-033, T-034
 - **Avance (2026-10-25, T70):**
   - Catálogo (W-07) y ficha (W-08) con presentaciones, comparador e historial con Recharts, desplegados en dev.
   - 11 pruebas.
-  - Falta el editor de producto y presentaciones (W-09), que escribe por push.
+  - **Editor (W-09, T71):** producto nuevo con su primera presentación en un push, edición con presentaciones en un diálogo y borrado de admin con cascada.
+  - **Reglas compartidas nuevas:** cantidades y precios tecleados, y contenido.
+  - **API:** `barcode_rows` en la ficha.
+  - 19 pruebas más.
 ### [ ] T-162 · Compras web (W-03 a W-05)
 - **Depende de:** T-160, T-035
 ### [ ] T-163 · Tickets web (W-06)

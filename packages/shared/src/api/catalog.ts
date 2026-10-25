@@ -156,7 +156,10 @@ export interface ProductDetailVariant {
   pack_count: number;
   sold_by_weight: 0 | 1;
   primary_image_id: string | null;
+  updated_at: number;
   barcodes: string[];
+  /** The rows behind [barcodes], for editing by push. */
+  barcode_rows: Array<{ id: string; code: string; updated_at: number }>;
   image: ImageRef | null;
   latest: LatestPoint[];
 }
@@ -171,6 +174,7 @@ export interface ProductDetailResponse {
     display_unit: DisplayUnit;
     notes: string | null;
     primary_image_id: string | null;
+    updated_at: number;
     tags: Array<{ id: string; name: string }>;
     image: ImageRef | null;
   };
