@@ -411,8 +411,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Escáner:** con `@zxing/browser` en W-10, en la línea de compra, en los códigos del editor de productos y en la búsqueda del catálogo. Un código que no está ofrece "Darlo de alta" con el código puesto.
   - **Compartido:** `shelfEffectiveCents` pasa a `shared` y `PlaceFields` se comparte entre W-05 y W-10.
   - **Pruebas:** 16 más en la web y 2 en `shared`; 14 mutaciones detectadas.
-### [ ] T-165 · Administración web (W-11 a W-13)
+### [x] T-165 · Administración web (W-11 a W-13)
 - **Depende de:** T-160, T-023, T-038, T-039
+- **Hecho (2026-10-25, T75):**
+  - **Usuarios:** alta con generador de contraseña, edición de solo lo que cambia, restablecer contraseña y activar o desactivar.
+  - **Fusionar duplicados:** con vista previa (`dry_run` nuevo en `POST /v1/admin/merge`).
+  - **Gasto de IA:** el mes contra el tope, con el aviso del límite suave.
+  - **Pruebas:** 11 más en la web y 3 en la API; 11 mutaciones detectadas.
 ### [ ] T-166 · Cuenta (W-14)
 - **Depende de:** T-160
 

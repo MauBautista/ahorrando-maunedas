@@ -4,11 +4,12 @@ import {
   SetPasswordRequestSchema,
   UpdateUserRequestSchema,
   type AdminUser,
+  type AiBudget,
   type MergeResponse,
 } from '@maunedas/shared/api/admin';
 import { Hono } from 'hono';
 import { z } from 'zod';
-import { type AiBudget, budgetSummary } from '../ai/budget';
+import { budgetSummary } from '../ai/budget';
 import { identityToolkitOf as identityOf } from '../auth/firebase-admin';
 import { requireUser } from '../auth/middleware';
 import { createUser, listUsers, setUserPassword, updateUser } from '../auth/users';
@@ -45,8 +46,16 @@ export const admin = new Hono<AppEnv>()
   })
 
   .post('/v1/admin/merge', adminOnly, async (c) => {
-    const { kind, source_id, target_id } = await parseJsonBody(c, MergeRequestSchema);
-    const moved = await mergeDuplicates(c.env.DB, kind, source_id, target_id, c.get('user').id, Date.now());
+    const { kind, source_id, target_id, dry_run } = await parseJsonBody(c, MergeRequestSchema);
+    const moved = await mergeDuplicates(
+      c.env.DB,
+      kind,
+      source_id,
+      target_id,
+      c.get('user').id,
+      Date.now(),
+      dry_run === true,
+    );
     return c.json<MergeResponse>({ moved });
   })
 

@@ -29,6 +29,7 @@ export async function mergeDuplicates(
   targetId: string,
   adminId: string,
   now: number,
+  dryRun = false,
 ): Promise<Record<string, number>> {
   if (sourceId === targetId) throw invalid('SAME');
   const table = TABLE[kind];
@@ -43,18 +44,43 @@ export async function mergeDuplicates(
   if (kind === 'variant' && source.measure !== target.measure) throw invalid('MEASURE_MISMATCH');
 
   const stamp = `updated_at = ?2, updated_by = ?3, version = (SELECT value FROM sync_meta WHERE key = 'version')`;
-  const moves: Array<[string, D1PreparedStatement]> = [];
-  const move = (name: string, sql: string, ...extra: unknown[]) =>
-    moves.push([name, db.prepare(sql).bind(targetId, now, adminId, sourceId, ...extra)]);
-
+  // Each move once: its UPDATE, and the count of the same rows for the preview (`dry_run`, W-12). In `where`,
+  // ?4 is the source and ?5 the kind.
+  const plan: Array<{ name: string; set: string; where: string }> = [];
   if (kind === 'variant') {
-    for (const ref of VARIANT_REFERENCES) {
-      move(ref, `UPDATE ${ref} SET variant_id = ?1, ${stamp} WHERE variant_id = ?4`);
-    }
+    for (const ref of VARIANT_REFERENCES)
+      plan.push({ name: ref, set: 'variant_id = ?1', where: 'variant_id = ?4' });
   } else {
-    move('variants', `UPDATE variants SET product_id = ?1, ${stamp} WHERE product_id = ?4`);
+    plan.push({ name: 'variants', set: 'product_id = ?1', where: 'product_id = ?4' });
   }
-  move('images', `UPDATE images SET owner_id = ?1, ${stamp} WHERE owner_type = ?5 AND owner_id = ?4`, kind);
+  plan.push({ name: 'images', set: 'owner_id = ?1', where: 'owner_type = ?5 AND owner_id = ?4' });
+  if (kind === 'product') {
+    plan.push({
+      name: 'product_tags',
+      set: 'deleted_at = ?2',
+      where: 'product_id = ?4 AND deleted_at IS NULL',
+    });
+  }
+
+  if (dryRun) {
+    const counts = await db.batch<{ n: number }>(
+      plan.map((m) =>
+        db
+          .prepare(
+            `SELECT count(*) AS n FROM ${m.name} WHERE ${m.where.replace('?4', '?1').replace('?5', '?2')}`,
+          )
+          .bind(...(m.where.includes('?5') ? [sourceId, kind] : [sourceId])),
+      ),
+    );
+    return Object.fromEntries(plan.map((m, i) => [m.name, counts[i]!.results[0]!.n]));
+  }
+
+  const moves: Array<[string, D1PreparedStatement]> = plan.map((m) => [
+    m.name,
+    db
+      .prepare(`UPDATE ${m.name} SET ${m.set}, ${stamp} WHERE ${m.where}`)
+      .bind(targetId, now, adminId, sourceId, ...(m.where.includes('?5') ? [kind] : [])),
+  ]);
 
   const tail: D1PreparedStatement[] = [];
   if (kind === 'product') {
@@ -64,10 +90,6 @@ export async function mergeDuplicates(
       .prepare('SELECT tag_id FROM product_tags WHERE product_id = ?1 AND deleted_at IS NULL')
       .bind(sourceId)
       .all<{ tag_id: string }>();
-    move(
-      'product_tags',
-      `UPDATE product_tags SET deleted_at = ?2, ${stamp} WHERE product_id = ?4 AND deleted_at IS NULL`,
-    );
     for (const { tag_id } of tags) {
       tail.push(
         db

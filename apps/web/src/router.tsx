@@ -86,9 +86,27 @@ export const routes: RouteObject[] = [
             path: 'admin',
             element: <RequireAdmin />,
             children: [
-              { path: 'usuarios', ...soon('Usuarios') },
-              { path: 'fusionar', ...soon('Fusionar duplicados') },
-              { path: 'ia', ...soon('Gasto de IA') },
+              {
+                lazy: () =>
+                  import('./features/admin/AdminLayout').then((m) => ({ Component: m.AdminLayout })),
+                children: [
+                  {
+                    path: 'usuarios',
+                    lazy: () =>
+                      import('./features/admin/UsersPage').then((m) => ({ Component: m.UsersPage })),
+                  },
+                  {
+                    path: 'fusionar',
+                    lazy: () =>
+                      import('./features/admin/MergePage').then((m) => ({ Component: m.MergePage })),
+                  },
+                  {
+                    path: 'ia',
+                    lazy: () =>
+                      import('./features/admin/AiSpendPage').then((m) => ({ Component: m.AiSpendPage })),
+                  },
+                ],
+              },
             ],
           },
           { path: '*', element: <ComingSoon title="No encontramos esta página" /> },

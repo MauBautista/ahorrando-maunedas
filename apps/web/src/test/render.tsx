@@ -12,14 +12,14 @@ type Handler = (url: URL, body: unknown) => unknown;
 /** A fake Worker: `/v1/me` answers for the signed-in [role]; other paths by their handler (JSON) or 404. */
 export function fakeWorker(handlers: Record<string, Handler>, role: 'admin' | 'member' = 'member') {
   const requests: URL[] = [];
-  /** What each POST sent, in order. */
-  const posts: Array<{ path: string; body: unknown }> = [];
+  /** What each write (POST, PUT, PATCH, DELETE) sent, in order. */
+  const posts: Array<{ path: string; body: unknown; method: string }> = [];
   const fetchImpl: typeof fetch = async (input, init) => {
     const url = new URL(String(input), 'https://app.test');
     requests.push(url);
     const body =
       init?.body instanceof Blob ? init.body : init?.body ? JSON.parse(String(init.body)) : undefined;
-    if (init?.method === 'POST' || init?.method === 'PUT') posts.push({ path: url.pathname, body });
+    if (init?.method && init.method !== 'GET') posts.push({ path: url.pathname, body, method: init.method });
     if (url.pathname === '/v1/me') return Response.json(me(role));
     // A key ending in "*" answers every path that starts with it ("/v1/images/*").
     const handler =
