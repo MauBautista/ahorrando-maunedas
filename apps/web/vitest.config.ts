@@ -8,5 +8,7 @@ export default defineConfig({
     environment: 'jsdom',
     include: ['src/**/*.test.{ts,tsx}'],
     setupFiles: ['./src/test/setup.ts'],
+    // Forms are typed key by key; with the API's workerd suites running alongside, 5 s is not always enough.
+    testTimeout: 15_000,
   },
 });

@@ -285,6 +285,7 @@ Upsert por `device_id`. Si otro dispositivo tenía el mismo `fcm_token`, se le p
   product: ProductRow & { tags: TagRow[]; image: ImageRef | null };
   variants: Array<VariantRow & {
     barcodes: string[];
+    barcode_rows: Array<{ id: Id; code: string; updated_at: Millis }>;   // para editar por push desde la web (T-161)
     image: ImageRef | null;
     latest: Array<{ store_id: Id; source: PriceSource; effective_unit_cents: Cents;
                     display_cents: Cents; display_unit: DisplayUnit; observed_at: Millis }>;   // último punto por tienda y fuente

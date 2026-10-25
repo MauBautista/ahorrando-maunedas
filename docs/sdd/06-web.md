@@ -181,6 +181,29 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
 - **Fotos** en el orden de 10 §1, con URLs firmadas; sin foto o si falla, la inicial.
 - **Tipos compartidos:** `LookupsResponse` y `ProductDetailResponse` en `packages/shared/src/api/catalog.ts`.
 
+## 7.3 Editor de producto y presentaciones (T-161, decisión T71)
+
+- **Rutas:** `/productos/nuevo` crea el producto con su primera presentación en un solo push. `/productos/:id/editar` edita el producto y abre cada presentación (o "Agregar presentación") en un diálogo, que guarda con su propio push.
+- **Reglas de Android:** la de `ProductForm` y `VariantForm` (T-113, T56):
+  - la unidad para comparar sigue a la medida hasta que se elige otra;
+  - la etiqueta sigue a `suggestVariantLabel` y borrarla vuelve a la sugerida;
+  - "a granel" solo por masa (1 kg, paquete de 1), y piezas enteras;
+  - etiquetas con alta rápida que reutilizan una del mismo nombre;
+  - los mismos mensajes.
+- **Reglas compartidas en `packages/shared`:** la conversión de contenido (`catalog/content.ts`, como `Content` de Kotlin) y la lectura de cantidades y precios tecleados (`text/decimal.ts`, como `DecimalText`). Las pruebas repiten los casos de Android.
+- **Códigos:**
+  - Al agregar uno se revisa el formato y si ya es de otra presentación, con `GET /v1/search/variants` (coincidencia exacta, sin consultar catálogos abiertos).
+  - Quitar uno es el tombstone de su fila. Para eso `GET /v1/products/:id` devuelve ahora `barcode_rows` (`id`, `code`, `updated_at`) junto a `barcodes`.
+- **Push (04 §7):**
+  - **Filas nuevas:** llevan todas sus columnas.
+  - **Cambios:** solo lo que edita el formulario, con `updated_at` posterior a la fila leída (`touchedAt`), y el servidor conserva lo demás (04 §3.3).
+  - **`product_tags`:** usa su UUIDv5, así que quitar y volver a poner una etiqueta es la misma fila.
+  - **Borrar** (solo admin, RF-CAT-08): lleva las presentaciones y sus códigos (04 §6.2).
+- **Conflictos:**
+  - Se dicen en un mensaje: código ya usado, medida bloqueada por compras, `STALE` o solo admin.
+  - Tras un `STALE` del producto, el formulario vuelve a lo que tiene el servidor.
+  - Si un producto nuevo se guardó a medias, se abre su edición.
+
 ## 8. Pruebas
 
 - Vitest + Testing Library: editor de compra (totales, promociones, validación), revisión de ticket (estados de línea), formularios de admin.
