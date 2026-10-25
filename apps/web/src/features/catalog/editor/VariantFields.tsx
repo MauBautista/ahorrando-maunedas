@@ -1,6 +1,7 @@
 import { type ContentUnit, contentUnitsOf } from '@maunedas/shared/catalog/content';
 import type { Measure } from '@maunedas/shared/pricing/units';
 import { useId, useState } from 'react';
+import { ScanDialog } from '../../../components/ScanDialog';
 import {
   type VariantForm,
   suggestedLabel,
@@ -19,7 +20,10 @@ const MEASURES: Array<{ value: Measure; label: string }> = [
   { value: 'count', label: 'Piezas' },
 ];
 
-/** S-10 in the web: measure, content (or "a granel"), label and codes. [onAddCode] checks a typed code and adds it. */
+/**
+ * S-10 in the web: measure, content (or "a granel"), label and codes. [onAddCode] checks the typed code, or the one
+ * scanned, and adds it.
+ */
 export function VariantFields({
   form,
   onChange,
@@ -27,15 +31,16 @@ export function VariantFields({
 }: {
   form: VariantForm;
   onChange: (change: (f: VariantForm) => VariantForm) => void;
-  onAddCode: () => Promise<void>;
+  onAddCode: (scanned?: string) => Promise<void>;
 }) {
   const id = useId();
   const [checking, setChecking] = useState(false);
+  const [scanning, setScanning] = useState(false);
   const field = (name: string) => `${id}-${name}`;
-  async function addCode() {
+  async function addCode(scanned?: string) {
     setChecking(true);
     try {
-      await onAddCode();
+      await onAddCode(scanned);
     } finally {
       setChecking(false);
     }
@@ -170,7 +175,19 @@ export function VariantFields({
           >
             Agregar código
           </button>
+          <button type="button" className="btn-outline" disabled={checking} onClick={() => setScanning(true)}>
+            Escanear
+          </button>
         </div>
+        {scanning && (
+          <ScanDialog
+            onCode={(code) => {
+              setScanning(false);
+              void addCode(code);
+            }}
+            onClose={() => setScanning(false)}
+          />
+        )}
         {form.codeError && (
           <p role="alert" className="text-error">
             {form.codeError}

@@ -404,8 +404,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Pruebas:** 24 más en la web, 3 en `shared` y 3 en la API.
 ### [ ] T-163 · Tickets web (W-06)
 - **Depende de:** T-162, T-040, T-037
-### [ ] T-164 · Precio de anaquel y escaneo web (W-10)
+### [x] T-164 · Precio de anaquel y escaneo web (W-10)
 - **Depende de:** T-161, T-036
+- **Hecho (2026-10-25, T74):**
+  - **W-10:** con las reglas de Android: promoción con precio efectivo, foto reducida en el navegador y subida, y tienda recordada por navegador.
+  - **Escáner:** con `@zxing/browser` en W-10, en la línea de compra, en los códigos del editor de productos y en la búsqueda del catálogo. Un código que no está ofrece "Darlo de alta" con el código puesto.
+  - **Compartido:** `shelfEffectiveCents` pasa a `shared` y `PlaceFields` se comparte entre W-05 y W-10.
+  - **Pruebas:** 16 más en la web y 2 en `shared`; 14 mutaciones detectadas.
 ### [ ] T-165 · Administración web (W-11 a W-13)
 - **Depende de:** T-160, T-023, T-038, T-039
 ### [ ] T-166 · Cuenta (W-14)

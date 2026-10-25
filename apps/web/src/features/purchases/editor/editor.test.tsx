@@ -140,6 +140,40 @@ describe('W-05 purchase editor', () => {
     expect(Number(rows![0]!.row.updated_at)).toBeGreaterThan(1_000);
   });
 
+  it('scans a code into the line at the last price here, and says when it is not in the catalog', async () => {
+    const w = worker({
+      '/v1/search/variants': (url) => ({
+        items:
+          url.searchParams.get('q') === '7501020515343'
+            ? [found({ barcode_match: true, last_unit_cents: 2850 })]
+            : [],
+      }),
+    });
+    renderAt('/compras/nueva', w.fetchImpl);
+    const user = userEvent.setup();
+    await user.selectOptions(await screen.findByLabelText('Tienda', {}, LAZY), 's-costco');
+    await user.click(screen.getByRole('button', { name: '+ Producto' }));
+    const line = within(await screen.findByRole('dialog', { name: 'Producto de la compra' }));
+    // jsdom has no camera: the scanner takes the typed code.
+    await user.click(line.getByRole('button', { name: 'Escanear' }));
+    const scan = within(screen.getByRole('dialog', { name: 'Escanear código' }));
+    await user.type(scan.getByLabelText('O escribe el código'), '1111111111{Enter}');
+    expect(await line.findByRole('link', { name: 'Darlo de alta' })).toBeTruthy();
+    await user.click(line.getByRole('button', { name: 'Escanear' }));
+    await user.type(
+      within(screen.getByRole('dialog', { name: 'Escanear código' })).getByLabelText('O escribe el código'),
+      '7501020515343{Enter}',
+    );
+    expect(await line.findByText('Leche Lala · 1 L')).toBeTruthy();
+    expect((line.getByLabelText('Precio unitario') as HTMLInputElement).value).toBe('28.50');
+    expect(
+      w.requests
+        .filter((u) => u.pathname === '/v1/search/variants')
+        .at(-1)!
+        .searchParams.get('store_id'),
+    ).toBe('s-costco');
+  });
+
   it('links a ticket line to a product, keeping its quantity and price', async () => {
     const w = worker({
       '/v1/search/variants': () => ({

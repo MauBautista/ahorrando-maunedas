@@ -1,6 +1,8 @@
 import type { ProductListItem, ProductsResponse } from '@maunedas/shared/api/catalog';
 import { useInfiniteQuery } from '@tanstack/react-query';
+import { useState } from 'react';
 import { Link, useSearchParams } from 'react-router';
+import { ScanDialog } from '../../components/ScanDialog';
 import { ProductPhoto } from '../../components/ProductPhoto';
 import { UnitPrice } from '../../components/UnitPrice';
 import { useApi } from '../../lib/context';
@@ -21,6 +23,7 @@ export function CatalogPage() {
   const tag = params.get('etiqueta') ?? '';
   const search = useDebounced(q.trim());
   const { data: lookups } = useLookups();
+  const [scanning, setScanning] = useState(false);
 
   const products = useInfiniteQuery({
     queryKey: ['products', search, category, tag],
@@ -59,14 +62,28 @@ export function CatalogPage() {
         </Link>
       </div>
       <div className="flex flex-col gap-3 md:flex-row">
-        <input
-          type="search"
-          aria-label="Buscar por nombre, marca o código"
-          placeholder="Buscar por nombre, marca o código"
-          value={q}
-          onChange={(e) => set('q', e.target.value)}
-          className="field md:flex-1"
-        />
+        <div className="flex gap-2 md:flex-1">
+          <input
+            type="search"
+            aria-label="Buscar por nombre, marca o código"
+            placeholder="Buscar por nombre, marca o código"
+            value={q}
+            onChange={(e) => set('q', e.target.value)}
+            className="field flex-1"
+          />
+          <button type="button" className="btn-outline" onClick={() => setScanning(true)}>
+            Escanear
+          </button>
+        </div>
+        {scanning && (
+          <ScanDialog
+            onCode={(code) => {
+              setScanning(false);
+              set('q', code);
+            }}
+            onClose={() => setScanning(false)}
+          />
+        )}
         <select
           aria-label="Categoría"
           value={category}

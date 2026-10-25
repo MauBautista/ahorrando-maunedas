@@ -24,6 +24,8 @@ export interface Api {
   post<T>(path: string, body?: unknown): Promise<T>;
   patch<T>(path: string, body?: unknown): Promise<T>;
   del<T>(path: string): Promise<T>;
+  /** A binary as the body, with its own type (`PUT /v1/images/:id/blobs/:name`, 06 §5). */
+  put<T>(path: string, blob: Blob): Promise<T>;
 }
 
 /**
@@ -41,12 +43,12 @@ export function createApi(
       res = await fetchImpl(path, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          'Content-Type': body instanceof Blob ? body.type : 'application/json',
           'X-Client-Schema': String(CLIENT_SCHEMA),
           'X-Client-Version': __APP_VERSION__,
           ...(token ? { Authorization: `Bearer ${token}` } : {}),
         },
-        body: body === undefined ? undefined : JSON.stringify(body),
+        body: body === undefined || body instanceof Blob ? body : JSON.stringify(body),
       });
     } catch {
       throw new ApiError(0, 'NETWORK', 'Sin conexión. Revisa tu internet e intenta de nuevo.');
@@ -73,5 +75,6 @@ export function createApi(
     post: (p, b) => request('POST', p, b),
     patch: (p, b) => request('PATCH', p, b),
     del: (p) => request('DELETE', p),
+    put: (p, blob) => request('PUT', p, blob),
   };
 }

@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { Dialog } from '../../../components/Dialog';
+import { Dialog } from '../../components/Dialog';
 
 const KINDS = [
   { value: 'physical', label: 'Física' },

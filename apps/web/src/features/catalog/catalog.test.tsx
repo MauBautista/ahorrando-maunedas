@@ -71,6 +71,24 @@ describe('W-07 catálogo', () => {
     });
   });
 
+  it('searches by a scanned code', async () => {
+    const worker = fakeWorker({
+      '/v1/lookups': () => lookups,
+      '/v1/products': () => ({ items: [], next_cursor: null }),
+    });
+    const router = renderAt('/catalogo', worker.fetchImpl);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Escanear' }, { timeout: 5000 }));
+    await user.type(
+      within(screen.getByRole('dialog')).getByLabelText('O escribe el código'),
+      '7501020515343{Enter}',
+    );
+    await waitFor(() => expect(router.state.location.search).toBe('?q=7501020515343'));
+    expect((screen.getByLabelText('Buscar por nombre, marca o código') as HTMLInputElement).value).toBe(
+      '7501020515343',
+    );
+  });
+
   it('says when there are no products at all', async () => {
     renderAt(
       '/catalogo',

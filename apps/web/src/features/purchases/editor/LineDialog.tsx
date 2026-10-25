@@ -2,7 +2,10 @@ import { plainCents } from '@maunedas/shared/text/decimal';
 import { useState } from 'react';
 import { Dialog } from '../../../components/Dialog';
 import { ProductPhoto } from '../../../components/ProductPhoto';
+import { ScanDialog } from '../../../components/ScanDialog';
+import { UnknownCode } from '../../../components/UnknownCode';
 import { formatMoney, formatUnitPrice } from '../../../lib/format';
+import { useVariantByCode } from '../../../lib/variantByCode';
 import { amountsOf, type PurchaseLine, perUnitCents } from './draft';
 import {
   computedDiscount,
@@ -37,6 +40,23 @@ export function LineDialog({
   const [form, setForm] = useState(initial);
   const [query, setQuery] = useState('');
   const [searching, setSearching] = useState(!initial.variant);
+  const [scanning, setScanning] = useState(false);
+  const [unknown, setUnknown] = useState<string | null>(null);
+  const variantByCode = useVariantByCode();
+
+  /** A scanned code picks its variant at once, at the last price here; one not in the catalog says so. */
+  async function scanned(code: string) {
+    setScanning(false);
+    try {
+      const item = await variantByCode(code, storeId);
+      if (!item) return setUnknown(code);
+      setForm((f) => withVariant(f, item));
+      setSearching(false);
+      setQuery('');
+    } catch (e) {
+      setForm((f) => ({ ...f, error: e instanceof Error ? e.message : 'No se pudo buscar el código.' }));
+    }
+  }
   const results = useVariantSearch(searching ? query : '', storeId);
   const change = (next: Partial<LineForm>) => setForm((f) => ({ ...f, ...next, error: null }));
   const preview = previewLine(form, promoId);
@@ -67,6 +87,7 @@ export function LineDialog({
 
   return (
     <Dialog title="Producto de la compra" onClose={onClose}>
+      {scanning && <ScanDialog onCode={(code) => void scanned(code)} onClose={() => setScanning(false)} />}
       <div className="flex flex-col gap-3">
         {form.rawText !== null && <p className="text-on-surface-variant">En el ticket: {form.rawText}</p>}
         {form.variant && !searching ? (
@@ -80,14 +101,23 @@ export function LineDialog({
           </div>
         ) : (
           <div className="flex flex-col gap-2">
-            <input
-              type="search"
-              aria-label="Buscar producto o código"
-              placeholder="Buscar producto o código"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              className="field"
-            />
+            <div className="flex gap-2">
+              <input
+                type="search"
+                aria-label="Buscar producto o código"
+                placeholder="Buscar producto o código"
+                value={query}
+                onChange={(e) => {
+                  setQuery(e.target.value);
+                  setUnknown(null);
+                }}
+                className="field flex-1"
+              />
+              <button type="button" className="btn-outline" onClick={() => setScanning(true)}>
+                Escanear
+              </button>
+            </div>
+            {unknown && <UnknownCode code={unknown} />}
             {results.data?.items.length === 0 && (
               <p className="text-on-surface-variant">Sin resultados. Agrégalo primero en Catálogo.</p>
             )}

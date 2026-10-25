@@ -53,6 +53,10 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-164 (2026-10-25):** precio de anaquel y escaneo en la web:
+  - registrar el precio del anaquel con promoción (dice cuánto sale cada pieza con ella) y foto opcional, en la tienda del último precio guardado en ese navegador;
+  - escanear con la cámara del navegador en el precio de anaquel, en los productos de una compra, en los códigos del editor de productos y en la búsqueda del catálogo;
+  - un código que no está en el catálogo ofrece darlo de alta con el código ya puesto.
 - **T-162 (2026-10-25):** compras en la web:
   - la lista por día con filtros de tienda, fechas y estado, y el detalle de cada compra con sus páginas de ticket;
   - el editor con las reglas de Android: buscar el producto con su último precio en la tienda, promociones, descuentos del ticket, total del ticket que avisa si no cuadra, confirmar, eliminar y guardado automático al salir;
@@ -110,7 +114,7 @@
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Web sin bloqueos: T-164 (precio de anaquel y escaneo), T-165 (administración), T-166 (cuenta). T-163 (tickets web) espera a T-040.
+1. Web sin bloqueos: T-165 (administración) y T-166 (cuenta). T-163 (tickets web) espera a T-040.
 2. Pantallas de Android: T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
 3. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
 4. Antes del primer despliegue a producción: T-004 (Firebase prod) y la decisión pendiente de T41.
@@ -192,6 +196,7 @@
 | T71 | **Editor web por push.**<br>• Un producto nuevo y su primera presentación van en un push; cada presentación se guarda en su diálogo.<br>• Los cambios mandan solo lo editado, con `updated_at` posterior a lo leído.<br>• `GET /v1/products/:id` agrega `barcode_rows` para poder quitar códigos.<br>• El dueño de un código se busca con `GET /v1/search/variants`, no con `/v1/barcodes/:code`.<br>• Tras un `STALE` se recarga el formulario.<br>• La lectura de cantidades y precios y la conversión de contenido pasan a `packages/shared` con los casos de Android. | La web no guarda datos locales (04 §7): escribe y vuelve a consultar. El servidor actualiza solo las columnas enviadas (04 §3.3). Quitar un código es el tombstone de su fila, que antes no tenía id en la web. La búsqueda no consulta Open Food Facts. La misma regla de captura en los dos clientes evita diferencias de redondeo. |
 | T72 | **Compras web con las reglas de Android.**<br>• La aritmética de la compra (`pricing/purchase.ts`) pasa a `shared` con los casos de `PurchaseMathTest`.<br>• La búsqueda de variantes trae su contenido y, con `store_id`, el último precio de lista en esa tienda.<br>• Escritorio: tabla con cantidad y precio en su celda; teléfono: tarjetas con diálogo.<br>• Al salir se guarda lo que cambió (si hay tienda), como Android.<br>• Los alias de ticket se escriben en cada confirmación con su UUIDv5. | El editor web debe guardar las mismas filas que Android. Sin datos locales (04 §7), la línea necesita del servidor lo que Android lee de Room. 06 §3 pide la tabla editable en escritorio. La web no lee `receipt_aliases`, y reescribir el mismo id es idempotente. |
 | T73 | **El upsert inserta la fila fusionada.** El `INSERT` lleva la fila de D1 con la mutación encima; el `UPDATE` del conflicto sigue cambiando solo las columnas enviadas (04 §3.3). | SQLite revisa `NOT NULL` antes del `ON CONFLICT`. Una fila parcial de la web o un tombstone sin `created_at` rechazaba el lote entero (`BATCH_REJECTED`). Afectaba la edición web de productos de T-161, que solo se había probado con fake Worker. Android manda filas completas y no se veía. |
+| T74 | **Anaquel y escaneo web.**<br>• `@zxing/browser` 0.2.1 y `@zxing/library` 0.23.0, cargados solo al escanear.<br>• Mismos formatos, normalización y `ScanGate` que Android.<br>• Un código por línea en W-05, sin modo continuo.<br>• Un código desconocido abre `/productos/nuevo?codigo=…`.<br>• La foto del anaquel se reduce en el navegador y sube después del push.<br>• La tienda recordada es por navegador (`localStorage`).<br>• `shelfEffectiveCents` pasa a `shared` con los casos de `ShelfPricesTest`. | 06 §3 pide zxing (Safari de iPhone no tiene `BarcodeDetector`). Las lecturas falsas de un cuadro se vieron en el Samsung (T64). La subida necesita que la fila `images` exista (409 si no). La web no tiene filas propias para saber mi último anaquel. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -309,3 +314,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-25** — T-161 (primera parte): catálogo y ficha web con comparador e historial, desplegados en dev (T70).
 - **2026-10-25** — T-161: editor web de productos y presentaciones por push; `barcode_rows` en la ficha; reglas de captura en `shared` (T71).
 - **2026-10-25** — T-162: compras web (lista, detalle, editor, Inicio); búsqueda con último precio en la tienda; el upsert acepta filas parciales y tombstones (T72, T73).
+- **2026-10-25** — T-164: precio de anaquel web con foto y escaneo con zxing en anaquel, compras, editor de productos y catálogo (T74).
