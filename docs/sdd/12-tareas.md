@@ -418,8 +418,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Fusionar duplicados:** con vista previa (`dry_run` nuevo en `POST /v1/admin/merge`).
   - **Gasto de IA:** el mes contra el tope, con el aviso del límite suave.
   - **Pruebas:** 11 más en la web y 3 en la API; 11 mutaciones detectadas.
-### [ ] T-166 · Cuenta (W-14)
+### [x] T-166 · Cuenta (W-14)
 - **Depende de:** T-160
+- **Hecho (2026-10-25, T76):**
+  - Datos de la cuenta y cerrar sesión.
+  - "Cambiar contraseña" con reautenticación en Firebase y los textos de Android.
+  - Si se entró con Google, no se ofrece el cambio y se explica por qué.
+  - **Pruebas:** 5 en la web; 5 mutaciones detectadas.
 
 ## Etapa 1 · Cierre
 

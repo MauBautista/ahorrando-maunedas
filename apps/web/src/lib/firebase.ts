@@ -2,13 +2,16 @@ import { syntheticEmail } from '@maunedas/shared/auth/username';
 import { initializeApp } from 'firebase/app';
 import {
   browserLocalPersistence,
+  EmailAuthProvider,
   getAuth,
   GoogleAuthProvider,
   onAuthStateChanged,
+  reauthenticateWithCredential,
   setPersistence,
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut,
+  updatePassword,
 } from 'firebase/auth';
 import type { AuthPort } from './auth';
 
@@ -44,5 +47,16 @@ export function firebaseAuth(): AuthPort {
       await signInWithPopup(auth, new GoogleAuthProvider());
     },
     signOut: () => signOut(auth),
+    signInMethod: () => {
+      const providers = auth.currentUser?.providerData.map((p) => p.providerId) ?? [];
+      if (providers.includes('password')) return 'password';
+      return providers.includes('google.com') ? 'google' : null;
+    },
+    changePassword: async (current, next) => {
+      const user = auth.currentUser;
+      if (!user?.email) throw Object.assign(new Error('Sin sesión'), { code: 'auth/no-current-user' });
+      await reauthenticateWithCredential(user, EmailAuthProvider.credential(user.email, current));
+      await updatePassword(user, next);
+    },
   };
 }

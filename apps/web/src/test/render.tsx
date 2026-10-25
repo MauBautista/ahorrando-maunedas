@@ -37,8 +37,7 @@ export function fakeWorker(handlers: Record<string, Handler>, role: 'admin' | 'm
 }
 
 /** The whole app at [path], signed in, over the fake Worker. */
-export function renderAt(path: string, fetchImpl: typeof fetch) {
-  const auth = new FakeAuth({ uid: 'u' });
+export function renderAt(path: string, fetchImpl: typeof fetch, auth = new FakeAuth({ uid: 'u' })) {
   const router = createMemoryRouter(routes, { initialEntries: [path] });
   render(
     <AppProviders auth={auth} api={createApi(auth, fetchImpl)} queryClient={createQueryClient()}>

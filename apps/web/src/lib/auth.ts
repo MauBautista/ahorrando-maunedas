@@ -18,6 +18,13 @@ export interface AuthPort {
   signInWithPassword(username: string, password: string): Promise<void>;
   signInWithGoogle(): Promise<void>;
   signOut(): Promise<void>;
+  /** How this session signed in: each method is its own Firebase account of the same user (02 §2). */
+  signInMethod(): 'password' | 'google' | null;
+  /**
+   * RF-AUTH-06: `reauthenticateWithCredential` + `updatePassword` of the password account (02 §6.5); the Worker never
+   * sees passwords. Rejects with Firebase's `code` (`auth/invalid-credential`, `auth/weak-password`…).
+   */
+  changePassword(current: string, next: string): Promise<void>;
 }
 
 export const AuthContext = createContext<AuthPort | null>(null);
