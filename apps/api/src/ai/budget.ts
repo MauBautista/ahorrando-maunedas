@@ -1,3 +1,4 @@
+import type { AiBudget } from '@maunedas/shared/api/admin';
 import { uuidv7 } from '@maunedas/shared/util/uuid';
 import { ApiError } from '../errors';
 import { log } from '../util/log';
@@ -114,16 +115,6 @@ export async function checkSoftLimit(env: BudgetEnv, nowMs = Date.now()): Promis
       budget_usd: Number(env.AI_MONTHLY_BUDGET_USD),
     });
   return first;
-}
-
-export interface AiBudget {
-  month: string;
-  budget_usd: number;
-  spent_usd: number;
-  soft_limit_pct: number;
-  soft_limit_reached: boolean;
-  by_purpose: Record<AiPurpose, number>;
-  calls: number;
 }
 
 /** `GET /v1/admin/ai-budget` (03 §12): this month in Mexico City. */

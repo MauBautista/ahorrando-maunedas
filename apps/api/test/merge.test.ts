@@ -271,6 +271,50 @@ describe('POST /v1/admin/merge — product (03 §12)', () => {
   });
 });
 
+describe('POST /v1/admin/merge — preview (dry_run, W-12)', () => {
+  async function previewThenMerge(kind: 'variant' | 'product', source: Mutation, target: Mutation) {
+    const before = await version();
+    const ids = { kind, source_id: source.row.id, target_id: target.row.id };
+    const preview = await merge({ ...ids, dry_run: true });
+    expect(preview.status).toBe(200);
+    expect(await version()).toBe(before);
+    const [still] = await rowsOf(kind === 'variant' ? 'variants' : 'products', [source.row.id]);
+    expect(still!.deleted_at).toBeNull();
+    const done = await merge(ids);
+    return { preview: preview.body.moved, moved: done.body.moved };
+  }
+
+  it('counts what a variant merge would move, writes nothing, and then moves exactly that', async () => {
+    const { preview, moved } = await previewThenMerge('variant', fx.src!, fx.tgt!);
+    expect(preview).toEqual(moved);
+    expect(preview?.barcodes).toBe(2);
+  });
+
+  it('counts what a product merge would move, live tag links included', async () => {
+    const { preview, moved } = await previewThenMerge('product', fx.duplicate!, fx.original!);
+    expect(preview).toEqual(moved);
+    expect(preview).toEqual({ variants: 2, images: 1, product_tags: 2 });
+  });
+
+  it('refuses what the merge would refuse', async () => {
+    const same = await merge({
+      kind: 'variant',
+      source_id: fx.src!.row.id,
+      target_id: fx.src!.row.id,
+      dry_run: true,
+    });
+    expect([same.status, same.body.error?.details?.reason]).toEqual([409, 'SAME']);
+    expect(
+      (
+        await merge(
+          { kind: 'product', source_id: fx.duplicate!.row.id, target_id: fx.original!.row.id, dry_run: true },
+          'member',
+        )
+      ).status,
+    ).toBe(403);
+  });
+});
+
 describe('POST /v1/admin/merge — rejections', () => {
   it('the same row, a deleted one, an unknown one or a bad body', async () => {
     const before = await version();

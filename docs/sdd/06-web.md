@@ -268,6 +268,24 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
   - **"Recuerda la última":** la tienda y la sucursal del último precio guardado en este navegador (`localStorage`). Android las lee de sus filas; la web no tiene filas.
   - **Al guardar:** "Guardar" abre la ficha del producto. "Guardar y otro" conserva la tienda y dice "Precio guardado".
 
+## 7.6 Administración (T-165, decisión T75)
+
+- **Acceso:** solo el admin (`RequireAdmin`). Las tres pantallas comparten una fila de pestañas: Usuarios, Fusionar duplicados y Gasto de IA.
+- **W-11 Usuarios:**
+  - **Vista:** tabla desde `md` (usuario, nombre, rol, Google, estado y acciones); tarjetas en el teléfono. Mi cuenta dice "(tú)".
+  - **"Nuevo usuario":** usuario (se normaliza como `normalizeUsername` y se revisa con `USERNAME_RE` antes de enviarlo), nombre, rol, contraseña inicial y correo de Google opcional. Hace falta una contraseña o un correo.
+  - **Contraseña ("Generar"):** 12 letras y dígitos sin los que se confunden (l, 1, O, 0), de `crypto.getRandomValues` y sin sesgo. Se ve en claro para entregarla en persona, con "Copiar". El Worker no la guarda ni la registra (regla 11).
+  - **"Editar":** manda solo lo que cambió. Quitar o cambiar el correo de Google avisa que esa sesión se cierra (02 §5.3).
+  - **"Restablecer contraseña":** con el mismo campo y su generador.
+  - **"Desactivar":** pregunta antes; "Activar" no.
+  - **Errores:** los mensajes del servidor se muestran tal cual (usuario ya existe, correo de Google tomado, último admin activo…).
+- **W-12 Fusionar duplicados:**
+  - **Elección:** productos o presentaciones; el duplicado (se elimina) y el que se queda, con buscador. El que se queda no ofrece el duplicado, y en presentaciones solo ofrece la misma medida.
+  - **Vista previa:** `POST /v1/admin/merge` con `dry_run` dice lo que pasará ("Pasarán a «…»: 2 presentaciones y 1 foto.") con las mismas revisiones del servidor.
+  - **Confirmar** usa los textos de Android (T57) y, al terminar, dice lo que se movió.
+  - **Rechazos:** misma, eliminado, distinta medida o solo admin, con los textos de Android.
+- **W-13 Gasto de IA:** el mes de la Ciudad de México con lo gastado contra el tope (barra y porcentaje), las llamadas, el desglose por propósito (tickets, edición de fotos, otros) y el aviso cuando se pasa `soft_limit_pct` (09 §2).
+
 ## 8. Pruebas
 
 - Vitest + Testing Library: editor de compra (totales, promociones, validación), revisión de ticket (estados de línea), formularios de admin.

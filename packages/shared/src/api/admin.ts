@@ -5,11 +5,24 @@ export const MergeRequestSchema = z.object({
   kind: z.enum(['product', 'variant']),
   source_id: z.uuid(),
   target_id: z.uuid(),
+  /** The preview of W-12: the same checks and counts, nothing written. */
+  dry_run: z.boolean().optional(),
 });
 
 export interface MergeResponse {
-  /** Rows moved to the target, per table. */
+  /** Rows moved to the target, per table (or that would move, with `dry_run`). */
   moved: Record<string, number>;
+}
+
+/** `GET /v1/admin/ai-budget` (03 §12): this month's AI spend in Mexico City, for W-13. */
+export interface AiBudget {
+  month: string;
+  budget_usd: number;
+  spent_usd: number;
+  soft_limit_pct: number;
+  soft_limit_reached: boolean;
+  by_purpose: Record<'receipt' | 'image_edit' | 'other', number>;
+  calls: number;
 }
 
 /** Passwords are checked for length by hand so the answer is `WEAK_PASSWORD`, never echoed back. */

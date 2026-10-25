@@ -465,10 +465,11 @@ Común a `/v1/admin/users*`: solo admin (`403 E-FORBIDDEN`); usuario inexistente
 ### `POST /v1/admin/merge`
 ```ts
 // request
-{ kind: 'product' | 'variant'; source_id: Id; target_id: Id }
+{ kind: 'product' | 'variant'; source_id: Id; target_id: Id; dry_run?: boolean }
 // 200
 { moved: Record<string, number> }     // filas reasignadas por tabla
 ```
+- `dry_run: true` es la vista previa de W-12 (T-165): hace las mismas revisiones (y responde los mismos errores), cuenta las filas que se moverían con las mismas condiciones del `UPDATE` y no escribe nada.
 - `variant`: reasigna `barcodes`, `purchase_items`, `price_observations`, `listings`, `alert_rules`, `receipt_aliases`, `images` (owner) al destino; tombstone del origen.
 - `product`: mueve las variantes del origen al producto destino; une etiquetas marcando como borradas las `product_tags` del origen y creando o reviviendo `uuidv5(destino:etiqueta)` (04 §2.1), para no dejar duplicados vivos; tombstone del origen.
 - Todas las filas tocadas reciben nueva `version` (un solo batch). `409 E-MERGE_INVALID` si son el mismo, si alguno está eliminado o si en `variant` las medidas difieren (`mass` vs `volume`); `details.reason` = `SAME`, `DELETED` o `MEASURE_MISMATCH`. Un id que no existe en la tabla de `kind` → `404 E-NOT_FOUND`. Solo admin (`403 E-FORBIDDEN`).
