@@ -179,7 +179,7 @@ export async function pushMutations(
     const statements = [
       db.prepare('PRAGMA defer_foreign_keys = on'),
       db.prepare(`UPDATE sync_meta SET value = value + 1 WHERE key = 'version'`),
-      ...toWrite.map((c) => buildUpsert(db, c.table, c.spec, c.incoming)),
+      ...toWrite.map((c) => buildUpsert(db, c.table, c.spec, c.incoming, c.merged)),
     ];
     try {
       await db.batch(statements);

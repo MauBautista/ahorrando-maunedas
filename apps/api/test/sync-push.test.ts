@@ -120,6 +120,32 @@ describe('push · last write wins (04 §8)', () => {
     });
   });
 
+  it('takes a row with only what changed, without created_at or other required columns (04 §3.3, 04 §7)', async () => {
+    // How the web writes: it keeps no copy, so it sends the columns its form edits, or a bare tombstone.
+    const s = store();
+    const pu = purchase(s.row.id, { notes: 'Despensa' });
+    const p = product({ brand: 'Lala' });
+    const v = variant(p.row.id);
+    const code = barcode(v.row.id, '7501020515343');
+    await push([s, pu, p, v, code]);
+    await push([
+      { table: 'purchases', row: { id: pu.row.id, updated_at: t(), status: 'confirmed' } },
+      { table: 'products', row: { id: p.row.id, updated_at: t(), name: 'Leche Lala Entera' } },
+      { table: 'barcodes', row: { id: code.row.id, updated_at: t(), deleted_at: t() } },
+    ]);
+    expect(await rowOf('purchases', pu.row.id)).toMatchObject({
+      status: 'confirmed',
+      source: 'manual',
+      notes: 'Despensa',
+      created_at: pu.row.created_at,
+    });
+    expect(await rowOf('products', p.row.id)).toMatchObject({ name: 'Leche Lala Entera', brand: 'Lala' });
+    expect(await rowOf('barcodes', code.row.id)).toMatchObject({
+      code: '7501020515343',
+      deleted_at: expect.any(Number),
+    });
+  });
+
   it('recomputes search_key and trims names', async () => {
     const p = product({ name: '  Café Legal  ', brand: 'Legal', search_key: 'manipulado' });
     await push([p]);

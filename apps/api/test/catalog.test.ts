@@ -328,7 +328,34 @@ describe('GET /v1/search/variants (03 §7)', () => {
     expect(body.items[0]).toMatchObject({ variant_label: '6 × 1 L', barcode_match: true });
   });
 
+  it('brings what a purchase line needs and the newest list price at the store (S-05)', async () => {
+    type Line = Search['items'][number] & Record<string, unknown>;
+    const at = async (store: string) =>
+      (await get<{ items: Line[] }>(`/v1/search/variants?q=leche&store_id=${store}`)).body.items;
+    // Walmart: the 1 L shelf price ($27.00) is newer than its purchase ($28.50); the 6-pack only in an old purchase.
+    const walmart = await at(fx.walmart!.row.id);
+    expect(walmart.map((i) => [i.variant_label, i.last_unit_cents])).toEqual([
+      ['1 L', 2700],
+      ['6 × 1 L', 5000],
+    ]);
+    expect(walmart[1]).toMatchObject({
+      measure: 'volume',
+      unit_amount: 1000,
+      pack_count: 6,
+      sold_by_weight: false,
+      display_unit: 'L',
+    });
+    expect((await at(fx.costco!.row.id)).map((i) => i.last_unit_cents)).toEqual([null, 15900]);
+    // Without a store there is no price; a variant's measure picks the unit when the product's does not fit (03 §3).
+    const { body } = await get<{ items: Line[] }>('/v1/search/variants?q=cafe');
+    expect(body.items.map((i) => [i.variant_label, i.display_unit, i.last_unit_cents])).toEqual([
+      ['1 kg', 'kg', null],
+      ['10 sobres', 'pz', null],
+    ]);
+  });
+
   it('requires q', async () => {
     expect((await get('/v1/search/variants')).status).toBe(400);
+    expect((await get('/v1/search/variants?q=leche&store_id=x')).status).toBe(400);
   });
 });

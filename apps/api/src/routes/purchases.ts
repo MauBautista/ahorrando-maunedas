@@ -1,7 +1,9 @@
 import {
   PurchasesQuerySchema,
   type PurchaseDetailItem,
+  type PurchaseLineFields,
   type PurchaseDetailResponse,
+  type PromotionRow,
   type PurchaseListItem,
   type PurchasesResponse,
 } from '@maunedas/shared/api/purchases';
@@ -20,17 +22,16 @@ import { parseParam, parseQuery } from '../util/validate';
 
 type Row = Record<string, unknown>;
 
+/** A line as D1 returns it: the variant's flag as 0/1 and the product's own unit, before §3 picks the display one. */
 interface ItemRow extends Row {
   id: string;
   quantity: number;
   final_cents: number;
-  product_id: string | null;
-  product_name: string | null;
-  variant_label: string | null;
   product_display_unit: DisplayUnit | null;
   measure: Measure | null;
   unit_amount: number | null;
   pack_count: number | null;
+  sold_by_weight: number | null;
 }
 
 /** Purchases for the web (Android reads Room) — 03 §7. Shared by the household, like the rest of the data. */
@@ -54,7 +55,7 @@ export const purchases = new Hono<AppEnv>()
       const [at, id] = decodeCursor(query.cursor, 2);
       where.push(`(p.purchased_at, p.id) < (${bind(Number(at))}, ${bind(String(id))})`);
     }
-    const sql = `SELECT p.id, p.store_id, p.branch_id, p.purchased_at, p.status, p.source, p.total_cents,
+    const sql = `SELECT p.id, p.store_id, p.branch_id, p.purchased_at, p.status, p.source, p.total_cents, p.discount_cents,
                         COALESCE(l.total, 0) AS lines_total_cents, COALESCE(l.n, 0) AS lines,
                         (SELECT count(*) FROM images im
                          WHERE im.owner_type = 'purchase' AND im.owner_id = p.id AND im.role = 'receipt'
@@ -83,8 +84,8 @@ export const purchases = new Hono<AppEnv>()
       db.prepare('SELECT * FROM purchases WHERE id = ?1 AND deleted_at IS NULL').bind(id),
       db
         .prepare(
-          `SELECT pi.*, v.product_id, pr.name AS product_name, v.label AS variant_label,
-                  pr.display_unit AS product_display_unit, v.measure, v.unit_amount, v.pack_count
+          `SELECT pi.*, v.product_id, pr.name AS product_name, pr.brand, v.label AS variant_label,
+                  pr.display_unit AS product_display_unit, v.measure, v.unit_amount, v.pack_count, v.sold_by_weight
            FROM purchase_items pi
            LEFT JOIN variants v ON v.id = pi.variant_id
            LEFT JOIN products pr ON pr.id = v.product_id
@@ -124,12 +125,17 @@ export const purchases = new Hono<AppEnv>()
     const body: PurchaseDetailResponse = {
       purchase: p as PurchaseDetailResponse['purchase'],
       items: lines.map((line, i): PurchaseDetailItem => {
-        const { product_display_unit: productUnit, measure, unit_amount, pack_count, ...row } = line;
+        const { product_display_unit: productUnit, sold_by_weight, ...row } = line;
+        const { measure, unit_amount, pack_count } = row;
         const linked =
           productUnit !== null && measure !== null && unit_amount !== null && pack_count !== null;
         const unit = linked ? unitFor(productUnit, measure) : null;
         return {
-          ...row,
+          ...(row as unknown as Omit<
+            PurchaseLineFields,
+            'sold_by_weight' | 'display_unit' | 'display_cents'
+          >),
+          sold_by_weight: sold_by_weight === null ? null : sold_by_weight === 1,
           display_unit: unit,
           display_cents:
             linked && unit
@@ -137,7 +143,7 @@ export const purchases = new Hono<AppEnv>()
               : null,
         };
       }),
-      promotions: promotions!.results,
+      promotions: promotions!.results as PromotionRow[],
       receipt_images: receiptIds.flatMap((r) => refs.get(r) ?? []),
     };
     return c.json(body);

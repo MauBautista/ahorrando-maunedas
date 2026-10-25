@@ -331,20 +331,24 @@ Producto inexistente o borrado → `404 E-NOT_FOUND`. `display_unit` de cada pun
 ```
 Defaults: `to = ahora`, `from = to − 365 días`. `from > to` → `400`. `sources` es una lista separada por comas de `purchase`, `shelf` y `web` (las tres por omisión). Puntos en orden de `observed_at` (y `point_id`); solo compras confirmadas, con el descuento de ticket prorrateado (`v_price_points`). `web_confirmed_until` incluye los listings vivos de la variante (y de la tienda, si se filtra) con `last_checked_at`. Variante o producto inexistente o borrado → `404`. Implementación (T-034): `routes/variants.ts`.
 
-### `GET /v1/search/variants?q=&limit=20`
+### `GET /v1/search/variants?q=&limit=20&store_id=`
 Para el editor de compra y la revisión de tickets en web. `q` obligatorio; `limit` de 1 a 50. Las palabras se buscan en `search_key` del producto y en la etiqueta de la variante; un código exacto va primero con `barcode_match: true`.
 ```ts
 // 200
 { items: Array<{ variant_id: Id; product_id: Id; product_name: string; brand: string | null;
-                 variant_label: string; barcode_match: boolean; image: ImageRef | null }> }
+                 variant_label: string; barcode_match: boolean; image: ImageRef | null;
+                 measure: Measure; unit_amount: number; pack_count: number; sold_by_weight: boolean;
+                 display_unit: DisplayUnit; last_unit_cents: Cents | null }> }
 ```
+- `measure`, `unit_amount`, `pack_count`, `sold_by_weight` y `display_unit` (§3) son lo que una línea de compra necesita para calcular y mostrar (S-05, T-162).
+- Con `store_id`, `last_unit_cents` es el precio de lista del punto más nuevo de `v_price_points` de esa variante en esa tienda (cualquier fuente), igual que "Último aquí" en Android. Sin `store_id` o sin precio ahí, `null`.
 
 ### `GET /v1/purchases?from=&to=&store_id=&status=&cursor=&limit=30`
 ```ts
 // 200 — orden: purchased_at DESC, id DESC
 {
   items: Array<{ id: Id; store_id: Id; branch_id: Id | null; purchased_at: Millis; status: 'draft' | 'confirmed';
-                 source: string; total_cents: Cents | null; lines_total_cents: Cents; lines: number;
+                 source: string; total_cents: Cents | null; discount_cents: Cents; lines_total_cents: Cents; lines: number;
                  receipt_pages: number }>;
   next_cursor: string | null;
 }
@@ -358,14 +362,15 @@ Para el editor de compra y la revisión de tickets en web. `q` obligatorio; `lim
 // 200
 {
   purchase: PurchaseRow;
-  items: Array<PurchaseItemRow & { product_id: Id | null; product_name: string | null;
-                                   variant_label: string | null; display_unit: DisplayUnit | null;
-                                   display_cents: Cents | null }>;
+  items: Array<PurchaseItemRow & { product_id: Id | null; product_name: string | null; brand: string | null;
+                                   variant_label: string | null; measure: Measure | null; unit_amount: number | null;
+                                   pack_count: number | null; sold_by_weight: boolean | null;
+                                   display_unit: DisplayUnit | null; display_cents: Cents | null }>;
   promotions: PromotionRow[];
   receipt_images: ImageRef[];     // images con owner=purchase y role=receipt, por created_at
 }
 ```
-- Solo líneas vivas, por `line_no`. `display_cents` es lo pagado por unidad de despliegue con el descuento de ticket prorrateado (`prorateTicketDiscount`, igual que `v_price_points`), también en borradores; `display_unit` sigue §3. Líneas sin vincular → campos del producto en `null`.
+- Solo líneas vivas, por `line_no`. `display_cents` es lo pagado por unidad de despliegue con el descuento de ticket prorrateado (`prorateTicketDiscount`, igual que `v_price_points`), también en borradores; `display_unit` sigue §3. Líneas sin vincular → campos del producto y de la variante en `null`. `measure`, `unit_amount`, `pack_count` y `sold_by_weight` son los de la variante, para que el editor web recalcule la línea (T-162).
 - `promotions`: las de la compra y las de sus líneas vivas. Compra inexistente o borrada → `404`.
 
 ## 8. Códigos de barras

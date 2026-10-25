@@ -27,10 +27,30 @@ export const routes: RouteObject[] = [
             index: true,
             lazy: () => import('./features/home/HomePage').then((m) => ({ Component: m.HomePage })),
           },
-          { path: 'compras', ...soon('Compras') },
-          { path: 'compras/nueva', ...soon('Nueva compra') },
-          { path: 'compras/:id', ...soon('Compra') },
-          { path: 'compras/:id/editar', ...soon('Editar compra') },
+          {
+            path: 'compras',
+            lazy: () =>
+              import('./features/purchases/PurchasesPage').then((m) => ({ Component: m.PurchasesPage })),
+          },
+          {
+            path: 'compras/nueva',
+            lazy: () =>
+              import('./features/purchases/editor/PurchaseEditorPage').then((m) => ({
+                Component: m.PurchaseEditorPage,
+              })),
+          },
+          {
+            path: 'compras/:id',
+            lazy: () =>
+              import('./features/purchases/PurchasePage').then((m) => ({ Component: m.PurchasePage })),
+          },
+          {
+            path: 'compras/:id/editar',
+            lazy: () =>
+              import('./features/purchases/editor/PurchaseEditorPage').then((m) => ({
+                Component: m.PurchaseEditorPage,
+              })),
+          },
           { path: 'compras/:id/ticket', ...soon('Revisión de ticket') },
           {
             path: 'catalogo',
