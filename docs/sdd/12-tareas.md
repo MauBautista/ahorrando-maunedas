@@ -395,8 +395,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Reglas compartidas nuevas:** cantidades y precios tecleados, y contenido.
   - **API:** `barcode_rows` en la ficha.
   - 19 pruebas más.
-### [ ] T-162 · Compras web (W-03 a W-05)
+### [x] T-162 · Compras web (W-03 a W-05)
 - **Depende de:** T-160, T-035
+- **Hecho (2026-10-25, T72):**
+  - **Pantallas:** lista por día con filtros, detalle, editor con las reglas de Android (líneas, promociones, descuentos del ticket, totales, confirmar, eliminar, autoguardado al salir y tabla editable en escritorio), e Inicio con gasto del mes, borradores y compras recientes.
+  - **API:** la búsqueda trae el contenido de la variante y su último precio en la tienda; el detalle trae la variante de cada línea; la lista trae `discount_cents`.
+  - **Corrección del push (T73):** las filas parciales de la web (cambios y tombstones) fallaban en `NOT NULL`. También arregla la edición web de productos de T-161.
+  - **Pruebas:** 24 más en la web, 3 en `shared` y 3 en la API.
 ### [ ] T-163 · Tickets web (W-06)
 - **Depende de:** T-162, T-040, T-037
 ### [ ] T-164 · Precio de anaquel y escaneo web (W-10)

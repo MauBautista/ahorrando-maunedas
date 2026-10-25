@@ -204,6 +204,44 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
   - Tras un `STALE` del producto, el formulario vuelve a lo que tiene el servidor.
   - Si un producto nuevo se guardó a medias, se abre su edición.
 
+## 7.4 Compras (T-162, decisión T72)
+
+- **W-03 Compras:**
+  - Lista por día de la Ciudad de México ("Hoy", "Ayer", "martes 20 de octubre"), la más nueva primero.
+  - Cada compra: tienda y sucursal, hora, productos, total (el del ticket, o Σ líneas − descuentos del ticket, nunca menos de cero, como S-02) y "Borrador".
+  - Filtros en la URL: tienda, fechas ("Este mes", "Mes pasado", "Últimos 3 meses" o "Elegir fechas…", en días completos de la Ciudad de México, T59) y estado.
+  - `GET /v1/purchases` trae `discount_cents` para calcular ese total.
+- **W-04 Compra:**
+  - Productos con cantidad × precio, promoción, total y lo pagado por unidad con el descuento del ticket prorrateado (como el historial).
+  - Descuentos del ticket, totales con "No cuadra por $X" y las páginas del ticket.
+  - "Editar" abre W-05.
+- **W-02 Inicio:** gasto del mes (compras confirmadas de este mes, sumando páginas de 100), aviso de borradores y las 5 compras más recientes.
+- **W-05 Editor**, con las reglas de Android (`PurchaseEditor`, `LineForm`):
+  - **Encabezado:** tienda (con "Nueva tienda"), sucursal opcional (con "Nueva sucursal"; ciudad por omisión, la de una sucursal ya usada, o Puebla), fecha y hora de la Ciudad de México. La tienda y la sucursal nuevas se escriben al momento, como en Android.
+  - **Línea** (S-05, en un diálogo):
+    - búsqueda por palabras o código con "Último aquí";
+    - cantidad con −/+ en piezas enteras, o kilos si se pesa;
+    - precio, promoción con sus parámetros y "Ajustar el descuento a mano" (se guarda como `other`);
+    - total y precio efectivo en vivo, y "Guardar y otro".
+  - **Productos:** en el teléfono, tarjetas que abren su diálogo. Desde `md`, una tabla con cantidad y precio editables en su celda (Tab pasa de una a otra; se toma al salir de la celda, y si no vale se dice y vuelve).
+  - **Más acciones en cada producto:** subir, bajar y quitar con "Deshacer". Una línea sin vincular (de ticket) dice "Vincular" y conserva cantidad y precio.
+  - **Pie:** Σ, descuentos del ticket (diálogo con descripción y monto), total calculado, "Total del ticket" y "No cuadra por $X".
+  - **Confirmar:**
+    - Pide tienda, un producto y que ninguno esté sin precio (T64).
+    - Si no cuadra por más de $1.00, pregunta antes.
+    - Una línea de ticket vinculada enseña su alias a la tienda (09 §7.4; la web no lee los alias, así que lo escribe cada vez, con el mismo id UUIDv5).
+  - **Eliminar compra:** cualquiera (RF-COM-08); se lleva sus líneas, promociones y páginas (04 §6.2).
+  - **Autoguardado al salir:** si hay tienda y algo cambió, se guarda antes de cambiar de pantalla (`useBlocker`). Al cerrar la pestaña con cambios, el navegador pregunta.
+- **Push (04 §7):**
+  - Las filas nuevas llevan todas sus columnas.
+  - Los cambios llevan solo lo que el editor maneja, con `updated_at` posterior a la fila leída.
+  - Lo que se quitó es tombstone.
+  - Si hay un conflicto, el editor vuelve a cargar lo que tiene el servidor y lo dice.
+- **API:**
+  - `GET /v1/search/variants` trae la medida, el contenido, a granel y la unidad de cada variante, y con `store_id` su último precio de lista ahí.
+  - `GET /v1/purchases/:id` trae lo mismo de la variante de cada línea.
+- **Llega después:** fotos de ticket y "Extraer" (T-163, W-06) y escanear (T-164). Mientras, "Foto de ticket" de Inicio abre una compra nueva.
+
 ## 8. Pruebas
 
 - Vitest + Testing Library: editor de compra (totales, promociones, validación), revisión de ticket (estados de línea), formularios de admin.

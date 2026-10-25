@@ -41,6 +41,8 @@ export const ProductsQuerySchema = z.object({
 export const SearchVariantsQuerySchema = z.object({
   q: z.string().trim().min(1).max(200),
   limit: z.coerce.number().int().min(1).max(50).default(20),
+  /** The purchase's store: each result brings its latest list price there (S-05). */
+  store_id: z.uuid().optional(),
 });
 
 export interface ProductListItem {
@@ -69,7 +71,17 @@ export interface LatestPoint {
   observed_at: number;
 }
 
-export interface VariantSearchItem {
+/** What a purchase line needs of its variant to compute and show (05 §5 S-04, S-05). */
+export interface LineVariantInfo {
+  measure: Measure;
+  unit_amount: number;
+  pack_count: number;
+  sold_by_weight: boolean;
+  /** The product's unit, or the default unit of the variant's measure when they differ (03 §3). */
+  display_unit: DisplayUnit;
+}
+
+export interface VariantSearchItem extends LineVariantInfo {
   variant_id: string;
   product_id: string;
   product_name: string;
@@ -77,6 +89,8 @@ export interface VariantSearchItem {
   variant_label: string;
   barcode_match: boolean;
   image: ImageRef | null;
+  /** List price of the newest price point at `store_id` (any source); null without `store_id` or price there. */
+  last_unit_cents: number | null;
 }
 
 /** `GET /v1/products/:id/compare` (03 §7). */

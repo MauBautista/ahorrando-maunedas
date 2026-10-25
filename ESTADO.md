@@ -53,6 +53,12 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-162 (2026-10-25):** compras en la web:
+  - la lista por día con filtros de tienda, fechas y estado, y el detalle de cada compra con sus páginas de ticket;
+  - el editor con las reglas de Android: buscar el producto con su último precio en la tienda, promociones, descuentos del ticket, total del ticket que avisa si no cuadra, confirmar, eliminar y guardado automático al salir;
+  - en la computadora, una tabla donde cantidad y precio se escriben directo;
+  - Inicio con el gasto del mes, aviso de borradores y las compras recientes;
+  - se corrigió el servidor: las ediciones de la web (compras y también productos de T-161) se rechazaban si no traían la fila completa.
 - **T-161 (2026-10-25):** catálogo, ficha y editor de productos en la web:
   - buscar, filtrar por categoría y etiqueta y ver el mejor precio de cada producto;
   - la ficha con presentaciones, comparador por tienda e historial con gráfica;
@@ -104,9 +110,10 @@
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Pantallas de Android: T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
-2. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
-3. Antes del primer despliegue a producción: T-004 (Firebase prod) y la decisión pendiente de T41.
+1. Web sin bloqueos: T-164 (precio de anaquel y escaneo), T-165 (administración), T-166 (cuenta). T-163 (tickets web) espera a T-040.
+2. Pantallas de Android: T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
+3. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
+4. Antes del primer despliegue a producción: T-004 (Firebase prod) y la decisión pendiente de T41.
 
 ## Decisiones tomadas
 
@@ -183,6 +190,8 @@
 | T69 | **Esqueleto web.**<br>• React Router 8 (la API *data* de la 7, sin cambios para este uso), TanStack Query 5 y Tailwind 4 con los tokens como tema.<br>• Firebase detrás de `AuthPort`, inyectado por contexto.<br>• Un error 5xx o sin red en `/v1/me` ofrece "Reintentar" y no cierra la sesión.<br>• `USER_NOT_ALLOWED` o `USER_DISABLED` sí la cierran.<br>• Íconos generados por script.<br>• `CLIENT_SCHEMA = 1` en la web, como Android. | React Router 8 es la versión estable vigente con más de dos semanas, y su modo *data* conserva la API. Con un puerto inyectado las pruebas no hablan con Google. Perder la red no debe sacar a nadie. Un admin que quita la cuenta sí. Sin herramientas de imágenes en la máquina, un PNG a mano es reproducible. |
 | T70 | **Catálogo y ficha web.** Filtros y pestaña en la URL. "Ver más" en vez de desplazamiento infinito. Comparar como tabla con desplazamiento horizontal. Recharts solo al abrir Historial. Antigüedad contada desde que llegaron los datos | Una búsqueda o una pestaña deben sobrevivir a "Atrás" y poder compartirse. Un botón funciona con teclado y lector de pantalla, y no depende de `IntersectionObserver`. En la web la tabla cabe; en Android se usaron tarjetas por la letra al 200 %. La ficha pesaba 446 KB por la gráfica. La regla de pureza de React no deja leer el reloj durante el render. |
 | T71 | **Editor web por push.**<br>• Un producto nuevo y su primera presentación van en un push; cada presentación se guarda en su diálogo.<br>• Los cambios mandan solo lo editado, con `updated_at` posterior a lo leído.<br>• `GET /v1/products/:id` agrega `barcode_rows` para poder quitar códigos.<br>• El dueño de un código se busca con `GET /v1/search/variants`, no con `/v1/barcodes/:code`.<br>• Tras un `STALE` se recarga el formulario.<br>• La lectura de cantidades y precios y la conversión de contenido pasan a `packages/shared` con los casos de Android. | La web no guarda datos locales (04 §7): escribe y vuelve a consultar. El servidor actualiza solo las columnas enviadas (04 §3.3). Quitar un código es el tombstone de su fila, que antes no tenía id en la web. La búsqueda no consulta Open Food Facts. La misma regla de captura en los dos clientes evita diferencias de redondeo. |
+| T72 | **Compras web con las reglas de Android.**<br>• La aritmética de la compra (`pricing/purchase.ts`) pasa a `shared` con los casos de `PurchaseMathTest`.<br>• La búsqueda de variantes trae su contenido y, con `store_id`, el último precio de lista en esa tienda.<br>• Escritorio: tabla con cantidad y precio en su celda; teléfono: tarjetas con diálogo.<br>• Al salir se guarda lo que cambió (si hay tienda), como Android.<br>• Los alias de ticket se escriben en cada confirmación con su UUIDv5. | El editor web debe guardar las mismas filas que Android. Sin datos locales (04 §7), la línea necesita del servidor lo que Android lee de Room. 06 §3 pide la tabla editable en escritorio. La web no lee `receipt_aliases`, y reescribir el mismo id es idempotente. |
+| T73 | **El upsert inserta la fila fusionada.** El `INSERT` lleva la fila de D1 con la mutación encima; el `UPDATE` del conflicto sigue cambiando solo las columnas enviadas (04 §3.3). | SQLite revisa `NOT NULL` antes del `ON CONFLICT`. Una fila parcial de la web o un tombstone sin `created_at` rechazaba el lote entero (`BATCH_REJECTED`). Afectaba la edición web de productos de T-161, que solo se había probado con fake Worker. Android manda filas completas y no se veía. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -299,3 +308,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-25** — T-160: esqueleto web (login, armazón, sesión, cliente HTTP) desplegado en dev y probado en el Samsung; falta Safari de iPhone (T69).
 - **2026-10-25** — T-161 (primera parte): catálogo y ficha web con comparador e historial, desplegados en dev (T70).
 - **2026-10-25** — T-161: editor web de productos y presentaciones por push; `barcode_rows` en la ficha; reglas de captura en `shared` (T71).
+- **2026-10-25** — T-162: compras web (lista, detalle, editor, Inicio); búsqueda con último precio en la tienda; el upsert acepta filas parciales y tombstones (T72, T73).

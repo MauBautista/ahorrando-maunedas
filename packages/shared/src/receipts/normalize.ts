@@ -10,6 +10,9 @@ const DOT_NOT_BETWEEN_DIGITS = /(?<!\d)\.|\.(?!\d)/g;
 
 const collapse = (s: string) => s.replace(/\s+/g, ' ').trim();
 
+/** The `raw_text` of a line the AI could not read (09 §4); it teaches no alias (09 §7.4). Kotlin `ReceiptText.ILLEGIBLE`. */
+export const ILLEGIBLE = 'ILEGIBLE';
+
 /**
  * `receipt_aliases.raw_text_norm` for a receipt line (SDD 09 §5.1):
  * "2 @ PAN BIMBO BLANCO 14.25 28.50" → "PAN BIMBO BLANCO".

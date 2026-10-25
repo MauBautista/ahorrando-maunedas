@@ -5,12 +5,23 @@ import type { Row, TableSpec } from '@maunedas/shared/sync/registry';
  * columns it does not know. Table and column names come from the registry whitelist (no injection).
  * `version` is the value `sync_meta` holds inside the same batch; the WHERE keeps last-write-wins even
  * when two pushes race.
+ *
+ * The INSERT carries `full` (the existing row overlaid with `row`): SQLite checks NOT NULL before it
+ * resolves the conflict, so a row with only what changed (the web, 04 §7) or a bare tombstone would
+ * fail on `created_at` and the other required columns. The UPDATE still sets only the columns of `row`.
  */
-export function buildUpsert(db: D1Database, table: string, spec: TableSpec, row: Row): D1PreparedStatement {
-  const cols = (spec.writable ?? []).filter((c) => c in row);
+export function buildUpsert(
+  db: D1Database,
+  table: string,
+  spec: TableSpec,
+  row: Row,
+  full: Row = row,
+): D1PreparedStatement {
+  const writable = spec.writable ?? [];
+  const cols = writable.filter((c) => c in full || c in row);
   const placeholders = cols.map((_, i) => `?${i + 1}`);
-  const updates = cols
-    .filter((c) => c !== spec.pk && c !== 'created_at')
+  const updates = writable
+    .filter((c) => c in row && c !== spec.pk && c !== 'created_at')
     .map((c) => `${c} = excluded.${c}`)
     .concat('version = excluded.version');
 
@@ -20,5 +31,5 @@ export function buildUpsert(db: D1Database, table: string, spec: TableSpec, row:
     `ON CONFLICT(${spec.pk}) DO UPDATE SET ${updates.join(', ')} ` +
     `WHERE excluded.updated_at > ${table}.updated_at`;
 
-  return db.prepare(sql).bind(...cols.map((c) => row[c] ?? null));
+  return db.prepare(sql).bind(...cols.map((c) => (c in row ? row[c] : full[c]) ?? null));
 }

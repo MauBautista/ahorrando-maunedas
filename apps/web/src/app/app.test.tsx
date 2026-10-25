@@ -9,9 +9,9 @@ import { routes } from '../router';
 import { FakeAuth, me } from '../test/fakes';
 import { AppProviders } from './providers';
 
-/** The Worker as the app sees it: `/v1/me` answers by token. */
+/** The Worker as the app sees it: `/v1/me` answers by token; the rest of the API is not there. */
 function worker(byToken: Record<string, Response | (() => Response)>) {
-  const fetchImpl: typeof fetch = async (_input, init) => {
+  const fetchImpl: typeof fetch = async (input, init) => {
     const token = new Headers(init?.headers).get('Authorization')?.replace('Bearer ', '') ?? '';
     const answer = byToken[token];
     if (!answer)
@@ -19,6 +19,8 @@ function worker(byToken: Record<string, Response | (() => Response)>) {
         { error: { code: 'UNAUTHENTICATED', message: 'Inicia sesión para continuar.' } },
         { status: 401 },
       );
+    if (new URL(String(input), 'https://app.test').pathname !== '/v1/me')
+      return Response.json({ error: { code: 'NOT_FOUND', message: 'No se encontró.' } }, { status: 404 });
     return typeof answer === 'function' ? answer() : answer.clone();
   };
   return fetchImpl;

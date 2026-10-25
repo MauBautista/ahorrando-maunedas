@@ -182,6 +182,8 @@ describe('GET /v1/purchases (03 §7)', () => {
       store_id: fx.walmart!.row.id,
       status: 'draft',
       total_cents: 4500,
+      // The web's total without a ticket total is lines − discount (05 §5 S-02).
+      discount_cents: 500,
       lines_total_cents: 5000,
       lines: 2,
       receipt_pages: 2,
@@ -245,6 +247,12 @@ describe('GET /v1/purchases/:id (03 §7)', () => {
       product_id: fx.leche!.row.id,
       product_name: 'Leche Lala Entera',
       variant_label: '1 L',
+      // What the web's line editor needs of the variant (S-05).
+      brand: null,
+      measure: 'volume',
+      unit_amount: 1000,
+      pack_count: 1,
+      sold_by_weight: false,
       display_unit: 'L',
       display_cents: 2565,
       final_cents: 2850,
@@ -254,6 +262,8 @@ describe('GET /v1/purchases/:id (03 §7)', () => {
       product_id: null,
       product_name: null,
       variant_label: null,
+      measure: null,
+      sold_by_weight: null,
       display_unit: null,
       display_cents: null,
     });
@@ -297,5 +307,73 @@ describe('GET /v1/purchases/:id (03 §7)', () => {
     expect((await get('/v1/purchases/abc')).status).toBe(400);
     await push([edit(fx.old!, { deleted_at: t() })]);
     expect((await get(`/v1/purchases/${fx.old!.row.id}`)).status).toBe(404);
+  });
+});
+
+describe("the web editor's pushes (T-162, 06 §7.4)", () => {
+  it('takes a purchase edited with only the columns the editor owns, merged with what D1 has', async () => {
+    const shop = store({ name: 'Chedraui' });
+    const p = purchase(shop.row.id, { status: 'draft', discount_cents: 500 });
+    const line = item(p.row.id, fx.l1!.row.id, {
+      quantity: 2,
+      gross_cents: 5700,
+      discount_cents: 2850,
+      final_cents: 2850,
+    });
+    const twoForOne = promotion(
+      { purchase_item_id: line.row.id },
+      { type: 'nxm', params: '{"n":2,"m":1}', discount_cents: 2850 },
+    );
+    const coupon = promotion({ purchase_id: p.row.id });
+    await push([shop, p, line, twoForOne, coupon]);
+    // What `purchaseMutations` sends: no owners, source or currency on rows that exist.
+    await push([
+      {
+        table: 'purchases',
+        row: {
+          id: p.row.id,
+          updated_at: t(),
+          store_id: shop.row.id,
+          branch_id: null,
+          purchased_at: p.row.purchased_at,
+          discount_cents: 0,
+          total_cents: null,
+          status: 'confirmed',
+          notes: null,
+        },
+      },
+      {
+        table: 'purchase_items',
+        row: {
+          id: line.row.id,
+          updated_at: t(),
+          line_no: 1,
+          variant_id: fx.l1!.row.id,
+          raw_text: null,
+          quantity: 3,
+          unit_price_cents: 2850,
+          gross_cents: 8550,
+          discount_cents: 2850,
+          final_cents: 5700,
+        },
+      },
+      {
+        table: 'promotions',
+        row: {
+          id: twoForOne.row.id,
+          updated_at: t(),
+          type: 'nxm',
+          params: '{"n":2,"m":1}',
+          description: null,
+          discount_cents: 2850,
+          affects_price: 1,
+        },
+      },
+      { table: 'promotions', row: { id: coupon.row.id, updated_at: t(), deleted_at: t() } },
+    ]);
+    const { body } = await get<DetailBody>(`/v1/purchases/${p.row.id}`);
+    expect(body.purchase).toMatchObject({ status: 'confirmed', discount_cents: 0, source: 'manual' });
+    expect(body.items[0]).toMatchObject({ quantity: 3, final_cents: 5700, purchase_id: p.row.id });
+    expect(body.promotions.map((x) => x.id)).toEqual([twoForOne.row.id]);
   });
 });

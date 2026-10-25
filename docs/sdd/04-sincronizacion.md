@@ -161,14 +161,17 @@ Implementación: `apps/api/src/sync/push.ts` (T-031). El orden real de los pasos
 
 Solo se actualizan las columnas presentes en la mutación. Así un cliente con esquema anterior no borra columnas nuevas que no conoce.
 
+El `INSERT` lleva la fila fusionada (`full`: la fila de D1 con la mutación encima). SQLite revisa `NOT NULL` antes de resolver el conflicto, así que una fila con solo lo que cambió (la web, §7) o un tombstone `{ id, updated_at, deleted_at }` fallaría en `created_at` y las demás columnas obligatorias. El `UPDATE` sigue tocando solo las columnas de la mutación (decisión T73).
+
 ```ts
 // apps/api/src/sync/upsert.ts
-export function buildUpsert(db: D1Database, table: string, spec: TableSpec, row: Row): D1PreparedStatement {
-  const cols = spec.writable!.filter((c) => c in row);   // nombres vienen de la lista blanca → sin inyección
+export function buildUpsert(db: D1Database, table: string, spec: TableSpec, row: Row, full: Row = row): D1PreparedStatement {
+  const writable = spec.writable ?? [];                       // nombres vienen de la lista blanca → sin inyección
+  const cols = writable.filter((c) => c in full || c in row);
   const insertCols = [...cols, 'version'];
   const values = cols.map((_, i) => `?${i + 1}`);
-  const updates = cols
-    .filter((c) => c !== spec.pk && c !== 'created_at')
+  const updates = writable
+    .filter((c) => c in row && c !== spec.pk && c !== 'created_at')
     .map((c) => `${c} = excluded.${c}`)
     .concat('version = excluded.version');
 
@@ -178,7 +181,7 @@ export function buildUpsert(db: D1Database, table: string, spec: TableSpec, row:
     `ON CONFLICT(${spec.pk}) DO UPDATE SET ${updates.join(', ')} ` +
     `WHERE excluded.updated_at > ${table}.updated_at`;
 
-  return db.prepare(sql).bind(...cols.map((c) => row[c] ?? null));
+  return db.prepare(sql).bind(...cols.map((c) => (c in row ? row[c] : full[c]) ?? null));
 }
 ```
 
