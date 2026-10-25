@@ -1,3 +1,4 @@
+import type { MeResponse } from '@maunedas/shared/api/me';
 import { Hono } from 'hono';
 import { requireUser } from '../auth/middleware';
 import { readSyncMeta } from '../db/meta';
@@ -7,7 +8,7 @@ import type { AppEnv } from '../env';
 export const me = new Hono<AppEnv>().get('/v1/me', requireUser(), async (c) => {
   const user = c.get('user');
   const { schemaVersion } = await readSyncMeta(c.env.DB);
-  return c.json({
+  return c.json<MeResponse>({
     user: {
       id: user.id,
       username: user.username,

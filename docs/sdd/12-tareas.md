@@ -380,6 +380,11 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-160 · Esqueleto web
 - **Docs:** 06 §1–4, 06 §6–7, 02 §7 · **Depende de:** T-020, T-025, T-007, T-004, T-021
 - **Hecho cuando:** login con ambos métodos (incluido Safari de iPhone vía proxy), layout responsive, cliente HTTP, despliegue junto con el Worker.
+- **Avance (2026-10-25, T69):**
+  - Router, sesión con `GET /v1/me`, login con usuario o Google, armazón responsive, cliente HTTP con reintento en 401, Cuenta con "Cerrar sesión", manifiesto e íconos.
+  - Desplegado en `maunedas-dev`.
+  - 13 pruebas con Firebase y `fetch` falsos.
+  - Falta probar el login real en el navegador del teléfono y en Safari de iPhone.
 ### [ ] T-161 · Catálogo y ficha web (W-07 a W-09)
 - **Depende de:** T-160, T-033, T-034
 ### [ ] T-162 · Compras web (W-03 a W-05)
