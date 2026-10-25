@@ -29,6 +29,7 @@
     <string name="settings_password_no_network">Necesitas internet para cambiar la contraseña.</string>
     <string name="settings_password_failed">No se pudo cambiar la contraseña. Intenta de nuevo.</string>
     <string name="settings_password_done">Listo: tu contraseña cambió.</string>
+    <string name="settings_password_google">Entraste con Google. Para cambiar tu contraseña, cierra sesión y entra con tu usuario y contraseña.</string>
     <string name="settings_sync_title">Sincronización</string>
     <string name="settings_sync_details">Ver detalle y cambios rechazados</string>
     <string name="settings_storage_title">Almacenamiento</string>

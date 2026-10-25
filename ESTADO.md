@@ -53,6 +53,7 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **Corrección de Android (2026-10-25, T76):** con sesión de Google, Ajustes ya no ofrece "Cambiar contraseña" (respondía "La contraseña actual no es correcta"); explica que hay que entrar con usuario y contraseña, como la web.
 - **T-166 (2026-10-25):** la cuenta en la web: tus datos, cambiar tu contraseña (pide la actual) y cerrar sesión. El nombre y el correo de Google los cambia el admin, como en Android.
 - **T-165 (2026-10-25):** administración en la web (solo admin):
   - usuarios: dar de alta con contraseña generada o correo de Google, editar, restablecer contraseña y activar o desactivar;
@@ -119,7 +120,7 @@
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
 
 ## Siguiente
-1. Web: T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone. Hallazgo para Android (T76): S-15 ofrece "Cambiar contraseña" también con sesión de Google y responde "La contraseña actual no es correcta".
+1. Web: T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
 2. Pantallas de Android: T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
 3. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
 4. Antes del primer despliegue a producción: T-004 (Firebase prod) y la decisión pendiente de T41.
@@ -203,7 +204,7 @@
 | T73 | **El upsert inserta la fila fusionada.** El `INSERT` lleva la fila de D1 con la mutación encima; el `UPDATE` del conflicto sigue cambiando solo las columnas enviadas (04 §3.3). | SQLite revisa `NOT NULL` antes del `ON CONFLICT`. Una fila parcial de la web o un tombstone sin `created_at` rechazaba el lote entero (`BATCH_REJECTED`). Afectaba la edición web de productos de T-161, que solo se había probado con fake Worker. Android manda filas completas y no se veía. |
 | T74 | **Anaquel y escaneo web.**<br>• `@zxing/browser` 0.2.1 y `@zxing/library` 0.23.0, cargados solo al escanear.<br>• Mismos formatos, normalización y `ScanGate` que Android.<br>• Un código por línea en W-05, sin modo continuo.<br>• Un código desconocido abre `/productos/nuevo?codigo=…`.<br>• La foto del anaquel se reduce en el navegador y sube después del push.<br>• La tienda recordada es por navegador (`localStorage`).<br>• `shelfEffectiveCents` pasa a `shared` con los casos de `ShelfPricesTest`. | 06 §3 pide zxing (Safari de iPhone no tiene `BarcodeDetector`). Las lecturas falsas de un cuadro se vieron en el Samsung (T64). La subida necesita que la fila `images` exista (409 si no). La web no tiene filas propias para saber mi último anaquel. |
 | T75 | **Administración web.**<br>• La vista previa de la fusión es `dry_run` en la misma ruta: cada movimiento se describe una vez y de ahí salen su `UPDATE` y su conteo.<br>• Las contraseñas se generan en el navegador (12 caracteres sin ambiguos, `crypto.getRandomValues`, sin sesgo) y se muestran en claro para entregarlas en persona.<br>• La edición manda solo lo que cambió.<br>• Los mensajes del servidor se muestran tal cual. | 06 §3 pide la vista previa y no había cómo contar sin escribir. Una sola descripción evita que la vista previa y la fusión real cuenten distinto (una prueba lo compara). Un `PATCH` vacío es 400 y cambiar el correo de Google cierra esa sesión, así que no se manda lo que no cambió. Los mensajes de 03 §1.2 ya están en español. |
-| T76 | **Cuenta web.**<br>• El nombre y el correo de Google solo se muestran; los cambia el admin.<br>• La contraseña se cambia en el navegador con `reauthenticateWithCredential` + `updatePassword`.<br>• Con una sesión de Google no se ofrece el cambio: se explica que hay que entrar con usuario y contraseña. | No hay ruta para editarse a sí mismo, y Android (S-15) solo los muestra. El Worker no debe ver contraseñas (regla 11). Cada método es su propia cuenta de Firebase (02 §2): con Google, la reautenticación usa ese correo y fallaría con "contraseña incorrecta", como pasa hoy en Android (hallazgo). |
+| T76 | **Cuenta web.**<br>• El nombre y el correo de Google solo se muestran; los cambia el admin.<br>• La contraseña se cambia en el navegador con `reauthenticateWithCredential` + `updatePassword`.<br>• Con una sesión de Google no se ofrece el cambio: se explica que hay que entrar con usuario y contraseña. | No hay ruta para editarse a sí mismo, y Android (S-15) solo los muestra. El Worker no debe ver contraseñas (regla 11). Cada método es su propia cuenta de Firebase (02 §2): con Google, la reautenticación usa ese correo y fallaría con "contraseña incorrecta", como pasaba en Android; corregido en S-15 con el mismo criterio. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -324,3 +325,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-25** — T-164: precio de anaquel web con foto y escaneo con zxing en anaquel, compras, editor de productos y catálogo (T74).
 - **2026-10-25** — T-165: administración web (usuarios, fusión con vista previa `dry_run`, gasto de IA) (T75).
 - **2026-10-25** — T-166: cuenta web (datos, cambiar contraseña con reautenticación, cerrar sesión); hallazgo de Android con sesión de Google (T76).
+- **2026-10-25** — Android: S-15 ya no ofrece cambiar contraseña con sesión de Google (hallazgo de T76).

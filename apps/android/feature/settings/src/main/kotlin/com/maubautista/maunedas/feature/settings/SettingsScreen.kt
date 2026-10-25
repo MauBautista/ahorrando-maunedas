@@ -75,6 +75,7 @@ fun SettingsRoute(
         version = viewModel.client.appVersion,
         schema = viewModel.client.schema,
         actions = SettingsActions(viewModel::openPassword, onOpenSync, viewModel::syncNow, viewModel::freeSpace, viewModel::askSignOut),
+        canChangePassword = viewModel.canChangePassword,
     )
     password?.let { PasswordDialog(it, viewModel::onPassword, viewModel::changePassword, viewModel::closePassword) }
     message?.let { m ->
@@ -110,6 +111,7 @@ fun SettingsScreen(
     version: String,
     schema: Int,
     actions: SettingsActions,
+    canChangePassword: Boolean = true,
 ) {
     var freeing by rememberSaveable { mutableStateOf(false) }
     Column(
@@ -119,7 +121,12 @@ fun SettingsScreen(
         Text(stringResource(R.string.settings_title), style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
         Section(R.string.settings_account_title)
         user?.let { Text(stringResource(R.string.settings_user, it.displayName, it.username), style = MaterialTheme.typography.bodyLarge) }
-        OutlinedButton(onClick = actions.onChangePassword, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.settings_change_password)) }
+        if (canChangePassword) {
+            OutlinedButton(onClick = actions.onChangePassword, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.settings_change_password)) }
+        } else {
+            // A Google session is its own Firebase account, without a password (T76).
+            Text(stringResource(R.string.settings_password_google), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+        }
         HorizontalDivider()
         Section(R.string.settings_sync_title)
         Text(syncText(sync), style = MaterialTheme.typography.bodyLarge)

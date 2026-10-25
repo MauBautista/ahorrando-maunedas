@@ -59,6 +59,9 @@ class SettingsViewModel
         val client: ClientInfo,
     ) : ViewModel() {
         val user: StateFlow<SessionUser?> = session.user
+
+        /** RF-AUTH-06 only for a session that signed in with username and password (T76). */
+        val canChangePassword: Boolean get() = auth.signedInWithPassword()
         val sync: StateFlow<SyncStatus> = status.status
         val pending: StateFlow<Int> = health.backlog().map { it.pending }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), 0)
 
