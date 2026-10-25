@@ -80,6 +80,27 @@ describe('W-09 editor', () => {
     expect(worker.posts.filter((p) => p.path === '/v1/sync/push')).toHaveLength(0);
   });
 
+  it('starts with a code that was not in the catalog, and scans another one', async () => {
+    const worker = fakeWorker({ '/v1/lookups': () => lookups, '/v1/search/variants': () => ({ items: [] }) });
+    renderAt('/productos/nuevo?codigo=7501020515343', worker.fetchImpl);
+    const user = userEvent.setup();
+    expect(
+      await screen.findByRole('button', { name: 'Quitar 7501020515343' }, { timeout: LAZY }),
+    ).toBeTruthy();
+    await user.click(screen.getByRole('button', { name: 'Escanear' }));
+    await user.type(
+      within(screen.getByRole('dialog')).getByLabelText('O escribe el código'),
+      '7501055300075{Enter}',
+    );
+    expect(await screen.findByRole('button', { name: 'Quitar 7501055300075' })).toBeTruthy();
+    // The scanned code was checked against the catalog like a typed one.
+    expect(
+      worker.requests.some(
+        (u) => u.pathname === '/v1/search/variants' && u.searchParams.get('q') === '7501055300075',
+      ),
+    ).toBe(true);
+  });
+
   it('edits a variant in its dialog, later than the row it read', async () => {
     const worker = fakeWorker({
       '/v1/lookups': () => lookups,

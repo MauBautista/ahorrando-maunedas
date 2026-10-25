@@ -19,7 +19,12 @@ export function Dialog({
   return (
     <div
       className="fixed inset-0 z-20 grid place-items-end bg-black/40 md:place-items-center"
-      onKeyDown={(e) => e.key === 'Escape' && onClose()}
+      onKeyDown={(e) => {
+        if (e.key !== 'Escape') return;
+        // A dialog over another one (the scanner over a line) closes alone.
+        e.stopPropagation();
+        onClose();
+      }}
     >
       <div
         role="dialog"

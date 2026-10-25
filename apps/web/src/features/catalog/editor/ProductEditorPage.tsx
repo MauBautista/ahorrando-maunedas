@@ -2,9 +2,10 @@ import type { ProductDetailResponse } from '@maunedas/shared/api/catalog';
 import type { DisplayUnit } from '@maunedas/shared/pricing/units';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useState } from 'react';
-import { Link, useNavigate, useParams } from 'react-router';
+import { Link, useNavigate, useParams, useSearchParams } from 'react-router';
 import { useApi } from '../../../lib/context';
 import { unitLabel } from '../../../lib/format';
+import { scanCode } from '../../../lib/scan';
 import { categoryTree, useLookups } from '../../../lib/lookups';
 import { type Mutation, push } from '../../../lib/sync';
 import { useMe } from '../../auth/useSession';
@@ -27,7 +28,7 @@ import {
 import { useCodeCheck } from './useCodeCheck';
 import { VariantDialog } from './VariantDialog';
 import { VariantFields } from './VariantFields';
-import { emptyVariant, type VariantDraft, type VariantForm, validateVariant } from './variantForm';
+import { emptyVariant, type VariantDraft, type VariantForm, validateVariant, withCode } from './variantForm';
 
 const UNITS: DisplayUnit[] = ['kg', '100g', 'L', '100ml', 'pz'];
 
@@ -56,7 +57,12 @@ function Editor({ page }: { page: ProductDetailResponse | null }) {
   const [product, setProduct] = useState<ProductForm>(() =>
     page ? productFormOf(page.product) : emptyProduct(),
   );
-  const [first, setFirst] = useState<VariantForm>(emptyVariant);
+  // "Darlo de alta" of a scanned code that is not in the catalog (W-10, W-05) opens this with the code.
+  const [params] = useSearchParams();
+  const [first, setFirst] = useState<VariantForm>(() => {
+    const code = scanCode(params.get('codigo') ?? '');
+    return code ? withCode(emptyVariant(), code) : emptyVariant();
+  });
   const [dialog, setDialog] = useState<{ variantId: string | null } | null>(null);
   const [busy, setBusy] = useState(false);
   const [message, setMessage] = useState<string | null>(null);
@@ -275,7 +281,9 @@ function Editor({ page }: { page: ProductDetailResponse | null }) {
                 return next;
               })
             }
-            onAddCode={async () => setFirst(await checkCode(first))}
+            onAddCode={async (scanned) =>
+              setFirst(await checkCode(scanned === undefined ? first : { ...first, codeInput: scanned }))
+            }
           />
         </section>
       )}

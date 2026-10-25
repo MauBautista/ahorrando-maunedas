@@ -13,6 +13,8 @@
   "dependencies": {
     "@maunedas/shared": "workspace:*",
     "@tanstack/react-query": "catalog:",
+    "@zxing/browser": "catalog:",
+    "@zxing/library": "catalog:",
     "firebase": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",

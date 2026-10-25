@@ -35,7 +35,9 @@ export function VariantDialog({
       <VariantFields
         form={form}
         onChange={(change) => setForm(change)}
-        onAddCode={async () => setForm(await checkCode(form))}
+        onAddCode={async (scanned) =>
+          setForm(await checkCode(scanned === undefined ? form : { ...form, codeInput: scanned }))
+        }
       />
       {error && (
         <p role="alert" className="mt-3 text-error">

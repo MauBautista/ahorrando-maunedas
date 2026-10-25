@@ -17,10 +17,14 @@ export function fakeWorker(handlers: Record<string, Handler>, role: 'admin' | 'm
   const fetchImpl: typeof fetch = async (input, init) => {
     const url = new URL(String(input), 'https://app.test');
     requests.push(url);
-    const body = init?.body ? JSON.parse(String(init.body)) : undefined;
-    if (init?.method === 'POST') posts.push({ path: url.pathname, body });
+    const body =
+      init?.body instanceof Blob ? init.body : init?.body ? JSON.parse(String(init.body)) : undefined;
+    if (init?.method === 'POST' || init?.method === 'PUT') posts.push({ path: url.pathname, body });
     if (url.pathname === '/v1/me') return Response.json(me(role));
-    const handler = handlers[url.pathname];
+    // A key ending in "*" answers every path that starts with it ("/v1/images/*").
+    const handler =
+      handlers[url.pathname] ??
+      Object.entries(handlers).find(([k]) => k.endsWith('*') && url.pathname.startsWith(k.slice(0, -1)))?.[1];
     if (!handler)
       return Response.json(
         { error: { code: 'NOT_FOUND', message: 'No se encontró lo que buscas.' } },

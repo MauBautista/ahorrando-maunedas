@@ -74,7 +74,10 @@ export const routes: RouteObject[] = [
                 Component: m.ProductEditorPage,
               })),
           },
-          { path: 'anaquel/nuevo', ...soon('Precio de anaquel') },
+          {
+            path: 'anaquel/nuevo',
+            lazy: () => import('./features/shelf/ShelfPage').then((m) => ({ Component: m.ShelfPage })),
+          },
           {
             path: 'cuenta',
             lazy: () => import('./features/account/AccountPage').then((m) => ({ Component: m.AccountPage })),

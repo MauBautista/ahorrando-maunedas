@@ -8,9 +8,9 @@ import { ApiError } from '../../../lib/api';
 import { useApi } from '../../../lib/context';
 import { dateKey, timeKey, zonedEpoch } from '../../../lib/dates';
 import { formatMoney } from '../../../lib/format';
-import { useLookups } from '../../../lib/lookups';
-import { newRow, push } from '../../../lib/sync';
+import { push } from '../../../lib/sync';
 import { conflictMessage } from '../../catalog/editor/conflicts';
+import { PlaceFields } from '../../places/PlaceFields';
 import { Totals } from '../Totals';
 import { usePurchase } from '../usePurchase';
 import { draftOf, emptyDraft, type PurchaseDraft, type PurchaseLine, totalsOf } from './draft';
@@ -18,7 +18,6 @@ import { lineFormOf, type LineForm, newLineForm, validateLine } from './lineForm
 import { LineDialog } from './LineDialog';
 import { LinesList } from './LinesList';
 import { purchaseMutations, deletePurchaseMutations } from './mutations';
-import { NewBranchDialog, NewStoreDialog, type StoreKind } from './PlaceDialogs';
 
 /** W-05 (05 §5 S-04, S-05): `/compras/nueva` or `/compras/:id/editar`. */
 export function PurchaseEditorPage() {
@@ -43,13 +42,10 @@ export function PurchaseEditorPage() {
   return <Editor key={id ?? 'nueva'} detail={id ? purchase.data! : null} />;
 }
 
-const DEFAULT_CITY = 'Puebla';
-
 function Editor({ detail }: { detail: PurchaseDetailResponse | null }) {
   const api = useApi();
   const queryClient = useQueryClient();
   const navigate = useNavigate();
-  const { data: lookups } = useLookups();
   const [draft, setDraft] = useState<PurchaseDraft>(() =>
     detail ? draftOf(detail) : emptyDraft(Date.now()),
   );
@@ -64,7 +60,6 @@ function Editor({ detail }: { detail: PurchaseDetailResponse | null }) {
     error: string | null;
   } | null>(null);
   const [removed, setRemoved] = useState<{ index: number; line: PurchaseLine } | null>(null);
-  const [place, setPlace] = useState<'store' | 'branch' | null>(null);
   // A conflict while creating reopens the editor on the saved purchase, with its message.
   const [problem, setProblem] = useState<string | null>(
     (useLocation().state as { problem?: string } | null)?.problem ?? null,
@@ -77,7 +72,6 @@ function Editor({ detail }: { detail: PurchaseDetailResponse | null }) {
   const leaving = useRef(false);
   const totals = totalsOf(draft);
   const dirty = JSON.stringify(draft) !== JSON.stringify(saved);
-  const branches = lookups?.store_branches.filter((b) => b.store_id === draft.storeId) ?? [];
 
   const change = (next: (d: PurchaseDraft) => PurchaseDraft) => {
     setDraft(next);
@@ -189,36 +183,6 @@ function Editor({ detail }: { detail: PurchaseDetailResponse | null }) {
     return () => window.removeEventListener('beforeunload', warn);
   }, [dirty]);
 
-  async function createStore(name: string, kind: StoreKind) {
-    const row = newRow({ name, kind, default_check_interval_min: 480 });
-    if (await pushPlace('stores', row)) change((d) => ({ ...d, storeId: row.id, branchId: null }));
-  }
-
-  async function createBranch(name: string, city: string | null) {
-    const row = newRow({ store_id: draft.storeId, name, city });
-    if (await pushPlace('store_branches', row)) change((d) => ({ ...d, branchId: row.id }));
-  }
-
-  async function pushPlace(table: string, row: Record<string, unknown>) {
-    setBusy(true);
-    try {
-      const res = await push(api, [{ table, row }]);
-      const message = conflictMessage(res.conflicts);
-      if (message) {
-        setProblem(message);
-        return false;
-      }
-      await queryClient.invalidateQueries({ queryKey: ['lookups'] });
-      setPlace(null);
-      return true;
-    } catch (e) {
-      setProblem(e instanceof Error ? e.message : 'No se pudo guardar.');
-      return false;
-    } finally {
-      setBusy(false);
-    }
-  }
-
   /** The line in its place, or at the end; "Guardar y otro" leaves the dialog open for a new one. */
   function saveLine(next: PurchaseLine, another: boolean) {
     change((d) => {
@@ -255,55 +219,17 @@ function Editor({ detail }: { detail: PurchaseDetailResponse | null }) {
 
   const date = dateKey(draft.purchasedAt);
   const time = timeKey(draft.purchasedAt);
-  const city =
-    branches.find((b) => b.city)?.city ?? lookups?.store_branches.find((b) => b.city)?.city ?? DEFAULT_CITY;
 
   return (
     <section className="flex flex-col gap-4 pb-24">
       <h1 className="text-title">{detail ? 'Compra' : 'Nueva compra'}</h1>
       <div className="grid gap-3 md:grid-cols-2">
-        <div className="flex items-end gap-2">
-          <label className="flex flex-1 flex-col gap-1">
-            <span className="text-label">Tienda</span>
-            <select
-              value={draft.storeId ?? ''}
-              onChange={(e) => change((d) => ({ ...d, storeId: e.target.value || null, branchId: null }))}
-              className="field"
-            >
-              <option value="">Elegir tienda</option>
-              {(lookups?.stores ?? []).map((s) => (
-                <option key={s.id} value={s.id}>
-                  {s.name}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="button" className="btn-text" onClick={() => setPlace('store')}>
-            Nueva tienda
-          </button>
-        </div>
-        {draft.storeId && (
-          <div className="flex items-end gap-2">
-            <label className="flex flex-1 flex-col gap-1">
-              <span className="text-label">Sucursal (opcional)</span>
-              <select
-                value={draft.branchId ?? ''}
-                onChange={(e) => change((d) => ({ ...d, branchId: e.target.value || null }))}
-                className="field"
-              >
-                <option value="">Sin sucursal</option>
-                {branches.map((b) => (
-                  <option key={b.id} value={b.id}>
-                    {b.city ? `${b.name} (${b.city})` : b.name}
-                  </option>
-                ))}
-              </select>
-            </label>
-            <button type="button" className="btn-text" onClick={() => setPlace('branch')}>
-              Nueva sucursal
-            </button>
-          </div>
-        )}
+        <PlaceFields
+          storeId={draft.storeId}
+          branchId={draft.branchId}
+          onChange={(storeId, branchId) => change((d) => ({ ...d, storeId, branchId }))}
+          onProblem={setProblem}
+        />
         <div className="flex gap-2">
           <label className="flex flex-1 flex-col gap-1">
             <span className="text-label">Fecha</span>
@@ -544,21 +470,6 @@ function Editor({ detail }: { detail: PurchaseDetailResponse | null }) {
             </button>
           </div>
         </Dialog>
-      )}
-      {place === 'store' && (
-        <NewStoreDialog
-          busy={busy}
-          onSave={(n, k) => void createStore(n, k)}
-          onClose={() => setPlace(null)}
-        />
-      )}
-      {place === 'branch' && (
-        <NewBranchDialog
-          defaultCity={city}
-          busy={busy}
-          onSave={(n, c) => void createBranch(n, c)}
-          onClose={() => setPlace(null)}
-        />
       )}
     </section>
   );

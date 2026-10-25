@@ -240,7 +240,33 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
 - **API:**
   - `GET /v1/search/variants` trae la medida, el contenido, a granel y la unidad de cada variante, y con `store_id` su último precio de lista ahí.
   - `GET /v1/purchases/:id` trae lo mismo de la variante de cada línea.
-- **Llega después:** fotos de ticket y "Extraer" (T-163, W-06) y escanear (T-164). Mientras, "Foto de ticket" de Inicio abre una compra nueva.
+- **Llega después:** fotos de ticket y "Extraer" (T-163, W-06). Mientras, "Foto de ticket" de Inicio abre una compra nueva.
+
+## 7.5 Precio de anaquel y escaneo (T-164, decisión T74)
+
+- **Escáner (`ScanDialog`):**
+  - Abre la cámara trasera en un modal con `@zxing/browser` 0.2.1 y `@zxing/library` 0.23.0. Se cargan solo al abrirlo, para no hacer más pesada la app.
+  - Lee los formatos de Android (EAN-13, EAN-8, UPC-A, UPC-E y Code 128).
+  - Un código cuenta con dos lecturas iguales en menos de 1 s, y el mismo código queda en silencio 2 s (`ScanGate`, T64). La lectura se normaliza como en Android (`ScanCodes`: solo dígitos, de 6 a 14).
+  - Sin cámara (o con el permiso negado) dice por qué, y siempre se puede escribir el código.
+- **Dónde se escanea:**
+  - **W-10:** elige la presentación del código.
+  - **W-05:** el diálogo de línea elige la presentación con su último precio en la tienda. Es un código por línea; "Guardar y otro" sigue al siguiente, sin el modo continuo de Android (RF-COM-09).
+  - **W-09:** agrega el código a la presentación con la misma revisión que uno tecleado.
+  - **W-07:** busca por el código.
+- **Código que no está en el catálogo:** W-10 y W-05 no crean productos (como S-13). Lo dicen y ofrecen "Darlo de alta", que abre `/productos/nuevo?codigo=…` con el código ya puesto en la primera presentación.
+- **W-10 Precio de anaquel**, con las reglas de Android (`ShelfRepository`, `ShelfPrices`):
+  - **Datos:** el producto (búsqueda o escaneo), la tienda y la sucursal (con "Nueva tienda" y "Nueva sucursal", el mismo `PlaceFields` de W-05) y el precio (por kilo si se pesa).
+  - **Promoción opcional:** el mismo selector de S-05. Muestra "Con la promoción: $X cada uno · $Y/L", o "Por unidad", o el aviso de MSI.
+  - **Precio efectivo:** `shelfEffectiveCents` pasa a `packages/shared` con los casos de `ShelfPricesTest`. Es lo que cuesta una pieza a la cantidad mínima que activa la promoción; en una rebaja el precio "de" es el del anaquel, y con MSI no hay precio efectivo.
+  - **Push:** la observación `shelf` de ahora y su fila de `promotions` (`observation_id`, descuento por pieza).
+  - **Foto opcional:**
+    - Se toma con `<input type="file" accept="image/*" capture="environment">`.
+    - Se reduce en el navegador como foto de producto (≤ 2048 px, JPEG 0.85, derecha por su EXIF, sin EXIF en la copia).
+    - Su fila `images` (`observation`, `shelf_photo`, `user`) va en el mismo push, y el binario sube después con `PUT /v1/images/:id/blobs/original.jpg`.
+    - Si la subida falla, el precio queda guardado y se avisa.
+  - **"Recuerda la última":** la tienda y la sucursal del último precio guardado en este navegador (`localStorage`). Android las lee de sus filas; la web no tiene filas.
+  - **Al guardar:** "Guardar" abre la ficha del producto. "Guardar y otro" conserva la tienda y dice "Precio guardado".
 
 ## 8. Pruebas
 
