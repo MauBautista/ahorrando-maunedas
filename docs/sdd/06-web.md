@@ -150,6 +150,22 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
 - `manifest.webmanifest` + `apple-touch-icon` para "Agregar a pantalla de inicio".
 - Login con Google por `signInWithPopup` y el proxy `/__/auth` (decisión T19); probar en Safari (checklist `11-pruebas.md`).
 
+## 7.1 Implementación del esqueleto (T-160, decisión T69)
+
+- **Versiones:** React Router 8.4 en modo *data* (`createBrowserRouter`; `RouterProvider` sale de `react-router/dom`), TanStack Query 5, Tailwind 4 con los tokens como tema (`styles/app.css`: `bg-surface`, `text-title`, `text-on-surface-variant`…). Cada pantalla es su propio *chunk* (`lazy`).
+- **Autenticación:** `lib/auth.ts` define `AuthPort` y `lib/firebase.ts` lo implementa con Firebase (02 §7). La app lo recibe por contexto, así que las pruebas pasan uno falso y nada sale a Google.
+- **Sesión:**
+  - `RequireSession` espera a Firebase y luego `GET /v1/me` (`MeResponse` en `packages/shared/src/api/me.ts`). Sin sesión manda a `/login` y recuerda la ruta; después del login regresa ahí.
+  - Sin red o con un error 5xx muestra "Reintentar" sin cerrar la sesión.
+  - `USER_NOT_ALLOWED` o `USER_DISABLED` cierran la sesión (el cliente HTTP) y el login muestra el mensaje; con Google, "Esta cuenta de Google no está registrada…" (02 §8).
+- **Armazón:** encabezado con la navegación arriba en pantallas anchas; en el teléfono, barra inferior con Inicio, Compras, Catálogo y Cuenta, dentro de las zonas seguras del iPhone. "Administración" aparece solo para admins y `RequireAdmin` protege `/admin/*`.
+- **Pantallas:**
+  - Inicio saluda y tiene las acciones grandes.
+  - Cuenta tiene "Cerrar sesión".
+  - Las rutas de T-161 a T-166 dicen "Esta pantalla llega pronto".
+- **Íconos:** el anillo sobre el verde de la marca lo dibuja `apps/web/scripts/icons.ts` (sin herramientas de imágenes). El manifiesto es `public/manifest.webmanifest`.
+- **Versión del cliente:** `__APP_VERSION__` sale de `apps/web/package.json` y `X-Client-Schema` es `CLIENT_SCHEMA = 1` (`lib/api.ts`), como Android.
+
 ## 8. Pruebas
 
 - Vitest + Testing Library: editor de compra (totales, promociones, validación), revisión de ticket (estados de línea), formularios de admin.

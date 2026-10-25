@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+@import './tokens.css';
+
+/* The design tokens (packages/design-tokens) as Tailwind's theme: `bg-surface`, `text-primary`, `text-title`… */
+@theme inline {
+  --color-primary: var(--mn-color-primary);
+  --color-on-primary: var(--mn-color-on-primary);
+  --color-surface: var(--mn-color-surface);
+  --color-on-surface: var(--mn-color-on-surface);
+  --color-surface-variant: var(--mn-color-surface-variant);
+  --color-on-surface-variant: var(--mn-color-on-surface-variant);
+  --color-outline: var(--mn-color-outline);
+  --color-error: var(--mn-color-error);
+  --color-on-error: var(--mn-color-on-error);
+  --color-warning: var(--mn-color-warning);
+  --color-success: var(--mn-color-success);
+  --color-price-purchase: var(--mn-price-purchase);
+  --color-price-shelf: var(--mn-price-shelf);
+  --color-price-web: var(--mn-price-web);
+  --text-display: var(--mn-font-display-size);
+  --text-display--line-height: var(--mn-font-display-line-height);
+  --text-display--font-weight: var(--mn-font-display-weight);
+  --text-title: var(--mn-font-title-size);
+  --text-title--line-height: var(--mn-font-title-line-height);
+  --text-title--font-weight: var(--mn-font-title-weight);
+  --text-label: var(--mn-font-label-size);
+  --text-label--line-height: var(--mn-font-label-line-height);
+  --text-label--font-weight: var(--mn-font-label-weight);
+  --radius-sm: var(--mn-radius-sm);
+  --radius-md: var(--mn-radius-md);
+  --radius-lg: var(--mn-radius-lg);
+  --radius-xl: var(--mn-radius-xl);
+}
+
+@layer base {
+  html {
+    -webkit-text-size-adjust: 100%;
+  }
+  body {
+    margin: 0;
+    background: var(--mn-color-surface);
+    color: var(--mn-color-on-surface);
+    font-family: system-ui, sans-serif;
+    font-size: var(--mn-font-body-size);
+    line-height: var(--mn-font-body-line-height);
+  }
+}
+
+@layer components {
+  /* 16 px at least: Safari on iPhone zooms into smaller inputs (06 §7). */
+  .field {
+    @apply min-h-12 rounded-md border border-outline bg-surface px-3 text-on-surface outline-none focus:border-primary focus:ring-2 focus:ring-primary/40;
+    font-size: max(16px, 1rem);
+  }
+  .btn-primary {
+    @apply min-h-12 rounded-full bg-primary px-6 font-medium text-on-primary disabled:opacity-50;
+  }
+  .btn-outline {
+    @apply min-h-12 rounded-full border border-outline px-6 font-medium text-on-surface disabled:opacity-50;
+  }
+  .btn-text {
+    @apply min-h-12 px-3 font-medium text-primary;
+  }
+  .tab {
+    @apply flex min-h-12 items-center justify-center rounded-full px-4 text-label text-on-surface-variant;
+  }
+  .tab-active {
+    @apply bg-surface-variant text-on-surface;
+  }
+  .action {
+    @apply flex min-h-24 items-center justify-center rounded-xl bg-surface-variant p-4 text-center font-medium text-on-surface;
+  }
+}

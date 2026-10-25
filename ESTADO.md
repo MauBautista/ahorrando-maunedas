@@ -53,6 +53,11 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-160 (2026-10-25):** esqueleto de la web en `maunedas-dev.maunedas.workers.dev`:
+  - login con usuario y contraseña o con Google;
+  - Inicio, navegación que se adapta al teléfono y a la computadora, y Cuenta con "Cerrar sesión";
+  - las demás pantallas dicen "llega pronto" (T-161 a T-166);
+  - probado en el navegador del Samsung; falta probar en Safari de iPhone.
 - **T-039 (2026-10-25):** gateway de IA y presupuesto en el Worker:
   - toda llamada a la IA pasa por un solo lugar que elige el modelo, revisa el tope de 6 USD al mes y registra el costo real;
   - reintenta una vez y no cobra lo que no respondió;
@@ -170,6 +175,7 @@
 | T66 | **Foto de ticket.** Escáner de documentos de ML Kit (1 a 4 páginas) y la app de cámara si no está disponible. Pide la tienda primero. Una compra nueva se guarda como borrador antes de sus páginas. Cada página se escribe al tomarla (`images` con `role='receipt'`, en orden por `created_at`) y va a la cola de subida. `purchases.receipt_image_id` no se usa | `purchases.store_id` es obligatorio, y guardar el borrador primero da a las páginas un dueño que se sincroniza. Escribirlas al momento cumple RF-TIC-01 sin red ni con la app cerrada. El escáner necesita Play services y descarga su módulo la primera vez. 03 §7 lee las páginas por dueño y rol. |
 | T67 | **Ordenar y vincular líneas (S-04).** Un modo "Ordenar" con ↑↓ y "Subir"/"Bajar" de TalkBack siempre, sin arrastrar. "Vincular" abre la hoja de la línea con el texto del ticket. Los alias se aprenden al confirmar cualquier compra, en `PurchaseEditor.save`; vale para S-04 y para la futura S-06 | Los botones funcionan igual con TalkBack y en pantallas chicas. Arrastrar en una lista con deslizar para borrar choca con el gesto. Un solo lugar escribe las compras, y con el id determinista confirmar dos veces no duplica. |
 | T68 | **Gateway de IA.**<br>• **Antes de llamar:** se revisa el presupuesto antes de cada intento, en micro-dólares enteros. Sin modelo elegido, sin key o con proveedor desconocido, `503`.<br>• **Qué se cobra:** cada respuesta (válida o no), con el costo reportado o el estimado. Timeouts, 5xx y 429 no se cobran y se reintentan una vez.<br>• **Errores:** un 4xx del proveedor es `502` sin reintento. Una salida no válida tras el reintento es `422 EXTRACTION_FAILED`.<br>• **Aviso del 80 %:** en E1 es una línea de log más `soft_limit_reached`. | Un intento puede gastar, así que el siguiente debe caber en el tope. En flotantes, llegar justo al tope se decidiría por redondeo. Sin respuesta no hay tokens que pagar. Una salida inválida sí costó. Un 4xx no mejora al repetirlo. El push al admin llega con T-213. |
+| T69 | **Esqueleto web.**<br>• React Router 8 (la API *data* de la 7, sin cambios para este uso), TanStack Query 5 y Tailwind 4 con los tokens como tema.<br>• Firebase detrás de `AuthPort`, inyectado por contexto.<br>• Un error 5xx o sin red en `/v1/me` ofrece "Reintentar" y no cierra la sesión.<br>• `USER_NOT_ALLOWED` o `USER_DISABLED` sí la cierran.<br>• Íconos generados por script.<br>• `CLIENT_SCHEMA = 1` en la web, como Android. | React Router 8 es la versión estable vigente con más de dos semanas, y su modo *data* conserva la API. Con un puerto inyectado las pruebas no hablan con Google. Perder la red no debe sacar a nadie. Un admin que quita la cuenta sí. Sin herramientas de imágenes en la máquina, un PNG a mano es reproducible. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -283,3 +289,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-24** — T-123: foto de ticket con el escáner de documentos (1 a 4 páginas, cámara como respaldo), guardada al tomarla y subida sola; probada en un Galaxy A53 (T66).
 - **2026-10-24** — T-124 (primera parte): ordenar líneas, "Vincular" y alias al confirmar (T67); la extracción y S-06 siguen esperando el spike C.
 - **2026-10-25** — T-039: gateway de IA con presupuesto, reintento y costo real; `GET /v1/admin/ai-budget` (T68).
+- **2026-10-25** — T-160: esqueleto web (login, armazón, sesión, cliente HTTP) desplegado en dev y probado en el Samsung; falta Safari de iPhone (T69).
