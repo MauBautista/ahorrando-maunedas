@@ -53,10 +53,11 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
-- **T-161, primera parte (2026-10-25):** catálogo y ficha en la web:
+- **T-161 (2026-10-25):** catálogo, ficha y editor de productos en la web:
   - buscar, filtrar por categoría y etiqueta y ver el mejor precio de cada producto;
   - la ficha con presentaciones, comparador por tienda e historial con gráfica;
-  - el editor de productos llega en la segunda parte.
+  - crear productos con su primera presentación, editarlos, agregar presentaciones y códigos, y (admin) borrarlos;
+  - las mismas reglas que Android: etiqueta sugerida, a granel, unidad para comparar y avisos de código ya usado.
 - **T-160 (2026-10-25):** esqueleto de la web en `maunedas-dev.maunedas.workers.dev`:
   - login con usuario y contraseña o con Google;
   - Inicio, navegación que se adapta al teléfono y a la computadora, y Cuenta con "Cerrar sesión";
@@ -181,6 +182,7 @@
 | T68 | **Gateway de IA.**<br>• **Antes de llamar:** se revisa el presupuesto antes de cada intento, en micro-dólares enteros. Sin modelo elegido, sin key o con proveedor desconocido, `503`.<br>• **Qué se cobra:** cada respuesta (válida o no), con el costo reportado o el estimado. Timeouts, 5xx y 429 no se cobran y se reintentan una vez.<br>• **Errores:** un 4xx del proveedor es `502` sin reintento. Una salida no válida tras el reintento es `422 EXTRACTION_FAILED`.<br>• **Aviso del 80 %:** en E1 es una línea de log más `soft_limit_reached`. | Un intento puede gastar, así que el siguiente debe caber en el tope. En flotantes, llegar justo al tope se decidiría por redondeo. Sin respuesta no hay tokens que pagar. Una salida inválida sí costó. Un 4xx no mejora al repetirlo. El push al admin llega con T-213. |
 | T69 | **Esqueleto web.**<br>• React Router 8 (la API *data* de la 7, sin cambios para este uso), TanStack Query 5 y Tailwind 4 con los tokens como tema.<br>• Firebase detrás de `AuthPort`, inyectado por contexto.<br>• Un error 5xx o sin red en `/v1/me` ofrece "Reintentar" y no cierra la sesión.<br>• `USER_NOT_ALLOWED` o `USER_DISABLED` sí la cierran.<br>• Íconos generados por script.<br>• `CLIENT_SCHEMA = 1` en la web, como Android. | React Router 8 es la versión estable vigente con más de dos semanas, y su modo *data* conserva la API. Con un puerto inyectado las pruebas no hablan con Google. Perder la red no debe sacar a nadie. Un admin que quita la cuenta sí. Sin herramientas de imágenes en la máquina, un PNG a mano es reproducible. |
 | T70 | **Catálogo y ficha web.** Filtros y pestaña en la URL. "Ver más" en vez de desplazamiento infinito. Comparar como tabla con desplazamiento horizontal. Recharts solo al abrir Historial. Antigüedad contada desde que llegaron los datos | Una búsqueda o una pestaña deben sobrevivir a "Atrás" y poder compartirse. Un botón funciona con teclado y lector de pantalla, y no depende de `IntersectionObserver`. En la web la tabla cabe; en Android se usaron tarjetas por la letra al 200 %. La ficha pesaba 446 KB por la gráfica. La regla de pureza de React no deja leer el reloj durante el render. |
+| T71 | **Editor web por push.**<br>• Un producto nuevo y su primera presentación van en un push; cada presentación se guarda en su diálogo.<br>• Los cambios mandan solo lo editado, con `updated_at` posterior a lo leído.<br>• `GET /v1/products/:id` agrega `barcode_rows` para poder quitar códigos.<br>• El dueño de un código se busca con `GET /v1/search/variants`, no con `/v1/barcodes/:code`.<br>• Tras un `STALE` se recarga el formulario.<br>• La lectura de cantidades y precios y la conversión de contenido pasan a `packages/shared` con los casos de Android. | La web no guarda datos locales (04 §7): escribe y vuelve a consultar. El servidor actualiza solo las columnas enviadas (04 §3.3). Quitar un código es el tombstone de su fila, que antes no tenía id en la web. La búsqueda no consulta Open Food Facts. La misma regla de captura en los dos clientes evita diferencias de redondeo. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -296,3 +298,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-25** — T-039: gateway de IA con presupuesto, reintento y costo real; `GET /v1/admin/ai-budget` (T68).
 - **2026-10-25** — T-160: esqueleto web (login, armazón, sesión, cliente HTTP) desplegado en dev y probado en el Samsung; falta Safari de iPhone (T69).
 - **2026-10-25** — T-161 (primera parte): catálogo y ficha web con comparador e historial, desplegados en dev (T70).
+- **2026-10-25** — T-161: editor web de productos y presentaciones por push; `barcode_rows` en la ficha; reglas de captura en `shared` (T71).

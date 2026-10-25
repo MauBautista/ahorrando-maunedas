@@ -7,14 +7,18 @@ import { createQueryClient } from '../lib/queryClient';
 import { routes } from '../router';
 import { FakeAuth, me } from './fakes';
 
-type Handler = (url: URL) => unknown;
+type Handler = (url: URL, body: unknown) => unknown;
 
 /** A fake Worker: `/v1/me` answers for the signed-in [role]; other paths by their handler (JSON) or 404. */
 export function fakeWorker(handlers: Record<string, Handler>, role: 'admin' | 'member' = 'member') {
   const requests: URL[] = [];
-  const fetchImpl: typeof fetch = async (input) => {
+  /** What each POST sent, in order. */
+  const posts: Array<{ path: string; body: unknown }> = [];
+  const fetchImpl: typeof fetch = async (input, init) => {
     const url = new URL(String(input), 'https://app.test');
     requests.push(url);
+    const body = init?.body ? JSON.parse(String(init.body)) : undefined;
+    if (init?.method === 'POST') posts.push({ path: url.pathname, body });
     if (url.pathname === '/v1/me') return Response.json(me(role));
     const handler = handlers[url.pathname];
     if (!handler)
@@ -22,10 +26,10 @@ export function fakeWorker(handlers: Record<string, Handler>, role: 'admin' | 'm
         { error: { code: 'NOT_FOUND', message: 'No se encontró lo que buscas.' } },
         { status: 404 },
       );
-    const body = handler(url);
-    return body instanceof Response ? body : Response.json(body);
+    const answer = handler(url, body);
+    return answer instanceof Response ? answer : Response.json(answer);
   };
-  return { fetchImpl, requests };
+  return { fetchImpl, requests, posts };
 }
 
 /** The whole app at [path], signed in, over the fake Worker. */

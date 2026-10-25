@@ -113,7 +113,7 @@ export const products = new Hono<AppEnv>()
         .bind(id),
       db
         .prepare(
-          `SELECT b.variant_id, b.code FROM barcodes b JOIN variants v ON v.id = b.variant_id
+          `SELECT b.id, b.variant_id, b.code, b.updated_at FROM barcodes b JOIN variants v ON v.id = b.variant_id
            WHERE v.product_id = ?1 AND b.deleted_at IS NULL ORDER BY b.code`,
         )
         .bind(id),
@@ -134,8 +134,7 @@ export const products = new Hono<AppEnv>()
         ...variantRows.map((v) => v.primary_image_id as string | null),
       ]),
     ]);
-    const codesOf = (variantId: unknown) =>
-      barcodes!.results.filter((b) => b.variant_id === variantId).map((b) => String(b.code));
+    const rowsOf = (variantId: unknown) => barcodes!.results.filter((b) => b.variant_id === variantId);
 
     return c.json({
       product: {
@@ -145,7 +144,9 @@ export const products = new Hono<AppEnv>()
       },
       variants: variantRows.map((v) => ({
         ...v,
-        barcodes: codesOf(v.id),
+        barcodes: rowsOf(v.id).map((b) => String(b.code)),
+        // The web edits codes by push: removing one is its row's tombstone (T-161).
+        barcode_rows: rowsOf(v.id).map((b) => ({ id: b.id, code: b.code, updated_at: b.updated_at })),
         image: (v.primary_image_id && images.get(String(v.primary_image_id))) || null,
         latest: latest.get(String(v.id)) ?? [],
       })),
