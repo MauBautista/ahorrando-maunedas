@@ -16,7 +16,9 @@
     "firebase": "catalog:",
     "react": "catalog:",
     "react-dom": "catalog:",
-    "react-router": "catalog:"
+    "react-is": "catalog:",
+    "react-router": "catalog:",
+    "recharts": "catalog:"
   },
   "devDependencies": {
     "@tailwindcss/vite": "catalog:",

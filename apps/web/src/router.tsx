@@ -32,9 +32,15 @@ export const routes: RouteObject[] = [
           { path: 'compras/:id', ...soon('Compra') },
           { path: 'compras/:id/editar', ...soon('Editar compra') },
           { path: 'compras/:id/ticket', ...soon('Revisión de ticket') },
-          { path: 'catalogo', ...soon('Catálogo') },
+          {
+            path: 'catalogo',
+            lazy: () => import('./features/catalog/CatalogPage').then((m) => ({ Component: m.CatalogPage })),
+          },
           { path: 'productos/nuevo', ...soon('Nuevo producto') },
-          { path: 'productos/:id', ...soon('Producto') },
+          {
+            path: 'productos/:id',
+            lazy: () => import('./features/catalog/ProductPage').then((m) => ({ Component: m.ProductPage })),
+          },
           { path: 'productos/:id/editar', ...soon('Editar producto') },
           { path: 'anaquel/nuevo', ...soon('Precio de anaquel') },
           {
