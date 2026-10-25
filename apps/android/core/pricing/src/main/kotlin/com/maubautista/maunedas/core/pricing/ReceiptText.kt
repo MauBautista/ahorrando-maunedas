@@ -16,6 +16,9 @@ object ReceiptText {
 
     private fun collapse(s: String) = s.replace(SPACES, " ").trimJs()
 
+    /** What the extraction writes for a line it cannot read (09 §4.2); such a line never teaches an alias (09 §7). */
+    const val ILLEGIBLE = "ILEGIBLE"
+
     /** "2 @ PAN BIMBO BLANCO 14.25 28.50" → "PAN BIMBO BLANCO". */
     fun normalize(raw: String): String {
         var s = collapse(foldAccents(raw).uppercase()) // 1

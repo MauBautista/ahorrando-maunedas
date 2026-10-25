@@ -40,6 +40,14 @@
     <string name="editor_store_first">Primero elige la tienda.</string>
     <string name="editor_line_qty">%1$s × %2$s</string>
     <string name="editor_unlinked">Sin vincular: %1$s</string>
+    <string name="editor_link">Vincular</string>
+    <string name="line_ticket_text">En el ticket: %1$s</string>
+    <string name="editor_reorder">Ordenar</string>
+    <string name="editor_reorder_done">Listo</string>
+    <string name="editor_move_up">Subir</string>
+    <string name="editor_move_down">Bajar</string>
+    <string name="editor_move_line_up">Subir %1$s</string>
+    <string name="editor_move_line_down">Bajar %1$s</string>
     <string name="editor_remove_line">Quitar %1$s</string>
     <string name="editor_line_removed">Se quitó %1$s.</string>
     <string name="editor_undo">Deshacer</string>

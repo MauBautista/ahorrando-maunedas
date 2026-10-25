@@ -168,11 +168,14 @@ Acciones:
 
 - **Implementación (T-121, decisión T60):**
   - **Barra fija:** solo el total calculado y "Guardar borrador" / "Confirmar". El resto del pie (Σ, descuentos de ticket, total del ticket y la diferencia en rojo) se desplaza con la lista, porque un pie fijo completo taparía la pantalla con letra al 200 %.
-  - **Productos:** se capturan en orden y se renumeran al guardar; reordenarlos llega con T-124. Se quitan deslizando o con su botón (accesible), con "Deshacer".
+  - **Productos:** se renumeran al guardar (`line_no`) en el orden de la lista. Se quitan deslizando o con su botón (accesible), con "Deshacer".
+  - **Ordenar (T-124, decisión T67):** "Ordenar" cambia la ✕ de cada línea por ↑ y ↓ y desactiva el deslizar; "Listo" vuelve. Con TalkBack, cada línea ofrece "Subir" y "Bajar" siempre, sin entrar al modo. No hay arrastrar.
+  - **Vincular:** una línea sin producto (de ticket) muestra "Vincular". Abre su hoja con lo que leyó el ticket ("En el ticket: …") y la búsqueda de presentación; se conservan la cantidad y el precio del ticket.
+  - **Alias al confirmar (09 §7.4):** al confirmar, cada línea con texto de ticket y presentación enseña su alias a la tienda. El id es UUIDv5 de tienda y texto normalizado. Confirmar otra vez no escribe nada; vincular el texto a otra presentación mueve el alias; `ILEGIBLE` no enseña nada. Los códigos impresos en el ticket (§7.5) llegan con la extracción.
   - **Confirmar** pide tienda y un producto. Si el total no cuadra por más de $1.00, aparece "El total no cuadra por $X. ¿Confirmar de todos modos?".
   - **Autoguardado:** al salir (Atrás) o al pasar la app a segundo plano, si hay tienda y algo cambió; un `Mutex` evita crear la compra dos veces.
   - **Fecha y hora** son de la Ciudad de México; la hora se teclea (`TimeInput`).
-  - **Llegan después:** "Extraer" y "Vincular" con T-124.
+  - **Llega después:** "Extraer" con T-124.
 - **Implementación de "Foto de ticket" (T-123, decisión T66):**
   - **Escáner:** el escáner de documentos de ML Kit (Google Play services, sin permiso de cámara) toma de 1 a 4 páginas recortadas y enderezadas, también de la galería. Si Play services no puede abrirlo (el módulo no se ha descargado y no hay red, o no hay Play services), la app de cámara toma una página.
   - **Tienda primero**, como en "Escanear productos", porque `purchases.store_id` es obligatorio. Desde Inicio se abre la hoja de tiendas y luego el escáner.

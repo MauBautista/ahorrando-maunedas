@@ -141,4 +141,22 @@ class PurchaseEditorViewModelTest {
             assertEquals(before, db.purchases().byId(id)!!.updatedAt)
             assertNull(vm.state.value.problem)
         }
+
+    @Test
+    fun linesMoveUpAndDownWithinTheList() =
+        runTest(dispatcher) {
+            vm.chooseStore(StoreChoice("s", "Soriana"))
+            addLine(1_000)
+            addLine(2_000)
+            addLine(3_000)
+            vm.moveLine(2, -1)
+            assertEquals(listOf(1_000L, 3_000L, 2_000L), vm.state.value.draft.lines.map { it.unitPriceCents })
+            vm.moveLine(0, 1)
+            assertEquals(listOf(3_000L, 1_000L, 2_000L), vm.state.value.draft.lines.map { it.unitPriceCents })
+            // Past either end nothing moves.
+            vm.moveLine(0, -1)
+            assertEquals(listOf(3_000L, 1_000L, 2_000L), vm.state.value.draft.lines.map { it.unitPriceCents })
+            vm.moveLine(2, 1)
+            assertEquals(listOf(3_000L, 1_000L, 2_000L), vm.state.value.draft.lines.map { it.unitPriceCents })
+        }
 }

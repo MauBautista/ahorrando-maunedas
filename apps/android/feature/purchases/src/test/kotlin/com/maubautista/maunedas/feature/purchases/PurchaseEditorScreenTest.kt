@@ -11,6 +11,7 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsNotEnabled
 import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
@@ -34,6 +35,7 @@ import com.maubautista.maunedas.core.model.DisplayUnit
 import com.maubautista.maunedas.core.model.Measure
 import com.maubautista.maunedas.core.pricing.PromoParams
 import com.maubautista.maunedas.core.pricing.PromoType
+import java.time.Instant
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertTrue
 import org.junit.Before
@@ -43,7 +45,6 @@ import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
 import org.robolectric.annotation.Config
 import org.robolectric.annotation.GraphicsMode
-import java.time.Instant
 
 /** A 360 × 800 dp phone with native graphics, as in the design system tests (T-106). */
 @RunWith(RobolectricTestRunner::class)
@@ -143,6 +144,42 @@ class PurchaseEditorScreenTest {
         compose.onNodeWithText("Nueva compra").assertExists()
         compose.onNodeWithText("El total no cuadra por $1.50. ¿Confirmar de todos modos?").assertExists()
         compose.onNodeWithText("Eliminar compra").assertDoesNotExist()
+    }
+
+    @Test
+    fun aTicketLineWithoutAProductOffersVincular() {
+        val calls = mutableListOf<String>()
+        show(actions = EditorActions(onEditLine = { calls += "edit:$it" }))
+        scrollTo("Vincular")
+        compose.onNodeWithText("Vincular").performClick()
+        assertEquals(listOf("edit:1"), calls)
+    }
+
+    @Test
+    fun linkingSaysWhatTheTicketRead() {
+        compose.setContent { MaunedasTheme { LineSheet(LineForm.of(draft.lines[1]), {}, {}, {}, {}) } }
+        compose.onNodeWithText("En el ticket: LCH LALA ENT 1L").assertExists()
+        compose.onNodeWithText("Buscar", substring = true).assertExists()
+    }
+
+    @Test
+    fun linesMoveWithOrdenarAndWithTalkBack() {
+        val moves = mutableListOf<String>()
+        show(actions = EditorActions(onMoveLine = { i, d -> moves += "$i:$d" }))
+        // TalkBack: the first line can only go down, the last only up.
+        fun actionsOf(text: String) =
+            compose.onNode(hasText(text, substring = true) and SemanticsMatcher.keyIsDefined(SemanticsActions.CustomActions)).fetchSemanticsNode().config[SemanticsActions.CustomActions]
+        assertEquals(listOf("Bajar"), actionsOf("Shampoo Herbal · 400 ml").map { it.label })
+        assertEquals(listOf("Subir"), actionsOf("LCH LALA ENT 1L").map { it.label })
+        actionsOf("LCH LALA ENT 1L").single().action()
+        // "Ordenar" puts the arrows where the remove button was.
+        compose.onNodeWithText("Ordenar").performClick()
+        compose.onNodeWithContentDescription("Quitar Shampoo Herbal · 400 ml").assertDoesNotExist()
+        compose.onNodeWithContentDescription("Subir Shampoo Herbal · 400 ml").assertIsNotEnabled()
+        compose.onNodeWithContentDescription("Bajar Shampoo Herbal · 400 ml").performClick()
+        compose.onNodeWithText("Listo").performClick()
+        compose.onNodeWithContentDescription("Quitar Shampoo Herbal · 400 ml").assertExists()
+        assertEquals(listOf("1:-1", "0:1"), moves)
     }
 
     @Test

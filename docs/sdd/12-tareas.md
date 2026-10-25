@@ -344,6 +344,9 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - 7 pruebas (T66).
 ### [ ] T-124 · Revisión de ticket (S-06)
 - **Incluye (T60):** reordenar las líneas de S-04 (hoy quedan en el orden en que se capturan) y "Vincular" en las líneas sin vincular.
+- **Avance (2026-10-24, T67):** ya están "Ordenar" (↑↓, y "Subir"/"Bajar" con TalkBack), "Vincular" y los alias al confirmar (09 §7.4).
+  - Falta lo que depende de la extracción (spike C y la key de OpenRouter): "Extraer", S-06 y los códigos del ticket (§7.5).
+  - 6 pruebas.
 - **Docs:** 09 §7 · **Depende de:** T-123, T-040, T-101
 - **Hecho cuando:** estados de línea, aceptar sugerencia, crear producto desde una línea, confirmar crea compra + alias + códigos; segunda compra se vincula sola.
 ### [x] T-125 · Precio de anaquel (S-13)
