@@ -227,7 +227,7 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
   - **Más acciones en cada producto:** subir, bajar y quitar con "Deshacer". Una línea sin vincular (de ticket) dice "Vincular" y conserva cantidad y precio.
   - **Pie:** Σ, descuentos del ticket (diálogo con descripción y monto), total calculado, "Total del ticket" y "No cuadra por $X".
   - **Confirmar:**
-    - Pide tienda, un producto y que ninguno esté sin precio (T64).
+    - Pide tienda, un producto y que ninguno esté sin precio (T64), y que los descuentos del ticket no igualen ni superen la suma de productos (T41).
     - Si no cuadra por más de $1.00, pregunta antes.
     - Una línea de ticket vinculada enseña su alias a la tienda (09 §7.4; la web no lee los alias, así que lo escribe cada vez, con el mismo id UUIDv5).
   - **Eliminar compra:** cualquiera (RF-COM-08); se lleva sus líneas, promociones y páginas (04 §6.2).

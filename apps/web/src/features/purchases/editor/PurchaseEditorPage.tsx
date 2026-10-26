@@ -126,7 +126,10 @@ function Editor({ detail }: { detail: PurchaseDetailResponse | null }) {
     void saveAndShow(false);
   }
 
-  /** RF-COM-06/07: needs a store and a product with its price; a total that does not match asks first. */
+  /**
+   * RF-COM-06/07: needs a store and a product with its price, and ticket discounts below the lines (T41); a total
+   * that does not match asks first.
+   */
   function confirm() {
     const need = !draft.storeId
       ? 'Elige la tienda para confirmar.'
@@ -134,7 +137,10 @@ function Editor({ detail }: { detail: PurchaseDetailResponse | null }) {
         ? 'Agrega al menos un producto para confirmar.'
         : draft.lines.some((l) => l.unitPriceCents === 0)
           ? 'Hay productos sin precio: escríbelo antes de confirmar.'
-          : null;
+          : // Discounts that reach the lines would leave every line at $0 in the history (decision T41).
+            totals.ticket_discount_cents > 0 && totals.ticket_discount_cents >= totals.lines_cents
+            ? 'Con esos descuentos del ticket la compra queda en $0: revisa los montos antes de confirmar.'
+            : null;
     if (need) return setProblem(need);
     if (totals.mismatch) return setMismatch(totals.difference_cents);
     void saveAndShow(true);

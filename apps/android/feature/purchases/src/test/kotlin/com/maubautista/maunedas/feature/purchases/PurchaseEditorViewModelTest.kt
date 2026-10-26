@@ -91,6 +91,35 @@ class PurchaseEditorViewModelTest {
         }
 
     @Test
+    fun ticketDiscountsThatReachTheLinesDoNotConfirmButSaveAsDraft() =
+        runTest(dispatcher) {
+            vm.chooseStore(StoreChoice("s", "Soriana"))
+            addLine(2_850)
+            // Equal to the lines: every line would enter the price history at $0 (decision T41).
+            vm.newDiscount()
+            vm.onDiscount { it.copy(description = "Cupón", amountCents = 2_850) }
+            vm.saveDiscount("Descuento")
+            vm.confirm()
+            advanceUntilIdle()
+            assertEquals(R.string.editor_discounts_exceed, vm.state.value.problem)
+            assertEquals(0, purchases())
+            vm.editDiscount(0)
+            vm.onDiscount { it.copy(amountCents = 2_849) }
+            vm.saveDiscount("Descuento")
+            assertEquals(null, vm.state.value.problem)
+            vm.editDiscount(0)
+            vm.onDiscount { it.copy(amountCents = 9_000) }
+            vm.saveDiscount("Descuento")
+            vm.confirm()
+            advanceUntilIdle()
+            assertEquals(R.string.editor_discounts_exceed, vm.state.value.problem)
+            assertEquals(0, purchases())
+            vm.saveDraft()
+            advanceUntilIdle()
+            assertEquals("draft", db.purchases().byId(vm.state.value.draft.id!!)!!.status)
+        }
+
+    @Test
     fun aTotalThatDoesNotMatchAsksFirst() =
         runTest(dispatcher) {
             vm.chooseStore(StoreChoice("s", "Soriana"))
