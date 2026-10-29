@@ -52,3 +52,29 @@ export interface AgentWorkResponse {
   image_jobs_queued: number;
   config: { min_spacing_s: Record<string, number> };
 }
+
+/** One check of a listing by the agent (07 §5.2). */
+export const AgentResultSchema = z.object({
+  listing_id: z.uuid(),
+  checked_at: z.number().int().positive(),
+  status: z.enum(['ok', 'not_found', 'blocked', 'error']),
+  price_cents: z.number().int().nonnegative().nullable(),
+  list_price_cents: z.number().int().nonnegative().nullable().optional(),
+  in_stock: z.boolean().nullable().optional(),
+  promo_text: z.string().max(300).nullable().optional(),
+  /** Seller, method… kept as the observation's `extra`. */
+  extra: z.record(z.string(), z.unknown()).nullable().optional(),
+  error: z.string().max(500).nullable().optional(),
+});
+
+export type AgentResult = z.infer<typeof AgentResultSchema>;
+
+/** `POST /agent/v1/observations`: 1 to 20 results (CLAUDE.md rule 13). */
+export const AgentObservationsRequestSchema = z.object({
+  results: z.array(AgentResultSchema).min(1).max(20),
+});
+
+export interface AgentObservationsResponse {
+  accepted: number;
+  observations_created: number;
+}

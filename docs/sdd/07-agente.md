@@ -272,6 +272,13 @@ export async function ingest(env: Env, ctx: ExecutionContext, results: AgentResu
 }
 ```
 
+**Implementación (T-211, decisión T79):**
+- **Orden:** los resultados se toman por `checked_at`, y cada uno se compara contra el anterior del mismo listing en la misma petición; así un lote con varias revisiones también se comprime. Un `checked_at` más de 5 min en el futuro se toma como "ahora".
+- **Fallas:** `error` y `blocked` suman a `consecutive_failures` y conservan los últimos precios conocidos. `ok` y `not_found` lo reinician, porque la página respondió.
+- **Sin precio:** un `ok` sin precio (agotado) actualiza el estado pero no crea observación, porque `price_cents` es obligatorio. Al volver con precio, el cambio de existencia la crea.
+- **Observación:** `observed_at` es `checked_at`, `updated_by = 'agent'`, `extra` con un máximo de 4000 caracteres. El estado y la observación llevan la misma `version` nueva, una por petición (ninguna si todo era reintento).
+- **Después de responder:** `afterIngest` guarda, para T-212, la observación creada con el estado anterior. Por ahora solo deja la traza `listing_blocked`; las alertas llegan con T-212 y el aviso al admin con T-213.
+
 ## 7. Scheduler
 
 ```python
