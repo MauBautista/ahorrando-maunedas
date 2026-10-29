@@ -103,8 +103,8 @@ describe('monthWindow (09 §2)', () => {
 describe('budget', () => {
   it('only this month counts, and an estimate that would pass the budget is refused', async () => {
     await usageAt(Date.UTC(2026, 9, 1, 5, 59), 3); // September in Mexico City
-    await usageAt(Date.UTC(2026, 9, 1, 6), 5.995); // October
-    expect(await spentThisMonthUsd(env.DB, OCT_15)).toBe(5.995);
+    await usageAt(Date.UTC(2026, 9, 1, 6), 4.995); // October
+    expect(await spentThisMonthUsd(env.DB, OCT_15)).toBe(4.995);
     // Landing exactly on the budget is allowed; one micro-dollar more is not.
     await expect(assertBudget(env, 0.005, OCT_15)).resolves.toBeUndefined();
     const refused = await assertBudget(env, 0.005001, OCT_15).catch((e) => e);
@@ -112,21 +112,21 @@ describe('budget', () => {
     expect([refused.status, refused.code, refused.details]).toEqual([
       402,
       'AI_BUDGET_EXCEEDED',
-      { spent_usd: 5.995, budget_usd: 6 },
+      { spent_usd: 4.995, budget_usd: 5 },
     ]);
   });
 
   it('records the reported cost or the estimate, and warns once a month past the soft limit', async () => {
-    const usage = { provider: 'openrouter', model: 'm', input_tokens: 10, output_tokens: 5, cost_usd: 4.79 };
-    expect(await recordUsage(env, 'receipt', ADMIN_ID, usage, 0.01, OCT_15)).toBe(4.79);
+    const usage = { provider: 'openrouter', model: 'm', input_tokens: 10, output_tokens: 5, cost_usd: 3.99 };
+    expect(await recordUsage(env, 'receipt', ADMIN_ID, usage, 0.01, OCT_15)).toBe(3.99);
     expect(await recordUsage(env, 'receipt', null, { ...usage, cost_usd: null }, 0.01, OCT_15 + 1)).toBe(
       0.01,
     );
     expect((await rows()).map((r) => [r.user_id, r.cost_usd_micros])).toEqual([
-      [ADMIN_ID, 4_790_000],
+      [ADMIN_ID, 3_990_000],
       [null, 10_000],
     ]);
-    // 4.80 of 6 USD is 80 %: the mark is written by the call that crossed it, and only once.
+    // 4.00 of 5 USD is 80 %: the mark is written by the call that crossed it, and only once.
     const mark = await env.DB.prepare(
       `SELECT value, expires_at FROM token_cache WHERE key = 'ai_soft:2026-10'`,
     ).first();
@@ -143,7 +143,7 @@ describe('budget', () => {
     await usageAt(Date.UTC(2026, 8, 20), 9, 'receipt'); // September
     expect(await budgetSummary(env, OCT_15)).toEqual({
       month: '2026-10',
-      budget_usd: 6,
+      budget_usd: 5,
       spent_usd: 0.79,
       soft_limit_pct: 80,
       soft_limit_reached: false,
@@ -274,7 +274,7 @@ describe('GET /v1/admin/ai-budget', () => {
     expect(res.status).toBe(200);
     expect(await res.json()).toEqual({
       month: monthWindow(now).key,
-      budget_usd: 6,
+      budget_usd: 5,
       spent_usd: 4.9,
       soft_limit_pct: 80,
       soft_limit_reached: true,

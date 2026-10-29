@@ -509,7 +509,7 @@ AI_RECEIPT_PROVIDER = "openrouter"
 AI_RECEIPT_MODEL = "<modelo de visión económico, se elige en el spike C>"
 AI_IMAGE_EDIT_PROVIDER = "openrouter"
 AI_IMAGE_EDIT_MODEL = "<modelo de edición de imagen>"
-AI_MONTHLY_BUDGET_USD = "6"
+AI_MONTHLY_BUDGET_USD = "5"
 AI_SOFT_LIMIT_PCT = "80"
 ```
 

@@ -37,7 +37,7 @@
     "AI_IMAGE_EDIT_PROVIDER": "openrouter",
     "AI_IMAGE_EDIT_MODEL": "<etapa 3>",
     "AI_IMAGE_EDIT_EST_COST_USD": "0.04",
-    "AI_MONTHLY_BUDGET_USD": "6",
+    "AI_MONTHLY_BUDGET_USD": "5",
     "AI_SOFT_LIMIT_PCT": "80",
   },
   "env": {
@@ -64,7 +64,7 @@
         "AI_IMAGE_EDIT_PROVIDER": "openrouter",
         "AI_IMAGE_EDIT_MODEL": "<etapa 3>",
         "AI_IMAGE_EDIT_EST_COST_USD": "0.04",
-        "AI_MONTHLY_BUDGET_USD": "6",
+        "AI_MONTHLY_BUDGET_USD": "5",
         "AI_SOFT_LIMIT_PCT": "80",
       },
     },

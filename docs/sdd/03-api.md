@@ -103,7 +103,7 @@ export interface Env {
   AI_IMAGE_EDIT_PROVIDER: string;
   AI_IMAGE_EDIT_MODEL: string;
   AI_IMAGE_EDIT_EST_COST_USD: string;      // E3
-  AI_MONTHLY_BUDGET_USD: string;           // "6"
+  AI_MONTHLY_BUDGET_USD: string;           // "5"
   AI_SOFT_LIMIT_PCT: string;               // "80"
   // secrets
   GOOGLE_SERVICE_ACCOUNT: string;          // JSON de la cuenta de servicio
@@ -146,7 +146,7 @@ export interface Env {
     "AI_IMAGE_EDIT_PROVIDER": "openrouter",
     "AI_IMAGE_EDIT_MODEL": "<etapa 3>",
     "AI_IMAGE_EDIT_EST_COST_USD": "0.04",
-    "AI_MONTHLY_BUDGET_USD": "6",
+    "AI_MONTHLY_BUDGET_USD": "5",
     "AI_SOFT_LIMIT_PCT": "80"
   },
   "env": {
@@ -167,7 +167,7 @@ export interface Env {
         "AI_IMAGE_EDIT_PROVIDER": "openrouter",
         "AI_IMAGE_EDIT_MODEL": "<etapa 3>",
         "AI_IMAGE_EDIT_EST_COST_USD": "0.04",
-        "AI_MONTHLY_BUDGET_USD": "6",
+        "AI_MONTHLY_BUDGET_USD": "5",
         "AI_SOFT_LIMIT_PCT": "80"
       }
     }
