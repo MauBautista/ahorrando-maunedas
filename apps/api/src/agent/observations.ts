@@ -1,5 +1,6 @@
 import type { AgentResult } from '@maunedas/shared/api/agent';
 import { uuidv7 } from '@maunedas/shared/util/uuid';
+import { type AlertEnv, type Deliver, evaluateAlerts } from '../alerts/engine';
 import { log } from '../util/log';
 
 const VERSION = `(SELECT value FROM sync_meta WHERE key = 'version')`;
@@ -201,9 +202,20 @@ export async function ingest(db: D1Database, results: AgentResult[], now: number
 }
 
 /**
- * After the answer (`ctx.waitUntil`, CLAUDE.md rule 13): the alerts of the new observations (T-212, 08) and the
- * admin's notice of a newly blocked store (T-213, 08 §5). Until those land, it only leaves the trace.
+ * After the answer (`ctx.waitUntil`, CLAUDE.md rule 13): the alerts of the new observations (08) and, with T-213,
+ * the admin's notice of a newly blocked store (08 §5), for which it leaves the trace meanwhile. A failure here never
+ * reaches the agent, whose checks are already stored; it is logged.
  */
-export async function afterIngest(result: IngestResult): Promise<void> {
+export async function afterIngest(
+  env: AlertEnv,
+  result: IngestResult,
+  now: number,
+  deliver?: Deliver,
+): Promise<void> {
   for (const id of result.newlyBlocked) log('warn', 'listing_blocked', { listing_id: id });
+  try {
+    await evaluateAlerts(env, result.created, now, deliver);
+  } catch (e) {
+    log('error', 'alerts_failed', { error: e instanceof Error ? e.message : String(e) });
+  }
 }
