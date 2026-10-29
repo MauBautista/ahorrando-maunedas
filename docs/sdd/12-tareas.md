@@ -440,8 +440,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-200 · Proyecto del agente
 - **Docs:** 07 §2–4, 07 §12–13 · **Depende de:** T-011, T-201 (el healthcheck necesita `/work`)
 - **Hecho cuando:** contenedor corre en el servidor, SQLite local creada, logs JSON, healthcheck.
-### [ ] T-201 · `/agent/v1` auth y `/work`
+### [~] T-201 · `/agent/v1` auth y `/work`
 - **Docs:** 07 §5.1 · **Depende de:** T-026
+- **Avance (2026-10-29, T78):**
+  - **Hecho:** token por hash, `POST /agent/v1/work` con la respuesta de 07 §5.1 y `agent_status` con la regla de versión.
+  - **Script:** `apps/api/scripts/agent-token.sh` genera el token en `agent/.env` y sube su hash.
+  - **Pruebas:** 6, con 8 mutaciones detectadas.
+  - **Falta:** que Mauricio corra el script en dev y en prod.
 - **Hacer:** generar `AGENT_TOKEN` (en `agent/.env` y en el gestor de contraseñas) y cargar su hash con `wrangler secret put AGENT_TOKEN_SHA256` en dev y prod.
 - **Hecho cuando:** token por hash, respuesta de 07 §5.1, `agent_status` con la regla de versión cada 10 min.
 ### [ ] T-202 · Scheduler, gate y outbox del agente

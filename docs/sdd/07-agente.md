@@ -166,6 +166,15 @@ Del lado del Worker:
 - Actualiza `agent_status` (`last_heartbeat_at`, `agent_version`, `info`). Solo asigna nueva `version` (y por tanto baja a los clientes) si cambió `info.blocked`, si el agente estaba fuera de línea o si pasaron ≥ 10 min desde la última versión.
 - Si el agente estaba fuera de línea y el watchdog había avisado, borra la marca para avisar de nuevo en la siguiente caída.
 
+**Implementación (T-201, decisión T78):**
+- **Token:** `src/agent/auth.ts` compara en tiempo constante el SHA-256 hexadecimal del bearer con `AGENT_TOKEN_SHA256`. Sin token, con otro token o sin hash configurado → `401`. El token se genera una vez en `agent/.env` con `apps/api/scripts/agent-token.sh dev|prod`, que solo sube su hash.
+- **Listings:** páginas de 200 por `(version, id)`. `upserts` son los vivos y activos; `removed` los borrados o inactivos de la misma página. Sin filas nuevas, el cursor se devuelve igual.
+- **`store_defaults`:** todas las tiendas vivas. **`check_now`:** listings vivos y activos, en orden de solicitud.
+- **`agent_status`:**
+  - Siempre guarda latido, versión del agente e `info`; `info.blocked` se guarda como conjunto ordenado, así un cambio de orden no cuenta. Los campos que el agente agregue a `info` se conservan, con un máximo de 4000 caracteres (`413` si se pasa).
+  - Nueva `version` (los clientes la bajan) si cambió el conjunto bloqueado, si el agente estaba fuera de línea (latido de hace ≥ 3 min, el mismo umbral de "en línea" de `GET /v1/admin/agent`) o si pasaron ≥ 10 min desde la última versión. `updated_at` es la hora de esa última versión.
+  - Al volver de una caída borra la marca del watchdog: `agent_offline_notified` en `token_cache`, que escribirá T-214.
+
 ### 5.2 `POST /agent/v1/observations`
 
 ```jsonc

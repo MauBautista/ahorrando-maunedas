@@ -21,6 +21,7 @@ import { purchases } from './routes/purchases';
 import { search } from './routes/search';
 import { sync } from './routes/sync';
 import { variants } from './routes/variants';
+import { agent } from './agent/routes';
 
 export interface AppOptions {
   /** Keys that verify Firebase ID tokens; tests pass local keys. Default: Google's JWKS. */
@@ -65,6 +66,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', barcodes);
   app.route('/', images);
   app.route('/', admin);
+  app.route('/', agent);
   options.extraRoutes?.(app);
   return app;
 }
