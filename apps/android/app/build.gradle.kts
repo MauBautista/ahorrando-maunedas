@@ -10,12 +10,30 @@ val syntheticEmailDomain = providers.gradleProperty("maunedas.syntheticEmailDoma
 fun webClientId(flavor: String) = providers.gradleProperty("maunedas.googleWebClientId.$flavor").getOrElse("")
 fun quoted(value: String) = "\"$value\""
 
+// Release signing (T-004 prod, 05 §1): the keystore and its passwords live outside git, in the user's
+// ~/.gradle/gradle.properties. Without them a release build comes out unsigned.
+val releaseStore = providers.gradleProperty("maunedas.release.storeFile").orNull
+
 android {
     defaultConfig {
         applicationId = "com.maubautista.maunedas"
         versionCode = 1
         versionName = "0.0.1"
         buildConfigField("String", "SYNTHETIC_EMAIL_DOMAIN", quoted(syntheticEmailDomain))
+    }
+
+    signingConfigs {
+        if (releaseStore != null) {
+            create("release") {
+                storeFile = file(releaseStore)
+                storePassword = providers.gradleProperty("maunedas.release.storePassword").get()
+                keyAlias = providers.gradleProperty("maunedas.release.keyAlias").get()
+                keyPassword = providers.gradleProperty("maunedas.release.keyPassword").get()
+            }
+        }
+    }
+    buildTypes {
+        getByName("release") { signingConfig = signingConfigs.findByName("release") }
     }
 
     flavorDimensions += "env"

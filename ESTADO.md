@@ -331,3 +331,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-25** — Android: S-15 ya no ofrece cambiar contraseña con sesión de Google (hallazgo de T76).
 - **2026-10-26** — T41 decidida (opción A): no se confirma una compra cuyos descuentos del ticket igualan o superan la suma de productos, en Android y web.
 - **2026-10-29** — T-005: key de OpenRouter comprobada (5 USD al mes); el tope de la app baja a 5 USD (T77). Spike C preparado en `spike/c-receipts`.
+- **2026-10-29** — Spike C pausado (dev vuelve a `main`, sin `SPIKE_TOKEN`; la rama `spike/c-receipts` se conserva). Firma de release de Android lista para cuando exista la llave de prod.

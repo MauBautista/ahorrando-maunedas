@@ -19,7 +19,7 @@ Requisitos: RF-AUTH, RF-CAT, RF-COM, RF-TIC, RF-PRE, RF-SYN, RF-IMG (E1); RF-TRK
 | Auth | Firebase Auth, Credential Manager + `googleid` |
 | Push | Firebase Cloud Messaging (E2) |
 | Fechas | `java.time` con zona `America/Mexico_City` |
-| Distribución | Firebase App Distribution; keystore de release propio (SHA-1/SHA-256 registrados en Firebase) |
+| Distribución | Firebase App Distribution; keystore de release propio (SHA-1/SHA-256 registrados en Firebase). El keystore vive en `~/.android/` y sus datos en `~/.gradle/gradle.properties` del servidor (`maunedas.release.storeFile`, `storePassword`, `keyAlias`, `keyPassword`), fuera de git; sin ellos, el release sale sin firmar |
 | Variantes de build | `dev` (Worker `maunedas-dev`, proyecto Firebase de dev, `applicationIdSuffix ".dev"`) y `prod`. `BuildConfig` por sabor: `API_BASE_URL`, `GOOGLE_WEB_CLIENT_ID`, `SYNTHETIC_EMAIL_DOMAIN`; `google-services.json` en `app/src/dev/` y `app/src/prod/` (fuera de git) |
 
 Versiones en `gradle/libs.versions.toml`; ninguna versión escrita en los `build.gradle.kts`. Solo versiones estables con al menos dos semanas publicadas (mismo criterio que `minimumReleaseAge` en pnpm); por eso lint no avisa de versiones nuevas.
