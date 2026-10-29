@@ -1,7 +1,9 @@
+import { createExecutionContext, waitOnExecutionContext } from 'cloudflare:test';
 import { env } from 'cloudflare:workers';
 import { uuidv7 } from '@maunedas/shared/util/uuid';
 import type { AgentWorkResponse } from '@maunedas/shared/api/agent';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
+import { ingest } from '../src/agent/observations';
 import { AGENT_OFFLINE_MARK, agentWork, MIN_SPACING_S, ONLINE_MS, STATUS_EVERY_MS } from '../src/agent/work';
 import { product, store, syncHarness, variant, type Mutation } from './support/sync';
 
@@ -207,5 +209,219 @@ describe('POST /agent/v1/work (07 §5.1)', () => {
     expect(
       await env.DB.prepare('SELECT key FROM token_cache WHERE key = ?1').bind(AGENT_OFFLINE_MARK).first(),
     ).toBeNull();
+  });
+});
+
+describe('POST /agent/v1/observations (07 §5.2, §6)', () => {
+  // A day ago: a check in the future would be taken as now (a wrong clock).
+  const T = Date.now() - 86_400_000;
+  const ok = (o: Record<string, unknown> = {}) => ({
+    listing_id: fx.live,
+    checked_at: T,
+    status: 'ok',
+    price_cents: 2899,
+    list_price_cents: 3299,
+    in_stock: true,
+    promo_text: null,
+    extra: { seller: 'Amazon México', method: 'http_jsonld' },
+    error: null,
+    ...o,
+  });
+  const state = (id = fx.live) =>
+    env.DB.prepare('SELECT * FROM listing_state WHERE listing_id = ?1')
+      .bind(id)
+      .first<Record<string, unknown>>();
+  const webObservations = () =>
+    env.DB.prepare(`SELECT * FROM price_observations WHERE source = 'web' ORDER BY observed_at`)
+      .all<Record<string, unknown>>()
+      .then((r) => r.results);
+
+  async function send(results: unknown[], token: string | null = 'test-agent-token') {
+    const ctx = createExecutionContext();
+    const res = await h.app.request(
+      '/agent/v1/observations',
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          ...(token ? { Authorization: `Bearer ${token}` } : {}),
+        },
+        body: JSON.stringify({ results }),
+      },
+      env as never,
+      ctx,
+    );
+    await waitOnExecutionContext(ctx);
+    return { status: res.status, body: await res.json<{ accepted: number; observations_created: number }>() };
+  }
+
+  it('records a web observation of the first check, with its state, both with one new version', async () => {
+    const before = await version();
+    const { status: code, body: res } = await send([ok()]);
+    expect(code).toBe(200);
+    expect(res).toEqual({ accepted: 1, observations_created: 1 });
+    expect(await version()).toBe(before + 1);
+    expect(await state()).toMatchObject({
+      last_checked_at: T,
+      last_status: 'ok',
+      last_error: null,
+      consecutive_failures: 0,
+      last_price_cents: 2899,
+      last_list_price_cents: 3299,
+      last_in_stock: 1,
+      last_promo_text: null,
+      version: before + 1,
+    });
+    const [obs] = await webObservations();
+    expect(obs).toMatchObject({
+      listing_id: fx.live,
+      store_id: fx.store,
+      source: 'web',
+      price_cents: 2899,
+      list_price_cents: 3299,
+      in_stock: 1,
+      observed_at: T,
+      updated_by: 'agent',
+      deleted_at: null,
+      version: before + 1,
+    });
+    expect(JSON.parse(String(obs!.extra))).toEqual({ seller: 'Amazon México', method: 'http_jsonld' });
+    // Clients receive it like any other row.
+    const pulled = await h.pull({ cursors: {} }, 'member');
+    const body = await pulled.json<{
+      changes: Record<string, Array<{ id?: string; listing_id?: string }>>;
+    }>();
+    expect(body.changes.price_observations?.map((o) => o.id)).toContain(obs!.id);
+    expect(body.changes.listing_state?.map((s) => s.listing_id)).toContain(fx.live);
+  });
+
+  it('compresses by change: only price, list price, stock or promotion make a new observation', async () => {
+    await send([ok()]);
+    expect((await send([ok({ checked_at: T + 1 })])).body.observations_created).toBe(0);
+    expect((await state())!.last_checked_at).toBe(T + 1);
+    expect((await send([ok({ checked_at: T + 2, price_cents: 2799 })])).body.observations_created).toBe(1);
+    expect(
+      (await send([ok({ checked_at: T + 3, price_cents: 2799, list_price_cents: null })])).body
+        .observations_created,
+    ).toBe(1);
+    expect(
+      (await send([ok({ checked_at: T + 4, price_cents: 2799, list_price_cents: null, promo_text: '2x1' })]))
+        .body.observations_created,
+    ).toBe(1);
+    expect(
+      (
+        await send([
+          ok({
+            checked_at: T + 5,
+            price_cents: 2799,
+            list_price_cents: null,
+            promo_text: '2x1',
+            in_stock: false,
+          }),
+        ])
+      ).body.observations_created,
+    ).toBe(1);
+    expect(
+      (await webObservations()).map((o) => [o.price_cents, o.list_price_cents, o.promo_text, o.in_stock]),
+    ).toEqual([
+      [2899, 3299, null, 1],
+      [2799, 3299, null, 1],
+      [2799, null, null, 1],
+      [2799, null, '2x1', 1],
+      [2799, null, '2x1', 0],
+    ]);
+  });
+
+  it('ignores a retry of a check already taken, and orders several checks of one listing', async () => {
+    await send([ok({ checked_at: T + 10 })]);
+    const retry = await send([
+      ok({ checked_at: T + 10, price_cents: 1 }),
+      ok({ checked_at: T + 5, price_cents: 2 }),
+    ]);
+    expect(retry.body).toEqual({ accepted: 2, observations_created: 0 });
+    expect((await state())!.last_price_cents).toBe(2899);
+    // Out of order in the request: taken by checked_at, so the newest wins and each change is recorded.
+    await send([
+      ok({ checked_at: T + 30, price_cents: 2500 }),
+      ok({ checked_at: T + 20, price_cents: 2600 }),
+    ]);
+    expect((await webObservations()).map((o) => o.price_cents)).toEqual([2899, 2600, 2500]);
+    expect((await state())!.last_price_cents).toBe(2500);
+    // Two equal checks in one request: the second compares against the first, so one observation.
+    const same = await send([
+      ok({ checked_at: T + 40, price_cents: 2400 }),
+      ok({ checked_at: T + 50, price_cents: 2400 }),
+    ]);
+    expect(same.body.observations_created).toBe(1);
+  });
+
+  it('counts consecutive failures, keeps the last price, and records again once it is ok', async () => {
+    await send([ok()]);
+    await send([{ ...ok({ checked_at: T + 1, status: 'error', price_cents: null, error: 'timeout' }) }]);
+    await send([{ ...ok({ checked_at: T + 2, status: 'error', price_cents: null, error: 'HTTP 500' }) }]);
+    expect(await state()).toMatchObject({
+      last_status: 'error',
+      last_error: 'HTTP 500',
+      consecutive_failures: 2,
+      last_price_cents: 2899,
+    });
+    // The page answered: not found is no failure.
+    await send([{ ...ok({ checked_at: T + 3, status: 'not_found', price_cents: null }) }]);
+    expect(await state()).toMatchObject({
+      last_status: 'not_found',
+      consecutive_failures: 0,
+      last_price_cents: 2899,
+    });
+    // Back to ok at the same price: after a check that was not ok, it is recorded again.
+    expect((await send([ok({ checked_at: T + 4 })])).body.observations_created).toBe(1);
+  });
+
+  it('reports a listing that becomes blocked once, and makes no observation without a price', async () => {
+    const first = await ingest(env.DB, [{ ...ok(), status: 'blocked', price_cents: null }] as never, T);
+    expect(first.newlyBlocked).toEqual([fx.live]);
+    const again = await ingest(
+      env.DB,
+      [{ ...ok({ checked_at: T + 1 }), status: 'blocked', price_cents: null }] as never,
+      T + 1,
+    );
+    expect(again.newlyBlocked).toEqual([]);
+    expect(await state()).toMatchObject({ last_status: 'blocked', consecutive_failures: 2 });
+    // Out of stock without a price: the state says so, no observation (price_cents is required).
+    const out = await ingest(
+      env.DB,
+      [ok({ checked_at: T + 2, price_cents: null, in_stock: false })] as never,
+      T + 2,
+    );
+    expect(out.created).toEqual([]);
+    expect(await state()).toMatchObject({
+      last_status: 'ok',
+      last_in_stock: 0,
+      last_price_cents: null,
+      consecutive_failures: 0,
+    });
+    // Back in stock with a price: observed, with what it was before for the alerts.
+    const back = await ingest(env.DB, [ok({ checked_at: T + 3 })] as never, T + 3);
+    expect(back.created[0]).toMatchObject({
+      price_cents: 2899,
+      in_stock: 1,
+      prev: { last_in_stock: 0, last_status: 'ok' },
+    });
+  });
+
+  it('takes a check from the future as now', async () => {
+    const now = Date.now();
+    await ingest(env.DB, [ok({ checked_at: now + 3_600_000 })] as never, now);
+    expect((await state())!.last_checked_at).toBe(now + 5 * 60_000);
+  });
+
+  it('skips unknown or deleted listings, and refuses bad requests', async () => {
+    const res = await send([ok({ listing_id: fx.gone }), ok({ listing_id: uuidv7() })]);
+    expect(res.body).toEqual({ accepted: 2, observations_created: 0 });
+    expect(await state(fx.gone)).toBeNull();
+    expect((await send([ok()], null)).status).toBe(401);
+    expect((await send([])).status).toBe(400);
+    expect((await send(Array.from({ length: 21 }, (_, i) => ok({ checked_at: T + i })))).status).toBe(400);
+    expect((await send([ok({ status: 'raro' })])).status).toBe(400);
+    expect((await send([ok({ price_cents: 28.99 })])).status).toBe(400);
   });
 });

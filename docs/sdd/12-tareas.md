@@ -464,9 +464,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-210 · Resolver URL, revisar ahora, listar listings
 - **Docs:** 03 §11 · **Depende de:** T-031
 - **Hecho cuando:** enlaces cortos de Amazon resueltos solo con `Location`; URL no soportada → 422.
-### [ ] T-211 · Ingesta de observaciones
+### [x] T-211 · Ingesta de observaciones
 - **Docs:** 07 §6 · **Depende de:** T-201
 - **Hecho cuando:** compresión por cambio, idempotencia por `checked_at`, fallas consecutivas, transición a `blocked`.
+- **Hecho (2026-10-29, T79):**
+  - `POST /agent/v1/observations` con las cuatro reglas, el orden por `checked_at` y el reloj adelantado.
+  - El trabajo posterior va en `waitUntil` (alertas en T-212 y aviso en T-213).
+  - **Pruebas:** 7.
 ### [ ] T-212 · Motor de alertas
 - **Docs:** 08 §2–5, 03 §11 · **Depende de:** T-211
 - **Hacer:** incluye `GET /v1/alerts/events`.
