@@ -53,7 +53,7 @@ Documentos relacionados: [`../ARQUITECTURA.md`](../ARQUITECTURA.md) (vista gener
 | Zona horaria | `America/Mexico_City` (UTC−6, sin horario de verano) | Presentación, cortes de mes del presupuesto de IA |
 | Moneda | MXN | Todo |
 | Código postal de referencia | `72750` | Adapters de tracking |
-| Presupuesto IA | 6 USD/mes, aviso al 80 % | Gateway de IA |
+| Presupuesto IA | 5 USD/mes, aviso al 80 % | Gateway de IA |
 | Intervalo de tracking por defecto | 480 min | `stores.default_check_interval_min` |
 | Límite de push | 100 mutaciones / request | Sync |
 | Límite de pull | 100 filas por tabla / request por omisión, máximo 500 (spike D) | Sync |

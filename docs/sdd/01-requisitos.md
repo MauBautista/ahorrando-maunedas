@@ -127,7 +127,7 @@ Formato: **ID · requisito · etapa · criterio de aceptación**. "E1" = etapa 1
 |---|---|---|
 | RNF-01 | Offline-first en Android | La UI nunca espera a la red para mostrar o guardar |
 | RNF-02 | Independencia del servidor casero | Con el agente apagado, E1 funciona completo |
-| RNF-03 | Costo | IA ≤ 6 USD/mes con corte duro; Cloudflare Free salvo decisión D3 |
+| RNF-03 | Costo | IA ≤ 5 USD/mes con corte duro; Cloudflare Free salvo decisión D3 |
 | RNF-04 | Rendimiento | Pantallas de Android cargan desde Room en < 300 ms; push de 100 filas < 2 s; páginas web interactivas < 2 s en 4G |
 | RNF-05 | Seguridad | Sin endpoints sin auth salvo `health`, `bootstrap` (una vez) y el proxy de auth; secretos fuera del repo; R2 privado |
 | RNF-06 | Privacidad | Solo salen a terceros: fotos de tickets a OpenRouter (al extraer), códigos de barras a Open Food Facts, URLs de tiendas desde el agente |

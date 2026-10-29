@@ -28,7 +28,7 @@ Cuatro personas del hogar: un administrador y tres miembros con permisos equival
 - Una alerta llega al teléfono **≤ 5 min** después de que el agente registra el cambio de precio.
 - Con el servidor casero apagado, app y web siguen registrando y consultando; solo se pausan tracking, mejora de fotos y respaldos.
 - En Android se puede registrar una compra completa en modo avión y se sincroniza sin pérdida al volver la señal.
-- Gasto de IA **≤ 6 USD/mes** con tope duro. Cloudflare en plan gratuito, o 5 USD/mes solo si se justifica con datos.
+- Gasto de IA **≤ 5 USD/mes** con tope duro. Cloudflare en plan gratuito, o 5 USD/mes solo si se justifica con datos.
 - Respaldo diario con **una restauración de prueba exitosa** documentada.
 
 ## No-objetivos (por ahora)
@@ -45,6 +45,6 @@ Cuatro personas del hogar: un administrador y tres miembros con permisos equival
 
 - **Servidor casero modesto** (HP Pavilion, AMD A8-7410): trabajos pesados en serie, asíncronos y con límites de memoria.
 - **El servidor casero nunca se expone a internet**: solo conexiones salientes hacia Cloudflare. Administración por Tailscale.
-- **IA con presupuesto de 6 USD/mes**, procesamiento local y gratuito primero. Proveedor intercambiable por configuración.
+- **IA con presupuesto de 5 USD/mes**, procesamiento local y gratuito primero. Proveedor intercambiable por configuración.
 - **Offline obligatorio en Android** (Room + WorkManager).
 - **Scraping de uso personal y respetuoso**: baja frecuencia, sin evadir bloqueos.

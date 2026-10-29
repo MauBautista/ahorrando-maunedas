@@ -96,7 +96,7 @@ Implementación (T-039, decisión T68): `apps/api/src/ai/` (`types.ts`, `provide
 - Antes de llamar: `gastado + estimado > tope` → `402 E-AI_BUDGET_EXCEEDED`. Estimado = `AI_RECEIPT_EST_COST_USD`.
 - Después de llamar (éxito o error de salida): registrar `ai_usage` con el costo reportado; si no viene, el estimado.
 - Al cruzar `AI_SOFT_LIMIT_PCT`: aviso al admin una vez por mes (marca `ai_soft:<YYYY-MM>` en `token_cache`). En la Etapa 1 el aviso es un banner en W-13 y en `GET /v1/admin/ai-budget` (`soft_limit_reached`); el push llega con FCM en T-213.
-- Red de seguridad: límite mensual de 6 USD configurado en la propia key de OpenRouter.
+- Red de seguridad: límite mensual de 5 USD configurado en la propia key de OpenRouter, igual al tope de la app (decisión T77): la app corta primero con su propio mensaje.
 - Implementación (T-039):
   - **Tope:** `assertBudget` compara en micro-dólares enteros, así que llegar justo al tope se permite y un micro-dólar más no.
   - **Marca del aviso:** la escribe la llamada que cruza el límite (`INSERT OR IGNORE`). Vence un día después de terminar el mes y la limpieza diaria la borra.
@@ -366,7 +366,7 @@ Al tocar **Confirmar compra** en S-06 / W-06, en una transacción (Android) o un
 
 ## 8. Costos esperados
 
-Una extracción usa 1–4 imágenes de entrada y ~1–2 mil tokens de salida para un ticket largo. Con un modelo de visión económico se espera **menos de 1 centavo de dólar por ticket**; 100 tickets al mes quedan muy por debajo del tope de 6 USD. El valor real se mide en el spike C con el costo que reporta OpenRouter.
+Una extracción usa 1–4 imágenes de entrada y ~1–2 mil tokens de salida para un ticket largo. Con un modelo de visión económico se espera **menos de 1 centavo de dólar por ticket**; 100 tickets al mes quedan muy por debajo del tope de 5 USD. El valor real se mide en el spike C con el costo que reporta OpenRouter.
 
 ## 9. Spike C (T-012)
 

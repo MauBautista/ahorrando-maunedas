@@ -48,10 +48,11 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho cuando:** en cada proyecto: Email/Password y Google habilitados (sin bloquear el registro); dominio autorizado y URI de redirección `/__/auth/handler` del host de su Worker; apps Android (`.dev` en dev) con SHA-1/256 de debug; secreto `GOOGLE_SERVICE_ACCOUNT` del proyecto de dev cargado en `maunedas-dev`.
 - **Avance (2026-10-20):** proyecto `maunedas-dev` con app web y app Android (`com.maubautista.maunedas.dev`, SHA del keystore de debug del servidor); `FIREBASE_PROJECT_ID` en `maunedas-dev`, `.env.development`/`.env.dev` de la web y Web client ID en `gradle.properties`; `GOOGLE_SERVICE_ACCOUNT` en `maunedas-dev` (2026-10-21, probada contra Identity Toolkit en el spike E). Verificado por API (2026-10-21): Email/contraseña y Google habilitados, registro sin bloquear, dominio autorizado, URI de redirección, SHA-1/256, FCM e Identity Toolkit habilitadas, API key restringida por sitio y `google-services.json` con clientes Android y web; secreto `GOOGLE_SERVICES_JSON_DEV` en GitHub. Confirmado a mano por Mauricio (2026-10-21): orígenes de JavaScript, *branding* publicado, restricción de APIs de la key y llave vieja de la cuenta de servicio borrada. **Dev completo**; falta el proyecto de prod.
 
-### [ ] T-005 · OpenRouter
+### [x] T-005 · OpenRouter
 - **Docs:** 09 §2
 - **Depende de:** T-003
-- **Hecho cuando:** key exclusiva con límite mensual de 6 USD; secreto `OPENROUTER_API_KEY` en el Worker de dev.
+- **Hecho cuando:** key exclusiva con límite mensual de 5 USD (decisión T77; antes 6); secreto `OPENROUTER_API_KEY` en el Worker de dev.
+- **Hecho (2026-10-29):** key de Mauricio con límite de 5 USD y reinicio mensual, comprobada con `GET /api/v1/key` sin gastar (uso 0); secreto en `maunedas-dev`. El tope de la app (`AI_MONTHLY_BUDGET_USD`) baja a 5 para coincidir.
 
 ### [x] T-006 · `packages/shared` base
 - **Docs:** 04 §2, 09 §5–6, 10 §2.2, 02 §3, `ARQUITECTURA.md` §3.1

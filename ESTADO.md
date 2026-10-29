@@ -80,10 +80,10 @@
   - las demás pantallas dicen "llega pronto" (T-161 a T-166);
   - probado en el navegador del Samsung; falta probar en Safari de iPhone.
 - **T-039 (2026-10-25):** gateway de IA y presupuesto en el Worker:
-  - toda llamada a la IA pasa por un solo lugar que elige el modelo, revisa el tope de 6 USD al mes y registra el costo real;
+  - toda llamada a la IA pasa por un solo lugar que elige el modelo, revisa el tope de 5 USD al mes y registra el costo real;
   - reintenta una vez y no cobra lo que no respondió;
   - el admin ve el gasto del mes y si pasó el 80 % (`GET /v1/admin/ai-budget`);
-  - falta elegir el modelo (spike C) y poner la key (T-005).
+  - falta elegir el modelo (spike C); la key ya está (T-005).
 - **T-124, primera parte (2026-10-24):** en el editor de compra:
   - "Ordenar" cambia el orden de los productos (y TalkBack ofrece "Subir" y "Bajar");
   - "Vincular" liga una línea del ticket a su producto;
@@ -117,12 +117,13 @@
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
-- Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); OpenRouter (T-005); 10 fotos para el spike A.
+- Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); 5 fotos de tickets para el spike C y 10 fotos de productos para el spike A.
+- Spike C (T-012): rutas temporales y script listos en la rama `spike/c-receipts`, desplegada en `maunedas-dev` con `SPIKE_TOKEN` temporal; esperan las fotos.
 
 ## Siguiente
 1. Web: T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
 2. Pantallas de Android: T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
-3. Spike A en cuanto estén las 10 fotos; T-005 (OpenRouter) y spike C (tickets) para T-039/T-040.
+3. Spike C en cuanto estén las fotos de tickets (luego T-040, T-124 y T-163); spike A con las 10 fotos de productos.
 4. Antes del primer despliegue a producción: T-004 (Firebase prod).
 
 ## Decisiones tomadas
@@ -206,6 +207,7 @@
 | T74 | **Anaquel y escaneo web.**<br>• `@zxing/browser` 0.2.1 y `@zxing/library` 0.23.0, cargados solo al escanear.<br>• Mismos formatos, normalización y `ScanGate` que Android.<br>• Un código por línea en W-05, sin modo continuo.<br>• Un código desconocido abre `/productos/nuevo?codigo=…`.<br>• La foto del anaquel se reduce en el navegador y sube después del push.<br>• La tienda recordada es por navegador (`localStorage`).<br>• `shelfEffectiveCents` pasa a `shared` con los casos de `ShelfPricesTest`. | 06 §3 pide zxing (Safari de iPhone no tiene `BarcodeDetector`). Las lecturas falsas de un cuadro se vieron en el Samsung (T64). La subida necesita que la fila `images` exista (409 si no). La web no tiene filas propias para saber mi último anaquel. |
 | T75 | **Administración web.**<br>• La vista previa de la fusión es `dry_run` en la misma ruta: cada movimiento se describe una vez y de ahí salen su `UPDATE` y su conteo.<br>• Las contraseñas se generan en el navegador (12 caracteres sin ambiguos, `crypto.getRandomValues`, sin sesgo) y se muestran en claro para entregarlas en persona.<br>• La edición manda solo lo que cambió.<br>• Los mensajes del servidor se muestran tal cual. | 06 §3 pide la vista previa y no había cómo contar sin escribir. Una sola descripción evita que la vista previa y la fusión real cuenten distinto (una prueba lo compara). Un `PATCH` vacío es 400 y cambiar el correo de Google cierra esa sesión, así que no se manda lo que no cambió. Los mensajes de 03 §1.2 ya están en español. |
 | T76 | **Cuenta web.**<br>• El nombre y el correo de Google solo se muestran; los cambia el admin.<br>• La contraseña se cambia en el navegador con `reauthenticateWithCredential` + `updatePassword`.<br>• Con una sesión de Google no se ofrece el cambio: se explica que hay que entrar con usuario y contraseña. | No hay ruta para editarse a sí mismo, y Android (S-15) solo los muestra. El Worker no debe ver contraseñas (regla 11). Cada método es su propia cuenta de Firebase (02 §2): con Google, la reautenticación usa ese correo y fallaría con "contraseña incorrecta", como pasaba en Android; corregido en S-15 con el mismo criterio. |
+| T77 | **Tope de IA en 5 USD al mes** (decisión de Mauricio): `AI_MONTHLY_BUDGET_USD` = 5 en dev y prod, igual al límite de la key de OpenRouter; GOALS, RNF-03 y 09 §2 lo dicen | La key quedó con 5 USD de límite mensual. Con 6 en la app, OpenRouter cortaría antes y la app daría un error genérico en vez de `AI_BUDGET_EXCEEDED` y su aviso; con los dos en 5, la app corta primero y la key queda como red de seguridad |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -328,3 +330,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-10-25** — T-166: cuenta web (datos, cambiar contraseña con reautenticación, cerrar sesión); hallazgo de Android con sesión de Google (T76).
 - **2026-10-25** — Android: S-15 ya no ofrece cambiar contraseña con sesión de Google (hallazgo de T76).
 - **2026-10-26** — T41 decidida (opción A): no se confirma una compra cuyos descuentos del ticket igualan o superan la suma de productos, en Android y web.
+- **2026-10-29** — T-005: key de OpenRouter comprobada (5 USD al mes); el tope de la app baja a 5 USD (T77). Spike C preparado en `spike/c-receipts`.
