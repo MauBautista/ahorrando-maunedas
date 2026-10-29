@@ -98,6 +98,7 @@
     <string name="line_need_quantity">Escribe una cantidad mayor que cero.</string>
     <string name="line_need_price">Escribe el precio.</string>
     <string name="editor_need_prices">Hay productos sin precio: escríbelo antes de confirmar.</string>
+    <string name="editor_discounts_exceed">Con esos descuentos del ticket la compra queda en $0: revisa los montos antes de confirmar.</string>
     <string name="editor_no_price">Sin precio</string>
     <string name="editor_scan">Escanear productos</string>
     <!-- RF-TIC-01 -->

@@ -446,6 +446,8 @@ class PurchaseEditorViewModel
                     s.draft.lines.isEmpty() -> R.string.editor_need_lines
                     // A scanned line without a price would enter the price history at $0 (decision T64).
                     s.draft.lines.any { it.unitPriceCents == 0L } -> R.string.editor_need_prices
+                    // Ticket discounts that reach the lines would leave every line at $0 too (decision T41).
+                    s.totals.ticketDiscountCents > 0 && s.totals.ticketDiscountCents >= s.totals.linesCents -> R.string.editor_discounts_exceed
                     else -> null
                 }
             if (problem != null) {

@@ -114,6 +114,29 @@ describe('W-05 purchase editor', () => {
     expect(pushes(w.posts)).toHaveLength(0);
   });
 
+  it('does not confirm when the ticket discounts reach the lines (T41)', async () => {
+    // $76.30 of lines and a $76.30 coupon: every line would enter the history at $0.
+    const coupon = { ...purchase.promotions[1]!, discount_cents: 7630 };
+    const w = worker({
+      '/v1/purchases/pu1': () => ({ ...purchase, promotions: [purchase.promotions[0]!, coupon] }),
+    });
+    renderAt('/compras/pu1/editar', w.fetchImpl);
+    const user = userEvent.setup();
+    await user.click(await screen.findByRole('button', { name: 'Confirmar' }));
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Con esos descuentos del ticket la compra queda en $0: revisa los montos antes de confirmar.',
+    );
+    expect(pushes(w.posts)).toHaveLength(0);
+    // A cent less confirms (after asking about the ticket total, which no longer matches).
+    await user.click(screen.getByRole('button', { name: 'Cupón app' }));
+    const dialog = within(await screen.findByRole('dialog', { name: 'Descuento del ticket' }));
+    await user.clear(dialog.getByLabelText('Monto'));
+    await user.type(dialog.getByLabelText('Monto'), '76.29');
+    await user.click(dialog.getByRole('button', { name: 'Guardar' }));
+    await user.click(screen.getByRole('button', { name: 'Confirmar' }));
+    expect(await screen.findByRole('dialog', { name: 'El total no cuadra' })).toBeTruthy();
+  });
+
   it('takes a line off and back, reorders and saves the draft later than it read', async () => {
     const w = worker();
     const router = renderAt('/compras/pu1/editar', w.fetchImpl);

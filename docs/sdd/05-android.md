@@ -173,6 +173,7 @@ Acciones:
   - **Vincular:** una línea sin producto (de ticket) muestra "Vincular". Abre su hoja con lo que leyó el ticket ("En el ticket: …") y la búsqueda de presentación; se conservan la cantidad y el precio del ticket.
   - **Alias al confirmar (09 §7.4):** al confirmar, cada línea con texto de ticket y presentación enseña su alias a la tienda. El id es UUIDv5 de tienda y texto normalizado. Confirmar otra vez no escribe nada; vincular el texto a otra presentación mueve el alias; `ILEGIBLE` no enseña nada. Los códigos impresos en el ticket (§7.5) llegan con la extracción.
   - **Confirmar** pide tienda y un producto. Si el total no cuadra por más de $1.00, aparece "El total no cuadra por $X. ¿Confirmar de todos modos?".
+  - **Descuentos del ticket (decisión T41):** si igualan o superan la suma de productos, no se confirma ("Con esos descuentos del ticket la compra queda en $0: revisa los montos antes de confirmar."), porque cada línea entraría al historial a $0 y sería el "mejor precio". Se puede guardar como borrador.
   - **Autoguardado:** al salir (Atrás) o al pasar la app a segundo plano, si hay tienda y algo cambió; un `Mutex` evita crear la compra dos veces.
   - **Fecha y hora** son de la Ciudad de México; la hora se teclea (`TimeInput`).
   - **Llega después:** "Extraer" con T-124.
