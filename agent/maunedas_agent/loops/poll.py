@@ -8,6 +8,7 @@ import httpx
 from maunedas_agent import __version__, log
 from maunedas_agent.api import ApiError
 from maunedas_agent.context import AgentContext
+from maunedas_agent.loops.backup import status as backup_status
 from maunedas_agent.store import POLL_TICK_KEY, WORK_OK_KEY, now_ms
 
 # Pages of listings in one tick at most (200 each); the rest come in the next one.
@@ -42,6 +43,8 @@ def work_request(ctx: AgentContext, at: int) -> dict[str, Any]:
             "load1": round(os.getloadavg()[0], 2),
             "blocked": store.blocked_adapters(),
             "last_error": ctx.last_error[:LAST_ERROR_MAX] if ctx.last_error else None,
+            # Outcome of the last backups (07 §10), for the admin's agent screen.
+            "backup": backup_status(ctx),
         },
     }
 

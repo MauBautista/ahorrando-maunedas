@@ -67,6 +67,9 @@ class AgentApi:
     async def observations(self, results: list[dict[str, Any]]) -> dict[str, Any]:
         return await self.post("/agent/v1/observations", {"results": results})
 
+    async def backup_pull(self, body: dict[str, Any]) -> dict[str, Any]:
+        return await self.post("/agent/v1/backup/pull", body)
+
 
 def _error_code(res: httpx.Response) -> str | None:
     try:

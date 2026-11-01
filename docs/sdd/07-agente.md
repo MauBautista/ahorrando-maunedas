@@ -517,6 +517,24 @@ Extracción: `selectolax` ≥ 1.0 ya no trae el parser Modest; usar `selectolax.
 
 Resultado de cada trabajo en `kv` y en `info` del siguiente `/work` (visible en W-22).
 
+**Implementación (T-230, agente; decisión T89):**
+- **Horario:** `loops/backup.py` revisa cada 5 min si ya pasó `BACKUP_HOUR` en `TZ`.
+  - Cada trabajo tiene su propia marca del día (`backup_mirror_day`, `backup_dump_day`, `backup_photos_day`), así que uno que falla se reintenta sin repetir los otros.
+  - El volcado y las fotos esperan al espejo del día.
+- **Espejo (`backup.py`):**
+  - `/data/backups/mirror.sqlite` se crea con las migraciones de `MIGRATIONS_DIR` (`/app/migrations` en la imagen). Las migraciones nuevas se aplican al arrancar cada corrida, una sola vez y cada una en su transacción (registro en `_mirror_migrations`).
+  - Cada página se aplica con sus cursores en una sola transacción (`_mirror_cursors`): `INSERT … ON CONFLICT(pk) DO UPDATE`, y para las tablas de `replace`, borrar y volver a insertar.
+  - Una tabla o columna que el espejo no conoce detiene la página sin escribir nada (`SchemaMismatch`): falta una migración en la imagen.
+- **Volcado:**
+  - `iterdump` comprimido con gzip, sin las tablas `_mirror_*`.
+  - Se escribe a `.partial` y se renombra al terminar; si falla, no queda archivo.
+  - Se conservan los `BACKUP_KEEP_WEEKLY` más nuevos.
+- **Fotos:**
+  - `rclone sync r2:<R2_BUCKET> /data/backups/r2` con el remoto armado por variables `RCLONE_CONFIG_R2_*` (proveedor Cloudflare, `no_check_bucket` porque el token es de solo lectura).
+  - Las llaves solo llegan al proceso de rclone. La imagen trae rclone 1.60.1.
+  - Sin credenciales se reporta "sin credenciales de R2"; si rclone falla, se reintenta a la hora.
+- **Estado:** queda en `kv` `backup_status` y viaja en `info.backup` de `/work`. Un fallo también queda en `last_error`.
+
 ## 11. Imágenes (E3, T-300)
 
 ```python
