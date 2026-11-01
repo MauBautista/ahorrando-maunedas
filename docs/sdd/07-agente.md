@@ -405,6 +405,29 @@ def decimal_to_cents(value: str | float | int) -> int:
 
 `blocks.py` devuelve `blocked` si: HTTP 403/429/503 con cuerpo que contiene marcadores de captcha (`captcha`, `validateCaptcha`, `px-captcha`, `Access Denied`), o el título de la página es de verificación. Cada adapter puede agregar marcadores propios.
 
+**Implementación (T-203, decisión T86):**
+- **HTTP (`fetch/http.py`):**
+  - Un solo cliente HTTP/2 con los headers de §8.1.
+  - El UA es el de Chrome 153, la versión del Chromium de la imagen, y se cambia con `CHROME_UA`.
+  - El jar de cookies completo se guarda en `kv` (`http_cookies`) después de cada página, sin las vencidas. Cada dominio recibe solo las suyas.
+  - Los errores de red llegan al adapter; si no los maneja, el ciclo los convierte en `error`.
+- **Precio (`money.py`):**
+  - `parse_mxn` es la del código de arriba.
+  - `decimal_to_cents` devuelve `None` para lo que no es un precio: texto, NaN, infinito, negativos o booleanos.
+  - Un precio de JSON-LD con formato de texto ("1,299.00") se lee con `parse_mxn`.
+- **JSON-LD (`jsonld.py`):**
+  - Recorre listas y `@graph`.
+  - `@type` sin distinguir mayúsculas, como el `product` de Costco.
+  - Usa la primera oferta en pesos con precio, o si no la primera oferta; para `AggregateOffer`, `lowPrice`.
+  - `availability` se acepta con o sin URL de schema.org: `InStock`, `LimitedAvailability`, `InStoreOnly`, `OnlineOnly`, `PreSale` y `PreOrder` cuentan como disponible; `OutOfStock`, `SoldOut` y `Discontinued` como agotado; lo demás queda en `None`.
+  - Un bloque roto no oculta los demás.
+- **Estado embebido (`embedded.py`):** `next_data` y `dig("a.b.0.c")`.
+- **Bloqueos (`blocks.py`):**
+  - Los marcadores débiles (`captcha`, `access denied`) solo cuentan con 403/429/503.
+  - Los fuertes cuentan con cualquier estado: `validatecaptcha`, `px-captcha`, `captcha-delivery.com` y `/cdn-cgi/challenge-platform`, más los del adapter.
+  - También cuentan una ruta final `/blocked` y un título de verificación ("Verifica tu identidad", "Robot Check", "Just a moment"…), porque los retos llegan con 200.
+- **HTML:** se lee con `selectolax.lexbor` (`extract/html.py`).
+
 ## 9. Adapters
 
 ```python

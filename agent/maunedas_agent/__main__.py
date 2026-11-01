@@ -48,7 +48,7 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         for task in loops:
             task.cancel()
         await asyncio.gather(*loops, return_exceptions=True)
-        await api.aclose()
+        await ctx.aclose()
         store.close()
         logger.info("agent_stopped")
 

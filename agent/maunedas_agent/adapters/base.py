@@ -4,6 +4,7 @@ from dataclasses import dataclass, field
 from typing import Any, Literal, Protocol
 
 from maunedas_agent.config import Settings
+from maunedas_agent.fetch.http import HttpFetcher
 
 Status = Literal["ok", "not_found", "blocked", "error"]
 
@@ -21,9 +22,10 @@ class ScrapeResult:
 
 @dataclass
 class FetchContext:
-    """What adapters get to download a page; the HTTP client and the browser arrive with T-203 and T-204."""
+    """What adapters get to download a page; the browser arrives with T-204."""
 
     settings: Settings
+    http: HttpFetcher
 
 
 class Adapter(Protocol):

@@ -7,6 +7,7 @@ from maunedas_agent.adapters.base import FetchContext
 from maunedas_agent.api import AgentApi
 from maunedas_agent.config import Settings
 from maunedas_agent.fetch.gate import DomainGate
+from maunedas_agent.fetch.http import HttpFetcher
 from maunedas_agent.store import Store
 
 
@@ -26,4 +27,8 @@ class AgentContext:
         self.gate = DomainGate(self.store)
         self.http_sem = asyncio.Semaphore(self.settings.max_http_concurrency)
         self.browser_sem = asyncio.Semaphore(self.settings.max_browser_concurrency)
-        self.fetch = FetchContext(settings=self.settings)
+        self.fetch = FetchContext(settings=self.settings, http=HttpFetcher(self.settings, self.store))
+
+    async def aclose(self) -> None:
+        await self.fetch.http.aclose()
+        await self.api.aclose()

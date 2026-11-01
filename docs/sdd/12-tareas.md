@@ -461,8 +461,12 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Código:** agenda con jitter y backoff, separación por dominio guardada en SQLite, cupos HTTP y de navegador, ciclos `scrape` y `flush`, y la base de adapters.
   - **Pruebas:** `test_flush.py` prueba que un corte de red y un reinicio no pierden resultados; el agente tiene 42 pruebas en total, con advertencias tratadas como errores.
   - **Mutaciones:** 18, todas detectadas.
-### [ ] T-203 · HTTP, JSON-LD, estado embebido y dinero
+### [x] T-203 · HTTP, JSON-LD, estado embebido y dinero
 - **Docs:** 07 §8.1, 8.3, 8.4 · **Depende de:** T-200
+- **Hecho (2026-11-01, T86):**
+  - **Código:** cliente HTTP/2 con cookies persistentes, `parse_mxn` y `decimal_to_cents`, JSON-LD (objeto, lista, `AggregateOffer`, `@graph`, tipo en minúsculas), `__NEXT_DATA__` y detección de bloqueo.
+  - **Pruebas:** con los fixtures del spike B (precios de Sam's y Costco, sin stock, Walmart como bloqueo, ninguna página de producto confundida con un bloqueo); el agente tiene 95 pruebas.
+  - **Mutaciones:** 20; una es equivalente (el espacio duro ya cuenta como `\s`).
 ### [ ] T-204 · Navegador (Playwright)
 - **Docs:** 07 §8.2 · **Depende de:** T-203
 - **Hecho cuando:** reinicio por número de páginas y por memoria probado.
