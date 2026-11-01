@@ -15,8 +15,15 @@ class FixtureCoverageTest {
             "usuarios.json" to "core:model UsernamesFixturesTest",
         )
 
+    /** Fixtures of rules Android does not run, with who does. */
+    private val elsewhere =
+        mapOf(
+            // Android resolves links through POST /v1/listings/resolve (T-220).
+            "enlaces.json" to "packages/shared urls.fixtures.test.ts and the agent (07 §9)",
+        )
+
     @Test
     fun everyFixtureHasASuite() {
-        assertEquals(suites.keys.sorted(), Fixtures.names())
+        assertEquals((suites.keys + elsewhere.keys).sorted(), Fixtures.names())
     }
 }
