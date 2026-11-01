@@ -9,6 +9,7 @@ import type { AppEnv } from '../env';
 import { ApiError } from '../errors';
 import { parseJsonBody } from '../util/validate';
 import { requireAgent } from './auth';
+import { fcmDeps } from '../fcm/send';
 import { afterIngest, ingest } from './observations';
 import { agentWork } from './work';
 
@@ -27,7 +28,8 @@ export const agent = new Hono<AppEnv>()
   .post('/agent/v1/observations', requireAgent, async (c) => {
     const { results } = await parseJsonBody(c, AgentObservationsRequestSchema);
     const result = await ingest(c.env.DB, results, Date.now());
-    c.executionCtx.waitUntil(afterIngest(c.env, result, Date.now()));
+    const deps = fcmDeps(c.get('outboundFetch'), c.get('googleTokens'));
+    c.executionCtx.waitUntil(afterIngest(c.env, result, Date.now(), deps));
     return c.json<AgentObservationsResponse>({
       accepted: result.accepted,
       observations_created: result.created.length,

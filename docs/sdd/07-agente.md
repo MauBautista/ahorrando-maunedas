@@ -277,7 +277,7 @@ export async function ingest(env: Env, ctx: ExecutionContext, results: AgentResu
 - **Fallas:** `error` y `blocked` suman a `consecutive_failures` y conservan los últimos precios conocidos. `ok` y `not_found` lo reinician, porque la página respondió.
 - **Sin precio:** un `ok` sin precio (agotado) actualiza el estado pero no crea observación, porque `price_cents` es obligatorio. Al volver con precio, el cambio de existencia la crea.
 - **Observación:** `observed_at` es `checked_at`, `updated_by = 'agent'`, `extra` con un máximo de 4000 caracteres. El estado y la observación llevan la misma `version` nueva, una por petición (ninguna si todo era reintento).
-- **Después de responder:** `afterIngest` guarda, para T-212, la observación creada con el estado anterior. Por ahora solo deja la traza `listing_blocked`; las alertas llegan con T-212 y el aviso al admin con T-213.
+- **Después de responder:** `afterIngest` avisa a los admins de cada listing que pasó a `blocked` (08 §5) y evalúa las alertas de las observaciones creadas con su estado anterior (08, T-212), todo por FCM (T-213).
 
 ## 7. Scheduler
 

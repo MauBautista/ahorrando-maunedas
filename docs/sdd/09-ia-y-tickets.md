@@ -95,7 +95,7 @@ Implementación (T-039, decisión T68): `apps/api/src/ai/` (`types.ts`, `provide
 - Mes = mes calendario en hora del centro de México (UTC−6 fijo, sin horario de verano).
 - Antes de llamar: `gastado + estimado > tope` → `402 E-AI_BUDGET_EXCEEDED`. Estimado = `AI_RECEIPT_EST_COST_USD`.
 - Después de llamar (éxito o error de salida): registrar `ai_usage` con el costo reportado; si no viene, el estimado.
-- Al cruzar `AI_SOFT_LIMIT_PCT`: aviso al admin una vez por mes (marca `ai_soft:<YYYY-MM>` en `token_cache`). En la Etapa 1 el aviso es un banner en W-13 y en `GET /v1/admin/ai-budget` (`soft_limit_reached`); el push llega con FCM en T-213.
+- Al cruzar `AI_SOFT_LIMIT_PCT`: aviso al admin una vez por mes (marca `ai_soft:<YYYY-MM>` en `token_cache`). En la Etapa 1 el aviso es un banner en W-13 y en `GET /v1/admin/ai-budget` (`soft_limit_reached`). Desde T-213 también llega por FCM a los admins: el Cron de cada hora ve la marca y envía el aviso una vez (marca `ai_soft_sent:<YYYY-MM>`), así el gateway nunca espera a Firebase.
 - Red de seguridad: límite mensual de 5 USD configurado en la propia key de OpenRouter, igual al tope de la app (decisión T77): la app corta primero con su propio mensaje.
 - Implementación (T-039):
   - **Tope:** `assertBudget` compara en micro-dólares enteros, así que llegar justo al tope se permite y un micro-dólar más no.

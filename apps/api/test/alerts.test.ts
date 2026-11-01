@@ -3,7 +3,7 @@ import { env } from 'cloudflare:workers';
 import { uuidv7 } from '@maunedas/shared/util/uuid';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
 import { ingest } from '../src/agent/observations';
-import { deliverPending, evaluateAlerts } from '../src/alerts/engine';
+import { evaluateAlerts } from '../src/alerts/engine';
 import { shouldFire } from '../src/alerts/evaluate';
 import { alertMessage } from '../src/alerts/messages';
 import {
@@ -286,16 +286,6 @@ describe('the alert engine (08 §1–4)', () => {
     const again = await ingest(env.DB, [check(2620, NOW - 30 * 60_000)], NOW - 30 * 60_000);
     expect(await evaluateAlerts(env, again.created, NOW + 49 * HOUR, spy)).toBe(0);
     expect((await events()).map((e) => e.rule_id).sort()).toEqual([all, web].sort());
-  });
-
-  it('delivers nothing yet without FCM (T-213): no devices, or failed when there are tokens', async () => {
-    expect(await deliverPending(env, MEMBER_ID, {})).toBe('no_devices');
-    await env.DB.prepare(
-      `INSERT INTO devices (id, user_id, platform, fcm_token, created_at) VALUES (?1, ?2, 'android', 'token', 1)`,
-    )
-      .bind(uuidv7(), MEMBER_ID)
-      .run();
-    expect(await deliverPending(env, MEMBER_ID, {})).toBe('failed');
   });
 
   it('runs after the agent’s answer and the user sees only their alerts, newest first', async () => {
