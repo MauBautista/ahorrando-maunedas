@@ -15,6 +15,7 @@ import { bootstrap } from './routes/bootstrap';
 import { devices } from './routes/devices';
 import { health } from './routes/health';
 import { images } from './routes/images';
+import { listings } from './routes/listings';
 import { lookups } from './routes/lookups';
 import { me } from './routes/me';
 import { products } from './routes/products';
@@ -66,6 +67,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', purchases);
   app.route('/', barcodes);
   app.route('/', images);
+  app.route('/', listings);
   app.route('/', admin);
   app.route('/', alerts);
   app.route('/', agent);

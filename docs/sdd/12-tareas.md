@@ -461,9 +461,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Docs:** 07 §9, `docs/spikes/spike-b-scraping.md` · **Depende de:** T-203 (ninguna requirió navegador en el spike B)
 - **T-206 · `walmart_mx`: descartada (2026-10-19).** Walmart bloquea con captcha de PerimeterX desde la primera petición; por la regla 10 no se sigue (decisión T34).
 - **Hecho cuando:** fixtures `ok`, `sin stock`, `con precio de lista` y `bloqueo` pasan; una URL real devuelve el precio correcto para CP 72750.
-### [ ] T-210 · Resolver URL, revisar ahora, listar listings
+### [x] T-210 · Resolver URL, revisar ahora, listar listings
 - **Docs:** 03 §11 · **Depende de:** T-031
 - **Hecho cuando:** enlaces cortos de Amazon resueltos solo con `Location`; URL no soportada → 422.
+- **Hecho (2026-11-01, T83):**
+  - **Rutas:** `POST /v1/listings/resolve` (enlaces cortos por `Location`, razón del 422), `POST /v1/listings/:id/check-now` y `GET /v1/listings`.
+  - **Reglas compartidas:** de enlaces, con el fixture nuevo `enlaces.json` (18 casos).
+  - **Pruebas:** 5 de API y 20 de `shared`; 9 mutaciones detectadas.
 ### [x] T-211 · Ingesta de observaciones
 - **Docs:** 07 §6 · **Depende de:** T-201
 - **Hecho cuando:** compresión por cambio, idempotencia por `checked_at`, fallas consecutivas, transición a `blocked`.

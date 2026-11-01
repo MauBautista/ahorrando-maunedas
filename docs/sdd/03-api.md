@@ -426,6 +426,15 @@ Respuesta, errores y algoritmo: `09-ia-y-tickets.md` §4.
 ```
 Resuelve enlaces cortos (`amzn.to`, `a.co`) siguiendo redirecciones con `redirect: 'manual'` (solo se leen los `Location`, sin descargar la página). No crea el listing: el cliente lo crea por sync.
 
+**Implementación (T-210, decisión T83):**
+- **Reglas:** adapter, URL canónica e id salen de `packages/shared/src/tracking/urls.ts` (`canonicalListing`), con los vectores de `fixtures/enlaces.json` que también usará el agente. La canónica quita consulta y fragmento y siempre usa `https://www.`.
+- **Enlaces cortos:** hasta 5 saltos, de 5 s cada uno. Un `Location` sin esquema se toma respecto al enlace anterior.
+- **Tienda:** la tienda viva con ese `adapter` (las semillas las crean en cada entorno).
+- **`url`:** la primera URL del texto, tal como se compartió (es la que guarda `listings.url`).
+- **Rechazo:** `details.reason` dice por qué: `NO_URL` (no hay URL), `SHORT_LINK` (el enlace corto no lleva a una página), `NOT_TRACKED` (tienda sin adapter, como Walmart por T34, o no es la página de un producto) o `NO_STORE` (falta la tienda).
+- **`check-now`:** responde `404` para un listing borrado o inexistente.
+- **`GET /v1/listings`:** devuelve los listings vivos de la variante, activos o no, con `state: null` si aún no tienen estado.
+
 ### `POST /v1/listings/:id/check-now`
 `202`. Upsert de `listing_state` (la fila puede no existir aún) con `check_requested_at = now`, en un batch con nueva `version`.
 
