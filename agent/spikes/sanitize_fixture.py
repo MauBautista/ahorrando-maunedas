@@ -28,6 +28,8 @@ FIXTURES = [
     ("sams_mx/papel_petalo_6_250m.http.html", "sams_mx/sin_stock.html"),
     ("costco_mx/papel_kirkland_30.http.html", "costco_mx/ok.html"),
     ("costco_mx/leche_santa_clara_6.http.html", "costco_mx/ok_con_carrusel.html"),
+    # T-205 real-page check (2026-11-01): the same Amazon product with a multi-buy promotion.
+    ("amazon_mx/papel_petalo_18.live.html", "amazon_mx/ok_con_promocion.html"),
 ]
 
 # DOM sections kept per store (the page's own product only).
@@ -40,6 +42,7 @@ SECTIONS = {
         "#availability",
         "#outOfStock",
         "#merchantInfoFeature_feature_div",
+        "#promoPriceBlockMessage_feature_div",
     ],
     "sams_mx": ["h1"],
     "costco_mx": ["sip-product-details"],
