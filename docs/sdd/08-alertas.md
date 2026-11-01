@@ -168,7 +168,7 @@ Flujo por usuario:
 - **Avisos de sistema (§5):** van a los admins activos con `type = 'system'` y canal `system`, y no crean `alert_event`.
   - **Tienda bloqueando revisiones:** sale de `afterIngest`, una vez por listing que pasa a `blocked`.
   - **Gasto de IA al 80 %:** sale del Cron de cada hora, una vez al mes (`ai_soft_sent:<YYYY-MM>`).
-  - **Servidor casero sin conexión:** llega con el watchdog (T-214).
+  - **Servidor casero sin conexión (T-214):** el Cron de cada hora (`cron/watchdog.ts`) mira el último latido. Si tiene 2 h o más, reserva la marca `agent_offline_notified` (30 días; `/agent/v1/work` la borra al volver el agente) y avisa una vez por caída. La hora sale en la Ciudad de México: "12:05 p.m.", o "31 oct, 3:30 p.m." si fue otro día. Si el agente nunca se ha conectado, no se avisa.
 
 ## 7. Android
 

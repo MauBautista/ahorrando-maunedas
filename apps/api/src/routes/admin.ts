@@ -9,6 +9,8 @@ import {
 } from '@maunedas/shared/api/admin';
 import { Hono } from 'hono';
 import { z } from 'zod';
+import type { AdminAgentResponse, AgentStatusRow } from '@maunedas/shared/api/agent';
+import { ONLINE_MS } from '../agent/work';
 import { budgetSummary } from '../ai/budget';
 import { identityToolkitOf as identityOf } from '../auth/firebase-admin';
 import { requireUser } from '../auth/middleware';
@@ -57,6 +59,34 @@ export const admin = new Hono<AppEnv>()
       dry_run === true,
     );
     return c.json<MergeResponse>({ moved });
+  })
+
+  // The home agent at a glance (W-22): its status, whether it is online, and listings in trouble.
+  .get('/v1/admin/agent', adminOnly, async (c) => {
+    const db = c.env.DB;
+    const [status, blocked, failing, jobs] = await db.batch<Record<string, unknown>>([
+      db.prepare('SELECT * FROM agent_status ORDER BY last_heartbeat_at DESC LIMIT 1'),
+      db.prepare(
+        `SELECT count(*) AS n FROM listing_state s JOIN listings l ON l.id = s.listing_id
+         WHERE l.deleted_at IS NULL AND s.last_status = 'blocked'`,
+      ),
+      db.prepare(
+        `SELECT count(*) AS n FROM listing_state s JOIN listings l ON l.id = s.listing_id
+         WHERE l.deleted_at IS NULL AND s.consecutive_failures > 0`,
+      ),
+      db.prepare(`SELECT count(*) AS n FROM image_jobs WHERE status = 'queued'`),
+    ]);
+    const row = status!.results[0] as (Omit<AgentStatusRow, 'info'> & { info: string | null }) | undefined;
+    const count = (r: D1Result<Record<string, unknown>> | undefined) => Number(r?.results[0]?.n ?? 0);
+    return c.json<AdminAgentResponse>({
+      status: row
+        ? { ...row, info: row.info ? (JSON.parse(row.info) as Record<string, unknown>) : null }
+        : null,
+      online: row?.last_heartbeat_at != null && Date.now() - row.last_heartbeat_at < ONLINE_MS,
+      blocked_listings: count(blocked),
+      failing_listings: count(failing),
+      queued_image_jobs: count(jobs),
+    });
   })
 
   // The month's AI spend and its soft limit (09 §2): the banner of W-13.

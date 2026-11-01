@@ -489,9 +489,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - Límite de 40 envíos por invocación.
   - Avisos al admin de tienda bloqueada (al ingerir) y de gasto de IA al 80 % (Cron por hora); el de agente caído llega con T-214.
   - **Pruebas:** 6.
-### [ ] T-214 · Watchdog del agente
+### [x] T-214 · Watchdog del agente
 - **Docs:** 08 §5, 07 §5.1, 03 §12 · **Depende de:** T-213
 - **Hacer:** incluye `GET /v1/admin/agent`.
+- **Hecho (2026-11-01, T82):**
+  - Aviso "Servidor casero sin conexión" a los admins desde el Cron, una vez por caída, con la marca que `/work` borra al volver el agente.
+  - `GET /v1/admin/agent`.
+  - **Pruebas:** 4.
 ### [ ] T-220 · Android: agregar URL y listings (S-20, S-21)
 - **Depende de:** T-210, T-126 · **Hecho cuando:** compartir desde la app de Amazon crea el listing.
 ### [ ] T-221 · Android: reglas, historial de alertas, FCM y deep link (S-22, S-23)
