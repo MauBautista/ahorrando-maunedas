@@ -36,6 +36,8 @@ class Settings(BaseSettings):
     backup_hour: int = 3
     backup_weekday: int = 6
     backup_keep_weekly: int = 8
+    # D1's migrations, copied into the image (07 §12); the mirror is built from them.
+    migrations_dir: Path = Path("/app/migrations")
     r2_endpoint: str = ""
     r2_bucket: str = "maunedas-images"
     r2_access_key_id: str = ""

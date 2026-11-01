@@ -8,12 +8,15 @@ from maunedas_agent import __version__, log
 from maunedas_agent.api import AgentApi
 from maunedas_agent.config import Settings
 from maunedas_agent.context import AgentContext
+from maunedas_agent.loops.backup import backup_once
 from maunedas_agent.loops.flush import flush_once
 from maunedas_agent.loops.poll import poll_once
 from maunedas_agent.loops.scrape import scrape_once
 from maunedas_agent.store import Store
 
 logger = log.get("agent")
+# The backup hour is checked this often; a failed mirror is retried at the same pace.
+BACKUP_TICK_S = 300
 
 
 async def every(
@@ -40,6 +43,7 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
         asyncio.create_task(every(settings.poll_interval_s, lambda: poll_once(ctx), stop, "poll")),
         asyncio.create_task(every(settings.scrape_tick_s, lambda: scrape_once(ctx), stop, "scrape")),
         asyncio.create_task(every(settings.scrape_tick_s, lambda: flush_once(ctx), stop, "flush")),
+        asyncio.create_task(every(BACKUP_TICK_S, lambda: backup_once(ctx), stop, "backup")),
     ]
     try:
         await stop.wait()
