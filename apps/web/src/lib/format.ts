@@ -53,6 +53,15 @@ export function ago(at: number, now: number): string {
   return `hace ${Math.floor(days / 30)} meses`;
 }
 
+/** "hace un momento", "hace 5 min", "hace 3 h", and from a day on as `ago`: for checks that happen hourly. */
+export function agoTime(at: number, now: number): string {
+  const minutes = Math.floor((now - at) / 60_000);
+  if (minutes < 1) return 'hace un momento';
+  if (minutes < 60) return `hace ${minutes} min`;
+  if (minutes < 24 * 60) return `hace ${Math.floor(minutes / 60)} h`;
+  return ago(at, now);
+}
+
 const shortDate = new Intl.DateTimeFormat('es-MX', {
   timeZone: ZONE,
   day: 'numeric',

@@ -490,7 +490,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Pruebas:** el agente tiene 134; 20 mutaciones, todas detectadas.
 - **Falta:**
   - **Páginas reales con precio de lista:** el spike B no vio ninguna; hoy se prueba con variantes de las reales. Se capturan cuando aparezcan.
-  - **Club de Sam's (Mauricio):** sin sesión, Sam's da el precio del club por defecto de la CDMX; hay que decidir qué club de Puebla usar y cómo fijarlo.
+  - **Club de Sam's:** Mauricio eligió el de **Forjadores, Puebla** (T93). Falta encontrar su identificador y cómo fijarlo sin sesión; sin eso, Sam's da el precio del club por defecto de la CDMX.
   - **Costco:** no se conoce cómo marca el precio de lista.
 ### [x] T-210 · Resolver URL, revisar ahora, listar listings
 - **Docs:** 03 §11 · **Depende de:** T-031
@@ -538,8 +538,12 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-222 · Android: serie web escalonada y estado del agente
 - **Nota (T-115):** hoy la serie web se dibuja como puntos, igual que las otras; esta tarea la convierte en escalones hasta `web_confirmed_until`.
 - **Depende de:** T-115, T-211
-### [ ] T-223 · Web: seguimiento, alertas y agente (W-20 a W-22)
+### [x] T-223 · Web: seguimiento, alertas y agente (W-20 a W-22)
 - **Depende de:** T-210, T-212, T-161
+- **Hecho (2026-11-01, T92):**
+  - **Pantallas:** W-20, W-21 y W-22 (06 §3), con pestañas dentro de Catálogo y enlaces desde la ficha de producto.
+  - **API:** `GET /v1/listings` sin presentación y con nombres; `GET /v1/alerts/rules`; el tema de cada alerta.
+  - **Pruebas:** 13 de web y 2 de API; mutaciones: 17 de web y 7 de API, todas detectadas.
 
 ## Etapa 2 · Respaldos y cierre
 

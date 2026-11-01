@@ -4,9 +4,10 @@ const TABS = [
   { to: '/admin/usuarios', label: 'Usuarios' },
   { to: '/admin/fusionar', label: 'Fusionar duplicados' },
   { to: '/admin/ia', label: 'Gasto de IA' },
+  { to: '/admin/agente', label: 'Servidor casero' },
 ];
 
-/** W-11 to W-13 (admin only, 06 §3): the three screens under one row of tabs. */
+/** W-11 to W-13 and W-22 (admin only, 06 §3): the screens under one row of tabs. */
 export function AdminLayout() {
   return (
     <div className="flex flex-col gap-4">

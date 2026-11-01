@@ -9,6 +9,7 @@ import { useApi } from '../../lib/context';
 import { ago } from '../../lib/format';
 import { categoryTree, storeName, useLookups } from '../../lib/lookups';
 import { useDebounced } from '../../lib/useDebounced';
+import { CatalogTabs } from './CatalogTabs';
 
 /**
  * W-07 (05 §5 S-07): search by name, brand or code, filters by category (with its subcategories) and tag, and each
@@ -55,6 +56,7 @@ export function CatalogPage() {
 
   return (
     <section className="flex flex-col gap-4">
+      <CatalogTabs />
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-title">Catálogo</h1>
         <Link to="/productos/nuevo" className="btn-primary inline-flex items-center">
