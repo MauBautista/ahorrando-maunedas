@@ -1,0 +1,26 @@
+# agent/compose.yaml — proyecto de compose propio del agente casero (07 §12).
+# No toca otros contenedores del servidor (Home Assistant corre suelto; nefrobalance es otro proyecto).
+#
+#   docker compose -f agent/compose.yaml up -d --build      # desde la raíz del repo
+#   docker compose -f agent/compose.yaml logs -f
+#
+# Las rutas relativas parten de esta carpeta (agent/).
+name: maunedas
+
+services:
+  maunedas-agent:
+    build:
+      context: ..
+      dockerfile: agent/Dockerfile
+    image: maunedas-agent:latest
+    restart: unless-stopped
+    env_file: .env
+    volumes:
+      # Fuera del repo: SQLite del agente, respaldos y perfil del navegador.
+      - ${MAUNEDAS_DATA:-../../datos-agente}:/data
+    mem_limit: 1200m # spike B: pico de Chromium 759 MB; Playwright solo como último recurso
+    cpus: 1.5
+    shm_size: 512m
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }

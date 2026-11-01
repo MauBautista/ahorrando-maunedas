@@ -64,7 +64,8 @@ UPDATE_SYNC_SCHEMA=1 pnpm --filter shared test   # regenera packages/shared/sync
 cd apps/android && ./gradlew checkModuleDependencies unitTests lintDevDebug   # reglas de módulos, pruebas (sabor dev) y lint
 cd agent && uv sync && uv run ruff check . && uv run ruff format --check . && uv run pytest
 docker build -f agent/Dockerfile -t maunedas-agent:dev .   # imagen del agente (contexto: raíz del repo)
-docker compose up -d maunedas-agent         # en el servidor casero (Etapa 2)
+docker compose -f agent/compose.yaml up -d --build   # agente en el servidor casero (proyecto `maunedas`, T91)
+docker compose -f agent/compose.yaml logs -f         # sus registros JSON
 ```
 
 ## Reglas no negociables
