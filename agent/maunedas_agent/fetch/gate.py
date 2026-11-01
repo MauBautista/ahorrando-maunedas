@@ -1,6 +1,19 @@
 """Minimum spacing between requests to one domain (07 §7, rule 10), kept in SQLite across restarts."""
 
+from collections.abc import Mapping
+from typing import Protocol
+
 from maunedas_agent.store import Store
+
+
+class Gated(Protocol):
+    gate_key: str
+    min_spacing_s: int
+
+
+def spacing_for(adapter: Gated, config: Mapping[str, int]) -> int:
+    """The stricter of the adapter's own spacing and the Worker's (`config.min_spacing_s`)."""
+    return max(adapter.min_spacing_s, config.get(adapter.gate_key, config.get("default", 0)))
 
 
 class DomainGate:

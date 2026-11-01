@@ -37,6 +37,8 @@ class BaseAdapter:
     needs_browser = False
     # Lowercase markers of this store's block page, counted like the strong ones (07 §8.4).
     block_markers: tuple[str, ...] = ()
+    # What the browser waits for before reading the page.
+    price_selector: str | None = None
 
     @property
     def gate_key(self) -> str:
@@ -50,8 +52,18 @@ class BaseAdapter:
         page = await ctx.http.get(url)
         result = self.read(page)
         result.extra.setdefault("http_status", page.status)
-        if result.status == "error" and result.error == NO_PRICE:
-            save_failure(ctx.settings.data_dir, self.name, page.html)
+        if result.status != "error" or result.error != NO_PRICE:
+            return result
+        save_failure(ctx.settings.data_dir, self.name, page.html)
+        # Last resort: only for a page that loaded without a price, never for a block (rule 10), and only once
+        # the domain can take another request.
+        if ctx.browser is None or ctx.wait_turn is None:
+            return result
+        await ctx.wait_turn(self)
+        page = await ctx.browser.get(url, self.price_selector)
+        result = self.read(page)
+        result.extra["method"] = str(result.extra.get("method", "http")).replace("http", "browser", 1)
+        result.extra.setdefault("http_status", page.status)
         return result
 
     def read(self, page: Page) -> ScrapeResult:

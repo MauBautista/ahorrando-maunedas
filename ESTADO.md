@@ -53,6 +53,12 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-204 (2026-11-01):** si una tienda cambia su página y ya no se encuentra el precio, el agente puede abrirla en un navegador como último recurso:
+  - espera su turno para no visitar la tienda dos veces seguidas;
+  - nunca lo usa para saltarse un bloqueo;
+  - reinicia el navegador cada cierto número de páginas o si usa demasiada memoria.
+  
+  Por ahora ninguna tienda lo necesita.
 - **T-230 (2026-11-01, avance):** el servidor ya entrega al agente casero todo lo necesario para un respaldo completo:
   - los datos de todos los usuarios, incluidos los borrados y los accesos con Google;
   - el historial de tickets leídos por IA y su gasto.
@@ -150,13 +156,20 @@
 - Mauricio, para T-207: qué club de Sam's de Puebla usar. Sin sesión, Sam's da el precio del club `0000009996` de la CDMX (CP 11220).
 - Mauricio, para terminar T-200: correr `apps/api/scripts/agent-token.sh dev` en su terminal, pegar `agent/compose.snippet.yaml` en el compose del servidor y levantar `maunedas-agent`.
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); 5 fotos de tickets para el spike C y 10 fotos de productos para el spike A.
-- Spike C (T-012): rutas temporales y script listos en la rama `spike/c-receipts`, desplegada en `maunedas-dev` con `SPIKE_TOKEN` temporal; esperan las fotos.
+- Spike C (T-012): rutas temporales y script listos en la rama local `spike/c-receipts`; `maunedas-dev` volvió a `main` y se borró `SPIKE_TOKEN`. Se vuelve a desplegar cuando estén las fotos.
 
 ## Siguiente
-1. Web: T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
-2. Pantallas de Android: T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
-3. Spike C en cuanto estén las fotos de tickets (luego T-040, T-124 y T-163); spike A con las 10 fotos de productos.
-4. Antes del primer despliegue a producción: T-004 (Firebase prod).
+1. **Agente en el servidor** (en cuanto Mauricio cargue el token y el compose):
+   - ver el primer `/work` y el estado en `GET /v1/admin/agent`;
+   - agregar un enlace real y ver su primera revisión;
+   - después del primer respaldo, T-231 (prueba de restauración).
+2. **Clientes de la Etapa 2:**
+   - T-223 (web: seguimiento, alertas y estado del agente), que necesita la revisión de Mauricio;
+   - T-220 a T-222 (Android), que necesitan pruebas en el teléfono.
+3. **Web:** T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
+4. **Pantallas de Android:** T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
+5. **Spikes:** el C en cuanto estén las fotos de tickets (luego T-040, T-124 y T-163); el A con las 10 fotos de productos.
+6. **Antes del primer despliegue a producción:** T-004 (Firebase prod).
 
 ## Decisiones tomadas
 
@@ -252,6 +265,7 @@
 | T87 | **Adapters de tiendas.**<br>• Un camino común: HTTP, bloqueo, 404 como `not_found`, lectura de la tienda; si no hay precio, `error` y la página se guarda en `/data/fallos/` (20).<br>• Amazon: precio a pagar con tres respaldos, lista solo si es mayor y nunca el precio por unidad, agotado sin precio, sin `style`/`script` en los textos.<br>• Sam's: el producto de `__NEXT_DATA__` con club y CP en `extra`; promociones solo de insignias con número.<br>• Costco: JSON-LD y, como respaldo, el DOM solo dentro de `sip-product-details`.<br>• El agente reconoce los enlaces con las mismas reglas que el Worker (`fixtures/enlaces.json`). | La comprobación real mostró que el precio "offscreen" de Amazon viene vacío y que su promoción trae CSS incrustado. Guardar las páginas que fallan da fixtures reales para corregir. Registrar el club permite distinguir precios cuando se fije uno de Puebla. |
 | T88 | **Respaldo desde el Worker.**<br>• `backup/pull` toma `SELECT *` de todas las tablas del registro sin filtro de usuario.<br>• `receipt_extractions` y `ai_usage` van por `(created_at, pk)`.<br>• `user_identities` viaja completa en cada respuesta y el espejo la reemplaza (`replace`).<br>• Quedan fuera `devices`, cachés, la cola de imágenes y `sync_meta`, que se recalcula al restaurar. | `user_identities` es la única tabla del servidor que borra filas (al quitar Google); un espejo incremental devolvería un acceso retirado al restaurar. Los tokens FCM se renuevan y las cachés se reconstruyen. |
 | T89 | **Respaldos en el agente.**<br>• Cada trabajo (espejo, volcado, fotos) tiene su propia marca del día; el volcado y las fotos esperan al espejo.<br>• El espejo se crea y actualiza con las migraciones de D1 copiadas en la imagen.<br>• Cada página se aplica con sus cursores en una transacción, con upsert por llave primaria.<br>• Una columna desconocida detiene sin escribir.<br>• El volcado es `iterdump` con gzip, sin la bitácora del espejo, y se escribe primero a `.partial`.<br>• rclone se configura por variables de entorno. | Un volcado que falla no debe repetir la copia de la base. Un upsert hace visible un choque de llaves únicas que `INSERT OR REPLACE` taparía borrando filas. Sin la bitácora, el volcado se restaura en D1 sin tablas ajenas. Las llaves de R2 no tocan disco ni registros. |
+| T90 | **Navegador del agente.**<br>• Chromium solo como último recurso, cuando la página HTTP cargó sin precio ni existencia; nunca ante un bloqueo.<br>• Antes de abrirlo se espera turno en el dominio con la misma separación.<br>• Se reinicia por páginas o si los procesos hijos pasan de 900 MB (RSS leído de `/proc`, sin psutil).<br>• No existe sin `PLAYWRIGHT_ENABLED` o sin Playwright instalado. | Por el spike B ninguna tienda lo necesita y cuesta 8–23 s y más de 600 MB por página. Una segunda petición inmediata a la misma tienda rompería la regla 10. Leer `/proc` evita otra dependencia nativa en un servidor sin AVX2. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -388,3 +402,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-01** — T-205/T-207/T-208 (avance): adapters de Amazon, Sam's y Costco con fixtures reales y una comprobación real por tienda (T87); falta el club de Sam's (Mauricio) y páginas reales con precio de lista.
 - **2026-11-01** — T-230 (avance): `POST /agent/v1/backup/pull` en el Worker con tablas del registro, tablas del servidor por `created_at` y `user_identities` completa (T88).
 - **2026-11-01** — T-230 (avance): espejo diario de D1, volcado semanal con rotación y copia de fotos con rclone en el agente (T89); faltan el token de R2 de solo lectura y el agente en el servidor.
+- **2026-11-01** — T-204: navegador Playwright como último recurso, con reinicio por páginas y por memoria, probado con Chromium real en la imagen (T90).

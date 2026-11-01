@@ -15,6 +15,7 @@ class CostcoMx(BaseAdapter):
     name = "costco_mx"
     domains = ("costco.com.mx",)
     min_spacing_s = 30
+    price_selector = 'script[type="application/ld+json"], sip-product-details .product-price-amount'
 
     def extract(self, tree: LexborHTMLParser) -> ScrapeResult | None:
         ld = jsonld_product(tree)
