@@ -38,7 +38,8 @@ def _promo(product: dict[str, Any]) -> str | None:
 class SamsMx(BaseAdapter):
     name = "sams_mx"
     domains = ("sams.com.mx",)
-    min_spacing_s = 30
+    # Sam's blocked the home IP after a burst at 30 s (2026-11-01, T94).
+    min_spacing_s = 120
     price_selector = "script#__NEXT_DATA__"
 
     def extract(self, tree: LexborHTMLParser) -> ScrapeResult | None:

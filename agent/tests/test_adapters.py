@@ -29,7 +29,7 @@ def read(adapter, body: str, status: int = 200, url: str = "https://www.example.
 def test_registry_follows_spike_b() -> None:
     assert {n: (a.min_spacing_s, a.needs_browser, a.gate_key) for n, a in ADAPTERS.items()} == {
         "amazon_mx": (45, False, "amazon_mx"),
-        "sams_mx": (30, False, "sams_mx"),
+        "sams_mx": (120, False, "sams_mx"),
         "costco_mx": (30, False, "costco_mx"),
     }
 

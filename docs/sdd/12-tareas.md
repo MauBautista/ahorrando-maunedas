@@ -490,7 +490,10 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Pruebas:** el agente tiene 134; 20 mutaciones, todas detectadas.
 - **Falta:**
   - **Páginas reales con precio de lista:** el spike B no vio ninguna; hoy se prueba con variantes de las reales. Se capturan cuando aparezcan.
-  - **Club de Sam's:** Mauricio eligió el de **Forjadores, Puebla** (T93). Falta encontrar su identificador y cómo fijarlo sin sesión; sin eso, Sam's da el precio del club por defecto de la CDMX.
+  - **Club de Sam's:** Mauricio eligió el de **Forjadores, Puebla** (T93).
+    - Sam's guarda el club en las cookies `assortmentStoreId` y `locDataV3`; sin ellas da el precio del club `0000009996` de la CDMX.
+    - El sitio no publica los números de club; falta el de Forjadores (Mauricio, por ejemplo de un ticket) y probar con calma que esas cookies lo fijen.
+    - Al buscarlo, Sam's bloqueó la IP tras una ráfaga, así que la separación con Sam's pasó a 2 minutos (T94).
   - **Costco:** no se conoce cómo marca el precio de lista.
 ### [x] T-210 · Resolver URL, revisar ahora, listar listings
 - **Docs:** 03 §11 · **Depende de:** T-031

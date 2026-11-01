@@ -170,7 +170,7 @@ Auth: `Authorization: Bearer <AGENT_TOKEN>`. El Worker calcula `sha256(token)` y
   "store_defaults": { "<store_id>": 480 },
   "check_now": ["0192…"],                    // check_requested_at > COALESCE(last_checked_at, 0)
   "image_jobs_queued": 0,
-  "config": { "min_spacing_s": { "amazon_mx": 45, "sams_mx": 30, "costco_mx": 30, "default": 20 } }
+  "config": { "min_spacing_s": { "amazon_mx": 45, "sams_mx": 120, "costco_mx": 30, "default": 20 } }   // sams_mx 120 desde T94
 }
 ```
 
