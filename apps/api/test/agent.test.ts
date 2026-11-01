@@ -132,6 +132,8 @@ describe('POST /agent/v1/work (07 §5.1)', () => {
     expect(res.check_now).toEqual([fx.live]);
     expect(res.image_jobs_queued).toBe(2);
     expect(res.config).toEqual({ min_spacing_s: MIN_SPACING_S });
+    // Sam's blocked the home IP after a burst at 30 s (T94).
+    expect(res.config.min_spacing_s.sams_mx).toBe(120);
     // From the cursor on, nothing new.
     const next = await work(body({ cursor: res.listings.cursor }));
     expect(next.body.listings).toEqual({

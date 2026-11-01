@@ -9,7 +9,8 @@ export const STATUS_EVERY_MS = 10 * 60_000;
 /** `token_cache` key the watchdog writes when it warned of an outage (T-214); a heartbeat after it clears it. */
 export const AGENT_OFFLINE_MARK = 'agent_offline_notified';
 /** Minimum seconds between requests to one domain (07 §5.1, §7; CLAUDE.md rule 10). */
-export const MIN_SPACING_S = { amazon_mx: 45, sams_mx: 30, costco_mx: 30, default: 20 };
+// Sam's blocked the home IP after a burst at 30 s (2026-11-01, T94): at most one page every 2 minutes.
+export const MIN_SPACING_S = { amazon_mx: 45, sams_mx: 120, costco_mx: 30, default: 20 };
 
 const VERSION = `(SELECT value FROM sync_meta WHERE key = 'version')`;
 

@@ -278,6 +278,7 @@
 | T91 | **El agente tiene su propio proyecto de compose** (`agent/compose.yaml`, proyecto `maunedas`).<br>• Se levanta con `docker compose -f agent/compose.yaml up -d --build` desde la raíz del repo.<br>• Datos en `~/proyectos/maunedas/datos-agente` (cambiable con `MAUNEDAS_DATA`).<br>• Mientras no haya producción, corre contra dev. | En el servidor, Home Assistant corre como contenedor suelto y el único compose es el de nefrobalance, otra app; no había compose del servidor donde pegar el fragmento. Un proyecto propio no toca a los demás contenedores y queda versionado en el repo. |
 | T92 | **Web de la Etapa 2.**<br>• Seguimiento y Alertas son pestañas dentro de Catálogo, como en Android.<br>• La ficha de producto enlaza cada presentación con `?producto=&variante=`.<br>• Para la web, que no guarda copia local: `GET /v1/listings` acepta ir sin presentación y trae nombres, hay un `GET /v1/alerts/rules` nuevo y cada alerta trae su presentación.<br>• Un enlace que ya se sigue no se agrega dos veces. | Así la navegación es la misma en las dos apps. Pedir los nombres al Worker evita una petición por listing o por regla. Seguir dos veces la misma página duplicaría revisiones y alertas. |
 | T93 | **El club de Sam's es el de Forjadores, Puebla** (decisión de Mauricio, 2026-11-01). | Es el que más usa la casa; sin fijarlo, Sam's da el precio de un club de la CDMX. |
+| T94 | **Separación de 2 minutos con Sam's** (decisión de Mauricio, 2026-11-01): `MIN_SPACING_S.sams_mx` = 120 en el Worker y en el adapter. | Al buscar el club de Forjadores, Sam's bloqueó la IP de la casa tras 6 peticiones en unos 4 minutos separadas 30 s. Con revisiones cada 8 h no cambia nada en el día a día, y una tanda (la primera corrida, varios "Revisar ahora") ya no se vuelve una ráfaga. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -292,7 +293,8 @@
 |---|---|
 | Anti-bot en Amazon, Sam's y Costco (Walmart ya bloquea y salió del tracker, T34) | Baja frecuencia, IP residencial, HTTP antes que navegador, backoff, estado "bloqueado" visible; no se evaden captchas |
 | `pnpm --filter api deploy` ejecuta el comando `deploy` de pnpm, no el script | El script se llama `deploy:prod` (y `deploy:dev`) |
-| Sam's muestra el precio de un club de CDMX a visitantes sin sesión | T-207 revisa si el precio cambia por club y si se puede fijar uno de Puebla sin login |
+| Sam's muestra el precio de un club de CDMX a visitantes sin sesión | T-207 fija el club de Forjadores (T93) con las cookies `assortmentStoreId` y `locDataV3`; falta su número de club |
+| Sam's bloquea la IP de la casa ante una ráfaga: 6 peticiones en unos 4 min, separadas 30 s, el 2026-11-01 | Separación de 2 min con Sam's (T94), backoff y nada de sondeos en ráfaga desde el servidor |
 | Capacidad del A8-7410 (RAM, CPU, instrucciones para onnxruntime) | Spikes A y B antes de comprometer diseño; concurrencia 1 para Chromium |
 | Productos duplicados creados offline por varios usuarios | Códigos únicos, `BARCODE_TAKEN`, herramienta de fusión para admin |
 | Relojes de teléfono desfasados (LWW) | Clamp de `updated_at` a `now + 5 min` en el servidor |
@@ -417,3 +419,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-01** — T-204: navegador Playwright como último recurso, con reinicio por páginas y por memoria, probado con Chromium real en la imagen (T90).
 - **2026-11-01** — T-200/T-201: token de dev cargado; el agente corre en el servidor con su propio compose (T91) y su primer respaldo coincide con D1 de dev en las 24 tablas.
 - **2026-11-01** — T-223: web de seguimiento, alertas y servidor casero (W-20 a W-22) con las lecturas nuevas de la API (T92). Mauricio eligió el Sam's de Forjadores (T93).
+- **2026-11-01** — T-207: Sam's bloqueó la IP de la casa durante la búsqueda del club; separación de 2 minutos con Sam's (T94).
