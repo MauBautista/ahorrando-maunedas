@@ -332,5 +332,66 @@ describe('the alert engine (08 §1–4)', () => {
       [MEMBER_ID, 'Leche Lala Entera · 1 L bajó a $29.00'],
     ]);
     expect(page2.next_cursor).toBeNull();
+    // What it is about, to link it (T-223).
+    expect(page2.items[0]).toMatchObject({
+      variant_id: fx.variant,
+      product_name: 'Leche Lala Entera',
+      brand: null,
+      variant_label: '1 L',
+    });
+    expect(page2.items[0]).toHaveProperty('product_id', expect.any(String));
+  });
+
+  it('lists my live rules with what they watch (T-223)', async () => {
+    const below = await addRule({ type: 'below_price', threshold_cents: 3000 });
+    const promo = await addRule({ type: 'promo', listing: fx.listing });
+    await addRule({ type: 'below_price', threshold_cents: 1000, user: ADMIN_ID });
+    const gone = await addRule({ type: 'back_in_stock' });
+    await env.DB.prepare('UPDATE alert_rules SET deleted_at = 5 WHERE id = ?1').bind(gone).run();
+    const p2 = product({ name: 'Atún Dolores' });
+    const v2 = variant(p2.row.id, { label: '140 g', measure: 'mass', unit_amount: 140 });
+    expect((await h.push([p2, v2] as Mutation[], 'member')).status).toBe(200);
+    const tuna = uuidv7();
+    await env.DB.prepare(
+      `INSERT INTO alert_rules (id, user_id, variant_id, type, scope, cooldown_hours, active, created_at, updated_at)
+       VALUES (?1, ?2, ?3, 'new_low', 'variant_all', 12, 0, 1, 1)`,
+    )
+      .bind(tuna, MEMBER_ID, v2.row.id)
+      .run();
+    const get = async (q = '', token: string | null = h.tokens.member) => {
+      const res = await h.app.request(
+        `/v1/alerts/rules${q}`,
+        { headers: { 'X-Client-Schema': '1', ...(token ? { Authorization: `Bearer ${token}` } : {}) } },
+        env as never,
+      );
+      return { status: res.status, body: await res.json<{ items: Array<Record<string, unknown>> }>() };
+    };
+    const { status, body } = await get();
+    expect(status).toBe(200);
+    expect(body.items.map((r) => [r.product_name, r.type])).toEqual([
+      ['Atún Dolores', 'new_low'],
+      ['Leche Lala Entera', 'below_price'],
+      ['Leche Lala Entera', 'promo'],
+    ]);
+    expect(body.items.find((r) => r.id === below)).toMatchObject({
+      variant_id: fx.variant,
+      variant_label: '1 L',
+      threshold_cents: 3000,
+      listing_id: null,
+      store_name: null,
+      active: 1,
+    });
+    expect(body.items.find((r) => r.id === promo)).toMatchObject({
+      listing_id: fx.listing,
+      store_name: 'Walmart',
+    });
+    expect(body.items.find((r) => r.id === tuna)).toMatchObject({
+      scope: 'variant_all',
+      cooldown_hours: 12,
+      active: 0,
+    });
+    expect((await get(`?variant_id=${v2.row.id}`)).body.items.map((r) => r.id)).toEqual([tuna]);
+    expect((await get('?variant_id=abc')).status).toBe(400);
+    expect((await get('', null)).status).toBe(401);
   });
 });

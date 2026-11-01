@@ -194,7 +194,12 @@ describe('listings: check now and list (03 §11)', () => {
       canonical_url: PRODUCT,
       external_id: 'B07XJ8C8F5',
       active: 1,
+      product_name: 'Leche Lala Entera',
+      brand: null,
+      variant_label: '1 L',
+      store_name: 'Amazon',
     });
+    expect(withState.product_id).toEqual(expect.any(String));
     expect(withState.state).toMatchObject({
       listing_id: a.id,
       last_status: 'ok',
@@ -203,6 +208,26 @@ describe('listings: check now and list (03 §11)', () => {
       version: 7,
     });
     expect(items.find((l) => l.id === b.id)!.state).toBeNull();
+
+    // Without a variant: every live listing, by product, variant and store (W-20).
+    const p2 = product({ name: 'Atún Dolores', brand: 'Dolores' });
+    const v2 = variant(p2.row.id, { label: '140 g', measure: 'mass', unit_amount: 140 });
+    expect((await h.push([p2, v2] as Mutation[], 'member')).status).toBe(200);
+    const tuna = uuidv7();
+    await env.DB.prepare(
+      `INSERT INTO listings (id, variant_id, store_id, adapter, url, created_at, updated_at, version)
+       VALUES (?1, ?2, ?3, 'amazon_mx', 'https://www.amazon.com.mx/dp/B000000002', 1, 1, 1)`,
+    )
+      .bind(tuna, v2.row.id, fx.amazon)
+      .run();
+    const every = (await call('GET', '/v1/listings')).body!.items as Array<Record<string, unknown>>;
+    expect(every.map((l) => [l.product_name, l.variant_label])).toEqual([
+      ['Atún Dolores', '140 g'],
+      ['Leche Lala Entera', '1 L'],
+      ['Leche Lala Entera', '1 L'],
+    ]);
+    expect(every[0]).toMatchObject({ id: tuna, brand: 'Dolores', state: null });
+    expect((await call('GET', `/v1/listings?variant_id=${v2.row.id}`)).body!.items).toHaveLength(1);
     expect((await call('GET', '/v1/listings?variant_id=abc')).status).toBe(400);
   });
 });

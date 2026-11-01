@@ -16,8 +16,8 @@ export interface ResolveListingResponse {
 /** Why a link cannot be tracked (`422 E-UNSUPPORTED_URL`, `details.reason`). */
 export type UnsupportedUrlReason = 'NO_URL' | 'SHORT_LINK' | 'NOT_TRACKED' | 'NO_STORE';
 
-/** `GET /v1/listings?variant_id=` (03 §11). */
-export const ListingsQuerySchema = z.object({ variant_id: z.uuid() });
+/** `GET /v1/listings?variant_id=` (03 §11); without `variant_id`, every live listing (W-20, T-223). */
+export const ListingsQuerySchema = z.object({ variant_id: z.uuid().optional() });
 
 export interface ListingStateRow {
   listing_id: string;
@@ -47,6 +47,12 @@ export interface ListingWithState {
   created_at: number;
   updated_at: number;
   version: number;
+  /** What the listing tracks and where, to show it without more requests. */
+  product_id: string;
+  product_name: string;
+  brand: string | null;
+  variant_label: string;
+  store_name: string;
   state: ListingStateRow | null;
 }
 

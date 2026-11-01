@@ -53,6 +53,11 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-223 (2026-11-01):** la web ya tiene las pantallas de la Etapa 2:
+  - **Seguimiento:** los enlaces de tiendas en línea con su último precio y estado. Ahí se agrega un enlace pegándolo, se pide "Revisar ahora", se pausa o se deja de seguir.
+  - **Alertas:** las reglas propias y el historial de avisos.
+  - **Servidor casero (para el admin):** si está en línea, qué tiene pendiente, sus errores y sus respaldos.
+  - **Ubicación:** las dos primeras están dentro de Catálogo, como en Android, y la ficha de producto enlaza a ellas por presentación.
 - **Agente en el servidor (2026-11-01, T-200 y T-201):**
   - Mauricio cargó el token y el agente ya corre en el servidor casero contra dev, en su propio proyecto de compose, sin tocar Home Assistant ni nefrobalance.
   - Se reporta cada minuto y usa 36 MB.
@@ -157,7 +162,7 @@
 
 ## En curso
 - Mauricio, para T-230: crear un token de R2 de **solo lectura** para el bucket `maunedas-images` y poner `R2_ENDPOINT`, `R2_ACCESS_KEY_ID` y `R2_SECRET_ACCESS_KEY` en `agent/.env`.
-- Mauricio, para T-207: qué club de Sam's de Puebla usar. Sin sesión, Sam's da el precio del club `0000009996` de la CDMX (CP 11220).
+- T-207: fijar el club de Sam's de Forjadores, Puebla (T93). Sin eso, Sam's da el precio del club `0000009996` de la CDMX (CP 11220).
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); 5 fotos de tickets para el spike C y 10 fotos de productos para el spike A.
 - Spike C (T-012): rutas temporales y script listos en la rama local `spike/c-receipts`; `maunedas-dev` volvió a `main` y se borró `SPIKE_TOKEN`. Se vuelve a desplegar cuando estén las fotos.
 
@@ -167,12 +172,13 @@
    - T-231 (prueba de restauración con el volcado del 2026-11-01);
    - las fotos esperan el token de R2.
 2. **Clientes de la Etapa 2:**
-   - T-223 (web: seguimiento, alertas y estado del agente), que necesita la revisión de Mauricio;
-   - T-220 a T-222 (Android), que necesitan pruebas en el teléfono.
-3. **Web:** T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
-4. **Pantallas de Android:** T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
-5. **Spikes:** el C en cuanto estén las fotos de tickets (luego T-040, T-124 y T-163); el A con las 10 fotos de productos.
-6. **Antes del primer despliegue a producción:** T-004 (Firebase prod).
+   - T-223 (web) espera la revisión de Mauricio en dev;
+   - T-220 a T-222 (Android) necesitan pruebas en el teléfono.
+3. **T-207:** fijar el club de Sam's de Forjadores.
+4. **Web:** T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
+5. **Pantallas de Android:** T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
+6. **Spikes:** el C en cuanto estén las fotos de tickets (luego T-040, T-124 y T-163); el A con las 10 fotos de productos.
+7. **Antes del primer despliegue a producción:** T-004 (Firebase prod).
 
 ## Decisiones tomadas
 
@@ -270,6 +276,8 @@
 | T89 | **Respaldos en el agente.**<br>• Cada trabajo (espejo, volcado, fotos) tiene su propia marca del día; el volcado y las fotos esperan al espejo.<br>• El espejo se crea y actualiza con las migraciones de D1 copiadas en la imagen.<br>• Cada página se aplica con sus cursores en una transacción, con upsert por llave primaria.<br>• Una columna desconocida detiene sin escribir.<br>• El volcado es `iterdump` con gzip, sin la bitácora del espejo, y se escribe primero a `.partial`.<br>• rclone se configura por variables de entorno. | Un volcado que falla no debe repetir la copia de la base. Un upsert hace visible un choque de llaves únicas que `INSERT OR REPLACE` taparía borrando filas. Sin la bitácora, el volcado se restaura en D1 sin tablas ajenas. Las llaves de R2 no tocan disco ni registros. |
 | T90 | **Navegador del agente.**<br>• Chromium solo como último recurso, cuando la página HTTP cargó sin precio ni existencia; nunca ante un bloqueo.<br>• Antes de abrirlo se espera turno en el dominio con la misma separación.<br>• Se reinicia por páginas o si los procesos hijos pasan de 900 MB (RSS leído de `/proc`, sin psutil).<br>• No existe sin `PLAYWRIGHT_ENABLED` o sin Playwright instalado. | Por el spike B ninguna tienda lo necesita y cuesta 8–23 s y más de 600 MB por página. Una segunda petición inmediata a la misma tienda rompería la regla 10. Leer `/proc` evita otra dependencia nativa en un servidor sin AVX2. |
 | T91 | **El agente tiene su propio proyecto de compose** (`agent/compose.yaml`, proyecto `maunedas`).<br>• Se levanta con `docker compose -f agent/compose.yaml up -d --build` desde la raíz del repo.<br>• Datos en `~/proyectos/maunedas/datos-agente` (cambiable con `MAUNEDAS_DATA`).<br>• Mientras no haya producción, corre contra dev. | En el servidor, Home Assistant corre como contenedor suelto y el único compose es el de nefrobalance, otra app; no había compose del servidor donde pegar el fragmento. Un proyecto propio no toca a los demás contenedores y queda versionado en el repo. |
+| T92 | **Web de la Etapa 2.**<br>• Seguimiento y Alertas son pestañas dentro de Catálogo, como en Android.<br>• La ficha de producto enlaza cada presentación con `?producto=&variante=`.<br>• Para la web, que no guarda copia local: `GET /v1/listings` acepta ir sin presentación y trae nombres, hay un `GET /v1/alerts/rules` nuevo y cada alerta trae su presentación.<br>• Un enlace que ya se sigue no se agrega dos veces. | Así la navegación es la misma en las dos apps. Pedir los nombres al Worker evita una petición por listing o por regla. Seguir dos veces la misma página duplicaría revisiones y alertas. |
+| T93 | **El club de Sam's es el de Forjadores, Puebla** (decisión de Mauricio, 2026-11-01). | Es el que más usa la casa; sin fijarlo, Sam's da el precio de un club de la CDMX. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -408,3 +416,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-01** — T-230 (avance): espejo diario de D1, volcado semanal con rotación y copia de fotos con rclone en el agente (T89); faltan el token de R2 de solo lectura y el agente en el servidor.
 - **2026-11-01** — T-204: navegador Playwright como último recurso, con reinicio por páginas y por memoria, probado con Chromium real en la imagen (T90).
 - **2026-11-01** — T-200/T-201: token de dev cargado; el agente corre en el servidor con su propio compose (T91) y su primer respaldo coincide con D1 de dev en las 24 tablas.
+- **2026-11-01** — T-223: web de seguimiento, alertas y servidor casero (W-20 a W-22) con las lecturas nuevas de la API (T92). Mauricio eligió el Sam's de Forjadores (T93).

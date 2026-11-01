@@ -1,4 +1,5 @@
 import type { LookupsResponse, ProductDetailVariant } from '@maunedas/shared/api/catalog';
+import { Link } from 'react-router';
 import { UnitPrice } from '../../components/UnitPrice';
 import { ago, SOURCE_LABEL } from '../../lib/format';
 import { storeName } from '../../lib/lookups';
@@ -27,6 +28,14 @@ export function VariantsTab({
           <p className="text-label text-on-surface-variant">
             {v.barcodes.length ? `Códigos: ${v.barcodes.join(', ')}` : 'Sin código de barras'}
           </p>
+          <div className="flex flex-wrap gap-2">
+            <Link to={`/seguimiento?producto=${v.product_id}&variante=${v.id}`} className="btn-text">
+              Precios en línea
+            </Link>
+            <Link to={`/alertas?producto=${v.product_id}&variante=${v.id}`} className="btn-text">
+              Alertas
+            </Link>
+          </div>
           {v.latest.length === 0 ? (
             <p className="text-on-surface-variant">Sin precios registrados.</p>
           ) : (

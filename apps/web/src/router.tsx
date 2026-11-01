@@ -79,6 +79,15 @@ export const routes: RouteObject[] = [
             lazy: () => import('./features/shelf/ShelfPage').then((m) => ({ Component: m.ShelfPage })),
           },
           {
+            path: 'seguimiento',
+            lazy: () =>
+              import('./features/tracking/TrackingPage').then((m) => ({ Component: m.TrackingPage })),
+          },
+          {
+            path: 'alertas',
+            lazy: () => import('./features/tracking/AlertsPage').then((m) => ({ Component: m.AlertsPage })),
+          },
+          {
             path: 'cuenta',
             lazy: () => import('./features/account/AccountPage').then((m) => ({ Component: m.AccountPage })),
           },
@@ -104,6 +113,11 @@ export const routes: RouteObject[] = [
                     path: 'ia',
                     lazy: () =>
                       import('./features/admin/AiSpendPage').then((m) => ({ Component: m.AiSpendPage })),
+                  },
+                  {
+                    path: 'agente',
+                    lazy: () =>
+                      import('./features/admin/AgentPage').then((m) => ({ Component: m.AgentPage })),
                   },
                 ],
               },

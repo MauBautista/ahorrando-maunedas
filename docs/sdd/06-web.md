@@ -69,6 +69,27 @@ Las pantallas replican el contenido y las reglas de Android (`05-android.md` §5
 - **W-12 Fusionar**: elegir tipo (producto o variante), origen y destino con buscador; vista previa de cuántas filas se moverán; confirmar.
 - **W-13 Gasto de IA**: barra del mes contra el tope, desglose por propósito, número de llamadas.
 
+**Implementación (T-223, decisión T92):**
+- **Navegación:**
+  - Como en Android (05 §4), Seguimiento y Alertas son pestañas dentro de Catálogo: "Productos · Seguimiento · Alertas".
+  - La ficha de producto enlaza cada presentación a `/seguimiento?producto=&variante=` y `/alertas?producto=&variante=`, que muestran solo esa presentación y la preseleccionan.
+- **W-20 Seguimiento:**
+  - **Contenido:** los listings agrupados por presentación, con la tienda, el último precio (el de lista tachado solo si es mayor), la promoción y el estado (al día, agotado, bloqueado, con error, ya no existe, por revisar o en pausa).
+  - **Revisión:** cuándo se revisó por última vez ("hace 2 h"), el intervalo propio y si se pidió revisar ahora.
+  - **Acciones:** "Revisar ahora" (`POST …/check-now`), pausar o reanudar, abrir en la tienda y dejar de seguir (con confirmación). Las tres que escriben van por sync.
+  - **"Seguir un enlace":** se pega el enlace o el texto compartido, `POST /v1/listings/resolve` lo resuelve, se elige la presentación y el listing se crea por sync.
+  - **Rechazos:** un enlace que ya se sigue se rechaza con el nombre de su presentación; los rechazos del Worker se explican según `details.reason`.
+- **W-21 Alertas:**
+  - **Reglas:** mis reglas, con crear, editar, pausar y quitar. El formulario lleva tipo, umbral, alcance de `new_low`, "Solo {tienda}" o cualquiera, silencio en horas y activa. La presentación de una regla guardada no cambia.
+  - **Historial:** las alertas con su entrega, enlace a la ficha y "Ver más". Los avisos llegan a Android; la web solo guarda el historial.
+- **W-22 Servidor casero** (pestaña de Administración):
+  - si está en línea y su último reporte;
+  - los enlaces por revisar, los resultados por enviar, los bloqueados y con fallas, las tiendas que bloquean y las fotos en cola;
+  - memoria, carga y último error;
+  - el estado de los tres respaldos de 07 §10.
+  
+  Se refresca cada minuto.
+
 ## 4. Cliente HTTP
 
 ```ts

@@ -94,17 +94,23 @@ export const listings = new Hono<AppEnv>()
     const { variant_id } = parseQuery(c, ListingsQuerySchema);
     const { results } = await c.env.DB.prepare(
       `SELECT l.id, l.variant_id, l.store_id, l.adapter, l.url, l.canonical_url, l.external_id, l.check_interval_min,
-              l.active, l.created_at, l.updated_at, l.version, json_object(
-                'listing_id', s.listing_id, 'last_checked_at', s.last_checked_at, 'last_status', s.last_status,
-                'last_error', s.last_error, 'consecutive_failures', s.consecutive_failures,
-                'last_price_cents', s.last_price_cents, 'last_list_price_cents', s.last_list_price_cents,
-                'last_in_stock', s.last_in_stock, 'last_promo_text', s.last_promo_text,
-                'check_requested_at', s.check_requested_at, 'updated_at', s.updated_at, 'version', s.version
-              ) AS state, s.listing_id AS has_state
-       FROM listings l LEFT JOIN listing_state s ON s.listing_id = l.id
-       WHERE l.variant_id = ?1 AND l.deleted_at IS NULL ORDER BY l.created_at, l.id`,
+              l.active, l.created_at, l.updated_at, l.version, v.product_id, p.name AS product_name, p.brand,
+              v.label AS variant_label, s.name AS store_name, json_object(
+                'listing_id', st.listing_id, 'last_checked_at', st.last_checked_at, 'last_status', st.last_status,
+                'last_error', st.last_error, 'consecutive_failures', st.consecutive_failures,
+                'last_price_cents', st.last_price_cents, 'last_list_price_cents', st.last_list_price_cents,
+                'last_in_stock', st.last_in_stock, 'last_promo_text', st.last_promo_text,
+                'check_requested_at', st.check_requested_at, 'updated_at', st.updated_at, 'version', st.version
+              ) AS state, st.listing_id AS has_state
+       FROM listings l
+       JOIN variants v ON v.id = l.variant_id
+       JOIN products p ON p.id = v.product_id
+       JOIN stores s ON s.id = l.store_id
+       LEFT JOIN listing_state st ON st.listing_id = l.id
+       WHERE l.deleted_at IS NULL AND (?1 IS NULL OR l.variant_id = ?1)
+       ORDER BY p.name COLLATE NOCASE, v.label COLLATE NOCASE, s.name COLLATE NOCASE, l.created_at, l.id`,
     )
-      .bind(variant_id)
+      .bind(variant_id ?? null)
       .all<Omit<ListingWithState, 'state'> & { state: string; has_state: string | null }>();
     return c.json<ListingsResponse>({
       items: results.map(({ state, has_state, ...l }) => ({
