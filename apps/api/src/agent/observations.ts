@@ -1,6 +1,9 @@
 import type { AgentResult } from '@maunedas/shared/api/agent';
 import { uuidv7 } from '@maunedas/shared/util/uuid';
-import { type AlertEnv, type Deliver, evaluateAlerts } from '../alerts/engine';
+import { type AlertEnv, evaluateAlerts, fcmDeliver } from '../alerts/engine';
+import { systemMessage } from '../alerts/messages';
+import { notifyAdmins } from '../fcm/deliver';
+import type { FcmDeps } from '../fcm/send';
 import { log } from '../util/log';
 
 const VERSION = `(SELECT value FROM sync_meta WHERE key = 'version')`;
@@ -202,19 +205,32 @@ export async function ingest(db: D1Database, results: AgentResult[], now: number
 }
 
 /**
- * After the answer (`ctx.waitUntil`, CLAUDE.md rule 13): the alerts of the new observations (08) and, with T-213,
- * the admin's notice of a newly blocked store (08 §5), for which it leaves the trace meanwhile. A failure here never
- * reaches the agent, whose checks are already stored; it is logged.
+ * After the answer (`ctx.waitUntil`, CLAUDE.md rule 13): the admins' notice of each newly blocked store (08 §5)
+ * and the alerts of the new observations (08), both through FCM with [deps]. A failure here never reaches the
+ * agent, whose checks are already stored; it is logged.
  */
 export async function afterIngest(
   env: AlertEnv,
   result: IngestResult,
   now: number,
-  deliver?: Deliver,
+  deps: FcmDeps,
 ): Promise<void> {
-  for (const id of result.newlyBlocked) log('warn', 'listing_blocked', { listing_id: id });
   try {
-    await evaluateAlerts(env, result.created, now, deliver);
+    if (result.newlyBlocked.length > 0) {
+      const { results: blocked } = await env.DB.prepare(
+        `SELECT l.id, s.name AS store, p.name || ' · ' || v.label AS product
+         FROM listings l JOIN stores s ON s.id = l.store_id JOIN variants v ON v.id = l.variant_id
+         JOIN products p ON p.id = v.product_id WHERE l.id IN (SELECT value FROM json_each(?1))`,
+      )
+        .bind(JSON.stringify(result.newlyBlocked))
+        .all<{ id: string; store: string; product: string }>();
+      for (const b of blocked) {
+        log('warn', 'listing_blocked', { listing_id: b.id });
+        const { title, body } = systemMessage.listingBlocked(b.store, b.product);
+        await notifyAdmins(env, deps, title, body);
+      }
+    }
+    await evaluateAlerts(env, result.created, now, fcmDeliver(deps));
   } catch (e) {
     log('error', 'alerts_failed', { error: e instanceof Error ? e.message : String(e) });
   }

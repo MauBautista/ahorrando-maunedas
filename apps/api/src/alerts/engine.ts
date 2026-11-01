@@ -3,39 +3,28 @@ import { centsPerBase, displayCents, type DisplayUnit, type Measure } from '@mau
 import { uuidv7 } from '@maunedas/shared/util/uuid';
 import type { CreatedObservation } from '../agent/observations';
 import { unitFor } from '../db/queries/prices';
-import { log } from '../util/log';
+import { sendToUser } from '../fcm/deliver';
+import type { FcmDeps, FcmEnv } from '../fcm/send';
 import { type AlertRuleRow, type ObsView, PRIORITY, shouldFire } from './evaluate';
 import { alertMessage, type MessageFacts } from './messages';
 
 const VERSION = `(SELECT value FROM sync_meta WHERE key = 'version')`;
 const HOUR_MS = 3_600_000;
 
-/** What a delivery needs (08 §6): the database for the devices; T-213 adds Firebase. */
-export interface AlertEnv {
-  DB: D1Database;
-}
+/** What an alert run needs: the database, and Firebase for its delivery (08 §6). */
+export type AlertEnv = FcmEnv;
 
-/** Sends one notification to a user's devices and says how it went (08 §6). */
+/** Sends one notification to a user's devices and says how it went (08 §6); `fcmDeliver` in production. */
 export type Deliver = (
   env: AlertEnv,
   userId: string,
   data: Record<string, string>,
 ) => Promise<DeliveryStatus>;
 
-/**
- * Until FCM delivery lands (T-213): a user without a device token is `no_devices`; one with tokens is `failed`,
- * with a trace, since nothing was sent. The events stay in the user's history either way.
- */
-export const deliverPending: Deliver = async (env, userId) => {
-  const tokens = await env.DB.prepare(
-    'SELECT count(*) AS n FROM devices WHERE user_id = ?1 AND fcm_token IS NOT NULL',
-  )
-    .bind(userId)
-    .first<number>('n');
-  if (!tokens) return 'no_devices';
-  log('warn', 'alert_not_delivered', { user_id: userId, reason: 'fcm_pending' });
-  return 'failed';
-};
+/** The real delivery: FCM to the user's devices with [deps] (T-213). */
+export function fcmDeliver(deps: FcmDeps): Deliver {
+  return (env, userId, data) => sendToUser(env, deps, userId, data);
+}
 
 interface VariantFacts {
   id: string;
@@ -62,7 +51,7 @@ export async function evaluateAlerts(
   env: AlertEnv,
   created: CreatedObservation[],
   now: number,
-  deliver: Deliver = deliverPending,
+  deliver: Deliver,
 ): Promise<number> {
   if (created.length === 0) return 0;
   const db = env.DB;

@@ -85,7 +85,7 @@ Prioridad: `new_low` > `below_price` > `drop_pct` > `promo` > `back_in_stock`.
 - **`new_low`:** usa `v_price_points` sin la propia observación ni lo observado después de ella: web del listing, web de la variante, o todo (compras, anaquel y web). Sin ese límite, de dos bajadas en un mismo envío del agente la primera se compararía con la segunda y nunca sería "más bajo".
 - **Silencio:** también vale dentro de la misma corrida, así dos listings de una variante no disparan dos veces la misma regla.
 - **Mensajes:** el porcentaje de `drop_pct` se redondea a entero. La notificación lleva el `event_id` del evento de mayor prioridad.
-- **Entrega:** es una función reemplazable. Hasta T-213 no se envía nada: sin dispositivos con token, el evento queda `no_devices`; con tokens, `failed` y una traza (`alert_not_delivered`).
+- **Entrega:** es una función reemplazable (`fcmDeliver` en producción, T-213); las pruebas la sustituyen.
 - **`GET /v1/alerts/events`:** solo los del usuario, por `fired_at` e `id` descendentes, con cursor opaco.
 
 ## 5. Mensajes
@@ -154,6 +154,21 @@ Flujo por usuario:
 2. Enviar a cada uno (≤ 6 en paralelo; límite de subrequests del plan Free: 50 por invocación).
 3. `unregistered` → `UPDATE devices SET fcm_token = NULL`.
 4. Registrar `alert_events` con `delivery_status` (`sent` si al menos uno llegó, `partial`, `failed`, `no_devices`) en un batch con nueva `version`.
+
+**Implementación (T-213, decisión T81):**
+- **Código:** `fcm/send.ts` (`sendFcm`, con `fetch` y el token de Google inyectados) y `fcm/deliver.ts` (`sendToUser`, `notifyAdmins`).
+- **`delivery_status`:**
+  - `sent` si llegó a todos los dispositivos del usuario;
+  - `partial` si llegó a algunos;
+  - `failed` si a ninguno;
+  - `no_devices` sin tokens.
+
+  Un token `unregistered` (404, o `UNREGISTERED` en el cuerpo) cuenta como no entregado y se borra. Una falla conserva el token.
+- **Límite por invocación:** cada invocación envía como máximo 40 mensajes (`FCM_SENDS_PER_INVOCATION`). El resto de las 50 subpeticiones del plan Free queda para D1 y el token. Al agotarse, el envío es `failed` con la traza `fcm_budget_exhausted`.
+- **Avisos de sistema (§5):** van a los admins activos con `type = 'system'` y canal `system`, y no crean `alert_event`.
+  - **Tienda bloqueando revisiones:** sale de `afterIngest`, una vez por listing que pasa a `blocked`.
+  - **Gasto de IA al 80 %:** sale del Cron de cada hora, una vez al mes (`ai_soft_sent:<YYYY-MM>`).
+  - **Servidor casero sin conexión:** llega con el watchdog (T-214).
 
 ## 7. Android
 

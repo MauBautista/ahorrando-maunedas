@@ -480,9 +480,15 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - `new_low` por alcance con `v_price_points` y `GET /v1/alerts/events`.
   - La entrega real por FCM queda para T-213.
   - **Pruebas:** 11.
-### [ ] T-213 · Entrega FCM y avisos de sistema
+### [x] T-213 · Entrega FCM y avisos de sistema
 - **Docs:** 08 §6 · **Depende de:** T-212, T-022, T-027
 - **Hecho cuando:** caso 12 de 08 §8 pasa; avisos de sistema al admin.
+- **Hecho (2026-11-01, T81):**
+  - Envío por FCM a cada dispositivo, con estado `sent`, `partial`, `failed` o `no_devices`.
+  - Los tokens dados de baja se borran.
+  - Límite de 40 envíos por invocación.
+  - Avisos al admin de tienda bloqueada (al ingerir) y de gasto de IA al 80 % (Cron por hora); el de agente caído llega con T-214.
+  - **Pruebas:** 6.
 ### [ ] T-214 · Watchdog del agente
 - **Docs:** 08 §5, 07 §5.1, 03 §12 · **Depende de:** T-213
 - **Hacer:** incluye `GET /v1/admin/agent`.

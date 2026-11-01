@@ -25,6 +25,18 @@ export interface MessageFacts {
   promoIsText: boolean;
 }
 
+/** The admin's system notices of 08 §5 (they make no `alert_event`). */
+export const systemMessage = {
+  listingBlocked: (store: string, product: string) => ({
+    title: 'Tienda bloqueando revisiones',
+    body: `${store} bloqueó la revisión de ${product}. Se reintentará más tarde.`,
+  }),
+  aiSoftLimit: (spentUsd: number, budgetUsd: number) => ({
+    title: `Gasto de IA al ${Math.round((spentUsd / budgetUsd) * 100)} %`,
+    body: `Llevas ${spentUsd.toFixed(2)} de ${budgetUsd} USD este mes.`,
+  }),
+};
+
 /** The texts of 08 §5. */
 export function alertMessage(type: AlertType, f: MessageFacts): { title: string; body: string } {
   const price = pesos(f.priceCents);

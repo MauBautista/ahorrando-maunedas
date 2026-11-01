@@ -96,7 +96,8 @@ function softLimitUsd(env: BudgetEnv): number {
 /**
  * Crossing the soft limit warns the admin once a month: the mark `ai_soft:<YYYY-MM>` in `token_cache` is written
  * only the first time, and lasts until the month is over (the daily cleanup drops it afterwards). In E1 the warning
- * is the banner of W-13 and `soft_limit_reached`; the push arrives with T-213. Returns true when it was this call.
+ * is the banner of W-13 and `soft_limit_reached`; the admins' push goes from the hourly Cron (`alerts/system.ts`).
+ * Returns true when it was this call.
  */
 export async function checkSoftLimit(env: BudgetEnv, nowMs = Date.now()): Promise<boolean> {
   const spent = (await spentMicros(env.DB, nowMs)) / 1e6;
