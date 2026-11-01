@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { PULL_DEFAULT_LIMIT, PULL_MAX_LIMIT, PullCursorSchema, type PullResponse } from './sync';
 
 /** The agent's report on itself (07 §5.1); kept as `agent_status.info`. New fields are kept as they come. */
 export const AgentInfoSchema = z
@@ -97,4 +98,30 @@ export interface AdminAgentResponse {
   blocked_listings: number;
   failing_listings: number;
   queued_image_jobs: number;
+}
+
+/**
+ * Server tables outside the sync registry that a restore needs (07 §5.4): append-only rows, read by
+ * `(created_at, pk)`.
+ */
+export const BACKUP_APPEND_TABLES = { receipt_extractions: 'id', ai_usage: 'id' } as const;
+
+/**
+ * Sent whole on every backup pull and replaced in the mirror: their rows can be deleted (removing a user's Google
+ * login), and a mirror that kept a deleted login would bring it back on a restore. Small by nature.
+ */
+export const BACKUP_SNAPSHOT_TABLES = { user_identities: 'firebase_uid' } as const;
+
+/** `POST /agent/v1/backup/pull` (07 §5.4): like `/v1/sync/pull`, for every user and with every column. */
+export const BackupPullRequestSchema = z.strictObject({
+  cursors: z.record(z.string().min(1).max(64), PullCursorSchema).default({}),
+  limit: z.number().int().min(1).max(PULL_MAX_LIMIT).default(PULL_DEFAULT_LIMIT),
+  tables: z.array(z.string().min(1).max(64)).min(1).optional(),
+});
+
+export type BackupPullRequest = z.infer<typeof BackupPullRequestSchema>;
+
+export interface BackupPullResponse extends PullResponse {
+  /** Tables in `changes` that come whole: the mirror replaces them instead of merging. */
+  replace: string[];
 }
