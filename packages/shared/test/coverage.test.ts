@@ -5,6 +5,7 @@ import { listFixtures } from './fixtures';
 /** Every shared fixture must have a suite here; a new fixture cannot be left untested. */
 const SUITES: Record<string, string> = {
   'cantidades.json': 'quantity.fixtures.test.ts',
+  'enlaces.json': 'urls.fixtures.test.ts',
   'ids.json': 'uuid.fixtures.test.ts',
   'normalizacion.json': 'units.fixtures.test.ts', // prorrateo_ticket: ticketDiscount.fixtures.test.ts
   'promociones.json': 'promotions.fixtures.test.ts',

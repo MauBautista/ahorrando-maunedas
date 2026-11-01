@@ -26,6 +26,7 @@ Servicios externos (Firebase, Google OAuth, FCM, OpenRouter, Open Food Facts, ti
 | `fixtures/cantidades.json` | `parseQuantity` y etiqueta sugerida | shared, Android |
 | `fixtures/usuarios.json` | Usuario → correo sintético | shared, Android |
 | `fixtures/ids.json` | Namespaces y vectores UUIDv5 (`product_tags`, `receipt_aliases`, 04 §2.1) | shared, Android |
+| `fixtures/enlaces.json` | Enlace de tienda en línea → adapter, URL canónica e id (07 §9) | shared (Worker), agente |
 
 En TS, `packages/shared/test/coverage.test.ts` falla si un archivo de `fixtures/` no tiene suite. Cada suite valida la forma del fixture con Zod antes de usarlo.
 

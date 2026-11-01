@@ -1,0 +1,23 @@
+{
+  "descripcion": "Enlaces de tiendas en línea → adapter, URL canónica e id externo (SDD 07 §9, 03 §11). Lo usan el Worker (POST /v1/listings/resolve) y el agente (canonicalize). null = no se puede seguir. Los enlaces cortos (amzn.to, a.co) se resuelven antes, en el Worker.",
+  "canonica": [
+    { "entrada": "https://www.amazon.com.mx/dp/B07XJ8C8F5", "esperado": { "adapter": "amazon_mx", "canonical_url": "https://www.amazon.com.mx/dp/B07XJ8C8F5", "external_id": "B07XJ8C8F5" } },
+    { "entrada": "https://www.amazon.com.mx/Leche-Lala-Entera-1L/dp/B07XJ8C8F5/ref=sr_1_3?keywords=leche&qid=1", "esperado": { "adapter": "amazon_mx", "canonical_url": "https://www.amazon.com.mx/dp/B07XJ8C8F5", "external_id": "B07XJ8C8F5" } },
+    { "entrada": "https://amazon.com.mx/gp/product/B07XJ8C8F5?th=1", "esperado": { "adapter": "amazon_mx", "canonical_url": "https://www.amazon.com.mx/dp/B07XJ8C8F5", "external_id": "B07XJ8C8F5" } },
+    { "entrada": "https://www.amazon.com.mx/gp/aw/d/B07XJ8C8F5/", "esperado": { "adapter": "amazon_mx", "canonical_url": "https://www.amazon.com.mx/dp/B07XJ8C8F5", "external_id": "B07XJ8C8F5" } },
+    { "entrada": "http://WWW.AMAZON.COM.MX/dp/B07XJ8C8F5#reviews", "esperado": { "adapter": "amazon_mx", "canonical_url": "https://www.amazon.com.mx/dp/B07XJ8C8F5", "external_id": "B07XJ8C8F5" } },
+    { "entrada": "https://www.amazon.com.mx/dp/b07xj8c8f5", "esperado": { "adapter": "amazon_mx", "canonical_url": "https://www.amazon.com.mx/dp/B07XJ8C8F5", "external_id": "B07XJ8C8F5" } },
+    { "entrada": "https://www.amazon.com.mx/s?k=leche+lala", "esperado": null },
+    { "entrada": "https://www.amazon.com/dp/B07XJ8C8F5", "esperado": null },
+    { "entrada": "https://www.sams.com.mx/ip/leche-lala-entera-12-pzas-de-1-l/000000981017897", "esperado": { "adapter": "sams_mx", "canonical_url": "https://www.sams.com.mx/ip/leche-lala-entera-12-pzas-de-1-l/000000981017897", "external_id": "000000981017897" } },
+    { "entrada": "https://sams.com.mx/ip/leche-lala-entera/000000981017897?from=search#top", "esperado": { "adapter": "sams_mx", "canonical_url": "https://www.sams.com.mx/ip/leche-lala-entera/000000981017897", "external_id": "000000981017897" } },
+    { "entrada": "https://www.sams.com.mx/browse/lacteos/leche", "esperado": null },
+    { "entrada": "https://www.costco.com.mx/Alimentos-y-Bebidas/Lacteos/Leche-Lala-Entera-12-pzas/p/123456", "esperado": { "adapter": "costco_mx", "canonical_url": "https://www.costco.com.mx/Alimentos-y-Bebidas/Lacteos/Leche-Lala-Entera-12-pzas/p/123456", "external_id": "123456" } },
+    { "entrada": "https://costco.com.mx/p/123456?utm_source=app", "esperado": { "adapter": "costco_mx", "canonical_url": "https://www.costco.com.mx/p/123456", "external_id": "123456" } },
+    { "entrada": "https://www.costco.com.mx/Alimentos-y-Bebidas/Lacteos/c/cos_1.2", "esperado": null },
+    { "entrada": "https://www.walmart.com.mx/ip/leche-lala/00750102051534", "esperado": null },
+    { "entrada": "https://super.walmart.com.mx/ip/leche-lala/00750102051534", "esperado": null },
+    { "entrada": "ftp://www.amazon.com.mx/dp/B07XJ8C8F5", "esperado": null },
+    { "entrada": "no es un enlace", "esperado": null }
+  ]
+}

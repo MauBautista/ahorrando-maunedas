@@ -395,6 +395,8 @@ class Adapter(Protocol):
     async def fetch(self, url: str, ctx: FetchContext) -> ScrapeResult: ...
 ```
 
+`canonicalize` sigue las mismas reglas que el Worker (`packages/shared/src/tracking/urls.ts`) y se prueba con `fixtures/enlaces.json` (T-210).
+
 Estrategia común (`BaseAdapter.fetch`): HTTP → JSON-LD → estado embebido → selectores → Playwright. Cada paso registra `extra.method` para saber qué funciona.
 
 Resultado del spike B (T-011, 2026-10-19; detalle en `docs/spikes/spike-b-scraping.md`, fixtures en `agent/tests/fixtures/html/`). Ninguna tienda necesitó navegador:
