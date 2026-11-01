@@ -5,6 +5,7 @@ import sqlite3
 import time
 from collections.abc import Iterator
 from contextlib import contextmanager
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any
 
@@ -45,6 +46,25 @@ MIN_SPACING_KEY = "min_spacing_s"
 CHECK_SEEN_KEY = "check_now_seen"
 POLL_TICK_KEY = "poll_tick_at"
 WORK_OK_KEY = "work_ok_at"
+# stores.default_check_interval_min when the Worker has not sent the store yet (docs/esquema-d1.sql).
+DEFAULT_INTERVAL_MIN = 480
+
+
+@dataclass(frozen=True)
+class DueListing:
+    id: str
+    adapter: str
+    url: str
+    interval_min: int
+    backoff_level: int
+    block_streak: int
+
+
+@dataclass(frozen=True)
+class Pending:
+    seq: int
+    listing_id: str
+    payload: dict[str, Any]
 
 
 def now_ms() -> int:
@@ -158,6 +178,66 @@ class Store:
                 (at,),
             ).fetchone()[0]
         )
+
+    def min_spacing(self) -> dict[str, int]:
+        raw = self.get(MIN_SPACING_KEY)
+        return json.loads(raw) if raw else {}
+
+    # Schedule (07 §7)
+
+    def ensure_scheduled(self, at: int) -> int:
+        """Active listings without a schedule are due now; returns how many."""
+        cur = self.db.execute(
+            """INSERT INTO schedule (listing_id, next_check_at)
+               SELECT id, ? FROM listing_cfg l
+               WHERE l.active = 1 AND NOT EXISTS (SELECT 1 FROM schedule s WHERE s.listing_id = l.id)""",
+            (at,),
+        )
+        return cur.rowcount
+
+    def due_listings(self, at: int, limit: int) -> list[DueListing]:
+        rows = self.db.execute(
+            """SELECT l.id, l.adapter, COALESCE(l.canonical_url, l.url) AS url,
+                      COALESCE(l.interval_min, d.interval_min, ?) AS interval_min,
+                      s.backoff_level, s.block_streak
+               FROM schedule s JOIN listing_cfg l ON l.id = s.listing_id
+               LEFT JOIN store_defaults d ON d.store_id = l.store_id
+               WHERE l.active = 1 AND s.next_check_at <= ?
+               ORDER BY s.next_check_at, l.id LIMIT ?""",
+            (DEFAULT_INTERVAL_MIN, at, limit),
+        ).fetchall()
+        return [DueListing(**dict(r)) for r in rows]
+
+    def reschedule(
+        self,
+        listing_id: str,
+        status: str,
+        checked_at: int,
+        next_check_at: int,
+        backoff_level: int,
+        block_streak: int,
+    ) -> None:
+        self.db.execute(
+            """UPDATE schedule SET next_check_at = ?, backoff_level = ?, block_streak = ?, last_status = ?,
+                 last_checked_at = ?
+               WHERE listing_id = ?""",
+            (next_check_at, backoff_level, block_streak, status, checked_at, listing_id),
+        )
+
+    # Outbox: results not yet accepted by the Worker
+
+    def outbox_add(self, listing_id: str, payload: dict[str, Any], at: int) -> None:
+        self.db.execute(
+            "INSERT INTO outbox (listing_id, payload, created_at) VALUES (?, ?, ?)",
+            (listing_id, json.dumps(payload, separators=(",", ":")), at),
+        )
+
+    def outbox_batch(self, limit: int) -> list[Pending]:
+        rows = self.db.execute("SELECT seq, listing_id, payload FROM outbox ORDER BY seq LIMIT ?", (limit,))
+        return [Pending(r["seq"], r["listing_id"], json.loads(r["payload"])) for r in rows.fetchall()]
+
+    def outbox_delete(self, seqs: list[int]) -> None:
+        self.db.executemany("DELETE FROM outbox WHERE seq = ?", [(s,) for s in seqs])
 
     def blocked_adapters(self) -> list[str]:
         rows = self.db.execute(

@@ -53,6 +53,12 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-202 (2026-11-01):** el agente ya sabe cuándo revisar cada enlace:
+  - según el intervalo de la tienda, con un poco de azar;
+  - con una pausa mínima entre visitas a la misma tienda, aunque se reinicie;
+  - esperando cada vez más si una página falla, y un día si una tienda bloquea tres veces seguidas.
+  
+  Lo que encuentra se guarda en una cola y se envía al servidor de 20 en 20: si se va internet o se reinicia, no se pierde nada. Falta enseñarle a leer cada tienda (T-203 y T-205 a T-208).
 - **T-200 (2026-11-01, avance):** el agente casero ya existe como programa y contenedor:
   - pregunta al servidor cada minuto qué revisar;
   - guarda lo que necesita en su propia base;
@@ -232,6 +238,7 @@
 | T82 | **Watchdog del agente.**<br>• Corre en el Cron de cada hora.<br>• Avisa a los admins si el último latido tiene ≥ 2 h, una vez por caída, con la marca `agent_offline_notified` (30 días), que `/work` borra al volver el agente.<br>• No avisa de un agente que nunca se conectó.<br>• La hora se escribe en la Ciudad de México, con el día si fue otro.<br>• `GET /v1/admin/agent` cuenta solo listings vivos. | Mientras el agente no se instala (Etapa 2), avisar cada hora de un agente inexistente sería ruido. La marca de 30 días cubre cualquier caída y la limpieza diaria la quita después. Un listing borrado no es un problema del agente. |
 | T83 | **Enlaces de tiendas en línea.**<br>• Las reglas de adapter, URL canónica e id viven en `packages/shared` con el fixture nuevo `fixtures/enlaces.json`, que también probará el agente.<br>• La canónica quita consulta y fragmento.<br>• Los enlaces cortos se siguen hasta 5 saltos, solo por `Location`.<br>• El 422 dice la razón (`NO_URL`, `SHORT_LINK`, `NOT_TRACKED`, `NO_STORE`).<br>• La tienda es la que tiene ese `adapter`. | El Worker y el agente deben reconocer exactamente lo mismo, y la regla 7 pide vectores compartidos. Una URL con `ref`/`utm` distintos sería otro listing del mismo producto. Los clientes pueden dar un mensaje útil según la razón. |
 | T84 | **Proyecto del agente.**<br>• Playwright 1.63.0 (imagen y paquete), la versión del spike B que ya está en el servidor.<br>• El contenedor usa el Python del venv en vez de `uv run`.<br>• `api.py` reintenta solo red, 5xx y 429.<br>• `poll` agenda cada "Revisar ahora" una vez por solicitud.<br>• El último error se reporta hasta la siguiente vuelta buena.<br>• `SIGTERM` cancela la espera de red.<br>• `agent-token.sh` crea `agent/.env` desde el ejemplo y fija `API_BASE` del entorno elegido. | La 1.64 obligaría a bajar otros 3.5 GB al servidor sin ganar nada. `uv run` instalaría las dependencias de desarrollo en cada arranque. Un 4xx no se arregla reintentando. `/work` repite la solicitud hasta recibir el resultado, y sin la marca se revisaría dos veces. Docker mata el contenedor a los 10 s. Con solo el token, el agente no arrancaría. |
+| T85 | **Agenda y cola del agente.**<br>• El dominio se toma justo antes de la petición, ya con cupo.<br>• La separación es la mayor entre la del adapter y la del Worker.<br>• Los errores esperan hasta 8 h (nivel 6, como en el código de 07 §7) y solo 3 bloqueos seguidos llevan a 24 h.<br>• Resultado, cola y agenda se guardan en una sola transacción.<br>• El `outbox` se envía en orden, de 20 en 20, y solo se borra lo aceptado.<br>• Ante un 400, 413 o 422 se reenvía uno por uno y se descarta solo el rechazado. | Tomar el dominio antes de esperar cupo podía juntar dos peticiones a la misma tienda. El Worker puede endurecer la separación sin desplegar el agente. Un resultado que el Worker nunca aceptará no debe frenar a los demás. Si se corta la red, el Worker ignora los repetidos por `checked_at`. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -363,3 +370,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-01** — T-214: watchdog del agente en el Cron (aviso de servidor casero sin conexión, una vez por caída) y `GET /v1/admin/agent` (T82).
 - **2026-11-01** — T-210: resolver enlaces de tiendas (cortos incluidos), "Revisar ahora" y lista de listings; reglas de enlaces compartidas con `fixtures/enlaces.json` (T83).
 - **2026-11-01** — T-200 (avance): agente en Python con configuración, registros JSON, SQLite local, cliente de `/agent/v1`, ciclo `poll`, healthcheck, `Dockerfile` y fragmento de compose; probado con `docker run --rm` (T84). Faltan el token y el compose (Mauricio).
+- **2026-11-01** — T-202: agenda con jitter y backoff, separación por dominio persistente, cupos, ciclos `scrape` y `flush` con `outbox` que no pierde resultados (T85).

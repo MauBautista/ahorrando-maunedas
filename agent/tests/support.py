@@ -10,7 +10,7 @@ def listing(id: str, version: int, **over: Any) -> dict[str, Any]:
     return {
         "id": id,
         "adapter": "amazon_mx",
-        "url": f"https://www.amazon.com.mx/dp/B0{version:08d}",
+        "url": f"https://www.amazon.com.mx/Leche/dp/B0{version:08d}?ref=sr_1_1",
         "canonical_url": f"https://www.amazon.com.mx/dp/B0{version:08d}",
         "external_id": f"B0{version:08d}",
         "store_id": STORE,

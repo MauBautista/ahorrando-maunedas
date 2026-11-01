@@ -454,9 +454,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Falta:** que Mauricio corra el script en dev y en prod.
 - **Hacer:** generar `AGENT_TOKEN` (en `agent/.env` y en el gestor de contraseñas) y cargar su hash con `wrangler secret put AGENT_TOKEN_SHA256` en dev y prod.
 - **Hecho cuando:** token por hash, respuesta de 07 §5.1, `agent_status` con la regla de versión cada 10 min.
-### [ ] T-202 · Scheduler, gate y outbox del agente
+### [x] T-202 · Scheduler, gate y outbox del agente
 - **Docs:** 07 §7 · **Depende de:** T-200, T-201
 - **Hecho cuando:** `test_scheduler.py` y `test_gate.py` pasan; ningún resultado se pierde al cortar la red.
+- **Hecho (2026-11-01, T85):**
+  - **Código:** agenda con jitter y backoff, separación por dominio guardada en SQLite, cupos HTTP y de navegador, ciclos `scrape` y `flush`, y la base de adapters.
+  - **Pruebas:** `test_flush.py` prueba que un corte de red y un reinicio no pierden resultados; el agente tiene 42 pruebas en total, con advertencias tratadas como errores.
+  - **Mutaciones:** 18, todas detectadas.
 ### [ ] T-203 · HTTP, JSON-LD, estado embebido y dinero
 - **Docs:** 07 §8.1, 8.3, 8.4 · **Depende de:** T-200
 ### [ ] T-204 · Navegador (Playwright)

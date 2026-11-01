@@ -323,6 +323,29 @@ def next_check(result_status: str, backoff_level: int, interval_min: int, now: i
 - Tres `blocked` seguidos en un listing → se reporta y el backoff sube al tope (24 h). No hay reintentos agresivos.
 - `due_listings` excluye `active = 0`.
 
+**Implementación (T-202, decisión T85):**
+- **Agenda:**
+  - Un listing activo sin agenda vence de inmediato.
+  - El intervalo es el del listing, si no el de la tienda, si no 480 min.
+  - Se revisa la `canonical_url` cuando existe.
+  - Hasta 10 vencidos por vuelta (`SCRAPE_TICK_S`).
+- **Separación:**
+  - Se toma el dominio justo antes de la petición, ya dentro del cupo HTTP o de navegador; esperar cupo nunca acorta la separación.
+  - La separación es la mayor entre la del adapter y la que manda el Worker (`config.min_spacing_s`, o `default`).
+  - Un dominio ocupado deja el listing vencido para la vuelta siguiente.
+  - `domain_gate` vive en la SQLite, así que un reinicio no la borra.
+- **Backoff:**
+  - Como en el código de arriba, los errores llegan hasta el nivel 6 (8 h).
+  - El tope de 24 h solo se alcanza con 3 `blocked` seguidos: se registra `listing_blocked` y el admin ya recibió el aviso del Worker al primer bloqueo.
+  - Un resultado distinto de `blocked` reinicia la racha.
+- **Fallas del adapter:** una excepción es un resultado `error` con su mensaje (máximo 500 caracteres; promoción, máximo 300).
+- **Resultado:** el resultado, su entrada en el `outbox` y la nueva agenda se guardan en una sola transacción.
+- **`flush`:**
+  - Envía en orden, de 20 en 20, y borra solo lo aceptado.
+  - Red, 5xx, 429 o 401 dejan todo en la cola para la vuelta siguiente.
+  - Un 400, 413 o 422 hace que se reenvíe uno por uno; el que el Worker rechaza solo se descarta con `result_rejected` y queda en `last_error`.
+  - Un envío repetido tras un corte lo ignora el Worker por `checked_at` (§5.2).
+
 ## 8. Descarga y extracción
 
 ### 8.1 HTTP

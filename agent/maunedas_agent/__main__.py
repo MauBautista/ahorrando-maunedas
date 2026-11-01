@@ -8,7 +8,9 @@ from maunedas_agent import __version__, log
 from maunedas_agent.api import AgentApi
 from maunedas_agent.config import Settings
 from maunedas_agent.context import AgentContext
+from maunedas_agent.loops.flush import flush_once
 from maunedas_agent.loops.poll import poll_once
+from maunedas_agent.loops.scrape import scrape_once
 from maunedas_agent.store import Store
 
 logger = log.get("agent")
@@ -34,7 +36,11 @@ async def run(settings: Settings, stop: asyncio.Event) -> None:
     api = AgentApi(settings)
     ctx = AgentContext(settings=settings, store=store, api=api)
     logger.info("agent_started", version=__version__, agent_id=settings.agent_id, db=str(settings.db_path))
-    loops = [asyncio.create_task(every(settings.poll_interval_s, lambda: poll_once(ctx), stop, "poll"))]
+    loops = [
+        asyncio.create_task(every(settings.poll_interval_s, lambda: poll_once(ctx), stop, "poll")),
+        asyncio.create_task(every(settings.scrape_tick_s, lambda: scrape_once(ctx), stop, "scrape")),
+        asyncio.create_task(every(settings.scrape_tick_s, lambda: flush_once(ctx), stop, "flush")),
+    ]
     try:
         await stop.wait()
     finally:

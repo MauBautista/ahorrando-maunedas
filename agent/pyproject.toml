@@ -28,6 +28,7 @@ package = false
 pythonpath = ["."]
 testpaths = ["tests"]
 asyncio_mode = "auto"
+filterwarnings = ["error"]
 
 [tool.ruff]
 target-version = "py312"
