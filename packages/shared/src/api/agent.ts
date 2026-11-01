@@ -78,3 +78,23 @@ export interface AgentObservationsResponse {
   accepted: number;
   observations_created: number;
 }
+
+/** A row of `agent_status` (down), with `info` as the agent sent it. */
+export interface AgentStatusRow {
+  id: string;
+  last_heartbeat_at: number | null;
+  agent_version: string | null;
+  info: Record<string, unknown> | null;
+  updated_at: number;
+  version: number;
+}
+
+/** `GET /v1/admin/agent` (03 §12, W-22). */
+export interface AdminAgentResponse {
+  status: AgentStatusRow | null;
+  /** Heartbeat less than 3 minutes old. */
+  online: boolean;
+  blocked_listings: number;
+  failing_listings: number;
+  queued_image_jobs: number;
+}

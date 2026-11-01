@@ -489,3 +489,5 @@ Común a `/v1/admin/users*`: solo admin (`403 E-FORBIDDEN`); usuario inexistente
 { status: AgentStatusRow | null; online: boolean /* heartbeat < 3 min */; blocked_listings: number;
   failing_listings: number; queued_image_jobs: number }
 ```
+- Solo admin. `status` es la fila con el latido más reciente, con `info` ya como objeto.
+- `blocked_listings` cuenta los listings vivos con `last_status = 'blocked'`, y `failing_listings` los vivos con `consecutive_failures > 0`. Implementación (T-214): `routes/admin.ts`.

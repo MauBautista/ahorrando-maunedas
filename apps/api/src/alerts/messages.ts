@@ -25,8 +25,34 @@ export interface MessageFacts {
   promoIsText: boolean;
 }
 
+const clock = new Intl.DateTimeFormat('es-MX', {
+  timeZone: 'America/Mexico_City',
+  hour: 'numeric',
+  minute: '2-digit',
+});
+const day = new Intl.DateTimeFormat('es-MX', {
+  timeZone: 'America/Mexico_City',
+  day: 'numeric',
+  month: 'short',
+});
+const dayKey = new Intl.DateTimeFormat('en-CA', { timeZone: 'America/Mexico_City' });
+
+/** "3:05 p.m." when [at] is [now]'s day in Mexico City (CLAUDE.md rule 2); "25 oct, 3:05 p.m." otherwise. */
+export function sinceText(at: number, now: number): string {
+  const time = clock.format(at).replace(/\s/g, ' ');
+  return dayKey.format(at) === dayKey.format(now) ? time : `${day.format(at).replace('.', '')}, ${time}`;
+}
+
 /** The admin's system notices of 08 §5 (they make no `alert_event`). */
 export const systemMessage = {
+  agentOffline: (lastHeartbeat: number, now: number) => {
+    const since = sinceText(lastHeartbeat, now);
+    // "p.m." already ends the sentence.
+    return {
+      title: 'Servidor casero sin conexión',
+      body: `El tracking de precios está en pausa desde ${since}${since.endsWith('.') ? '' : '.'}`,
+    };
+  },
   listingBlocked: (store: string, product: string) => ({
     title: 'Tienda bloqueando revisiones',
     body: `${store} bloqueó la revisión de ${product}. Se reintentará más tarde.`,
