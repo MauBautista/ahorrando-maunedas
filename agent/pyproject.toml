@@ -4,8 +4,10 @@ version = "0.1.0"
 description = "Agente del servidor casero: scraping, imágenes y respaldos (SDD 07)"
 requires-python = ">=3.12,<3.13"
 dependencies = [
+    "h2==4.4.1",
     "httpx==0.28.1",
     "pydantic-settings==2.16.0",
+    "selectolax==1.0.1",
     "structlog==26.1.0",
 ]
 

@@ -24,6 +24,11 @@ class Settings(BaseSettings):
     playwright_enabled: bool = True
     browser_restart_every: int = 50
     reference_postal_code: str = "72750"
+    # A recent stable Chrome, the version of the image's Chromium (07 §8.1).
+    chrome_ua: str = (
+        "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 (KHTML, like Gecko) "
+        "Chrome/153.0.0.0 Safari/537.36"
+    )
     http_timeout_s: float = 20
     browser_timeout_s: float = 40
 
