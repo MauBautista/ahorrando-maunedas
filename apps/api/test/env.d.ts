@@ -10,6 +10,8 @@ declare global {
       REFERENCE_SCHEMA: D1Migration[];
       TEST_SEEDS: D1Migration[];
       NORMALIZATION_FIXTURE: unknown;
+      // A secret: `wrangler types` reads it from .dev.vars locally, but CI has none, so the generated type lacks it.
+      GOOGLE_SERVICE_ACCOUNT: string;
     }
   }
 }
