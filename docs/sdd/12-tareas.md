@@ -437,21 +437,24 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ## Etapa 2 · Agente y tracking
 
-### [~] T-200 · Proyecto del agente
+### [x] T-200 · Proyecto del agente
 - **Docs:** 07 §2–4, 07 §12–13 · **Depende de:** T-011, T-201 (el healthcheck necesita `/work`)
 - **Hecho cuando:** contenedor corre en el servidor, SQLite local creada, logs JSON, healthcheck.
 - **Avance (2026-11-01, T84):**
   - **Código:** configuración, registros JSON sin secretos, SQLite local de 07 §4, cliente de `/agent/v1` con reintentos, ciclo `poll` y healthcheck, con 21 pruebas.
-  - **Imagen:** `Dockerfile`, `compose.snippet.yaml`, y `agent-token.sh`, que ahora crea `agent/.env` desde el ejemplo y fija `API_BASE`.
+  - **Imagen:** `Dockerfile`, el compose del agente y `agent-token.sh`, que ahora crea `agent/.env` desde el ejemplo y fija `API_BASE`.
   - **Comprobado con `docker run --rm` contra dev:** arranque, base local, healthcheck, Chromium y apagado limpio.
-- **Falta (Mauricio):** correr `apps/api/scripts/agent-token.sh dev`, pegar `agent/compose.snippet.yaml` en el compose del servidor y levantarlo.
-### [~] T-201 · `/agent/v1` auth y `/work`
+- **Hecho (2026-11-01, T91):**
+  - Mauricio cargó el token de dev.
+  - El agente corre en el servidor con su propio proyecto de compose (`agent/compose.yaml`) contra `maunedas-dev`: healthcheck sano, registros JSON sin el token y 36 MB de memoria.
+  - El Worker lo ve en línea.
+### [x] T-201 · `/agent/v1` auth y `/work`
 - **Docs:** 07 §5.1 · **Depende de:** T-026
 - **Avance (2026-10-29, T78):**
   - **Hecho:** token por hash, `POST /agent/v1/work` con la respuesta de 07 §5.1 y `agent_status` con la regla de versión.
   - **Script:** `apps/api/scripts/agent-token.sh` genera el token en `agent/.env` y sube su hash.
   - **Pruebas:** 6, con 8 mutaciones detectadas.
-  - **Falta:** que Mauricio corra el script en dev y en prod.
+  - **Token:** cargado en dev el 2026-11-01. En prod se carga en el primer despliegue a producción con `agent-token.sh prod`, que también apunta el agente a prod.
 - **Hacer:** generar `AGENT_TOKEN` (en `agent/.env` y en el gestor de contraseñas) y cargar su hash con `wrangler secret put AGENT_TOKEN_SHA256` en dev y prod.
 - **Hecho cuando:** token por hash, respuesta de 07 §5.1, `agent_status` con la regla de versión cada 10 min.
 ### [x] T-202 · Scheduler, gate y outbox del agente
@@ -547,9 +550,8 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Hecho:** la ruta `POST /agent/v1/backup/pull` en el Worker.
   - **Pruebas:** 6, entre ellas que el conteo por tabla tras paginar sea igual al de D1 (RF-BAK-01).
   - **Agente (T89):** espejo diario, volcado semanal con rotación y copia de fotos con rclone, con 147 pruebas en total; un volcado restaurado da los mismos conteos que el espejo.
-- **Falta (Mauricio):**
-  - Crear un token de R2 de solo lectura y poner `R2_ENDPOINT`, `R2_ACCESS_KEY_ID` y `R2_SECRET_ACCESS_KEY` en `agent/.env`.
-  - Que el agente corra en el servidor (T-200).
+  - **En el servidor (2026-11-01):** primer espejo (57 filas) y volcado (7 KB). Las 24 tablas tienen el mismo conteo que D1 de dev (RF-BAK-01).
+- **Falta (Mauricio):** crear un token de R2 de solo lectura y poner `R2_ENDPOINT`, `R2_ACCESS_KEY_ID` y `R2_SECRET_ACCESS_KEY` en `agent/.env`.
 ### [ ] T-231 · Prueba de restauración
 - **Hecho cuando:** procedimiento y resultado en `ESTADO.md` (RF-BAK-04).
 ### [ ] T-290 · Cierre de la Etapa 2

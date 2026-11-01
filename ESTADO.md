@@ -53,6 +53,10 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **Agente en el servidor (2026-11-01, T-200 y T-201):**
+  - Mauricio cargó el token y el agente ya corre en el servidor casero contra dev, en su propio proyecto de compose, sin tocar Home Assistant ni nefrobalance.
+  - Se reporta cada minuto y usa 36 MB.
+  - Hizo el primer respaldo: el espejo tiene las mismas 57 filas que la base de dev en sus 24 tablas, más el volcado del domingo.
 - **T-204 (2026-11-01):** si una tienda cambia su página y ya no se encuentra el precio, el agente puede abrirla en un navegador como último recurso:
   - espera su turno para no visitar la tienda dos veces seguidas;
   - nunca lo usa para saltarse un bloqueo;
@@ -154,15 +158,14 @@
 ## En curso
 - Mauricio, para T-230: crear un token de R2 de **solo lectura** para el bucket `maunedas-images` y poner `R2_ENDPOINT`, `R2_ACCESS_KEY_ID` y `R2_SECRET_ACCESS_KEY` en `agent/.env`.
 - Mauricio, para T-207: qué club de Sam's de Puebla usar. Sin sesión, Sam's da el precio del club `0000009996` de la CDMX (CP 11220).
-- Mauricio, para terminar T-200: correr `apps/api/scripts/agent-token.sh dev` en su terminal, pegar `agent/compose.snippet.yaml` en el compose del servidor y levantar `maunedas-agent`.
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); 5 fotos de tickets para el spike C y 10 fotos de productos para el spike A.
 - Spike C (T-012): rutas temporales y script listos en la rama local `spike/c-receipts`; `maunedas-dev` volvió a `main` y se borró `SPIKE_TOKEN`. Se vuelve a desplegar cuando estén las fotos.
 
 ## Siguiente
-1. **Agente en el servidor** (en cuanto Mauricio cargue el token y el compose):
-   - ver el primer `/work` y el estado en `GET /v1/admin/agent`;
+1. **Agente en el servidor (ya corre contra dev):**
    - agregar un enlace real y ver su primera revisión;
-   - después del primer respaldo, T-231 (prueba de restauración).
+   - T-231 (prueba de restauración con el volcado del 2026-11-01);
+   - las fotos esperan el token de R2.
 2. **Clientes de la Etapa 2:**
    - T-223 (web: seguimiento, alertas y estado del agente), que necesita la revisión de Mauricio;
    - T-220 a T-222 (Android), que necesitan pruebas en el teléfono.
@@ -266,6 +269,7 @@
 | T88 | **Respaldo desde el Worker.**<br>• `backup/pull` toma `SELECT *` de todas las tablas del registro sin filtro de usuario.<br>• `receipt_extractions` y `ai_usage` van por `(created_at, pk)`.<br>• `user_identities` viaja completa en cada respuesta y el espejo la reemplaza (`replace`).<br>• Quedan fuera `devices`, cachés, la cola de imágenes y `sync_meta`, que se recalcula al restaurar. | `user_identities` es la única tabla del servidor que borra filas (al quitar Google); un espejo incremental devolvería un acceso retirado al restaurar. Los tokens FCM se renuevan y las cachés se reconstruyen. |
 | T89 | **Respaldos en el agente.**<br>• Cada trabajo (espejo, volcado, fotos) tiene su propia marca del día; el volcado y las fotos esperan al espejo.<br>• El espejo se crea y actualiza con las migraciones de D1 copiadas en la imagen.<br>• Cada página se aplica con sus cursores en una transacción, con upsert por llave primaria.<br>• Una columna desconocida detiene sin escribir.<br>• El volcado es `iterdump` con gzip, sin la bitácora del espejo, y se escribe primero a `.partial`.<br>• rclone se configura por variables de entorno. | Un volcado que falla no debe repetir la copia de la base. Un upsert hace visible un choque de llaves únicas que `INSERT OR REPLACE` taparía borrando filas. Sin la bitácora, el volcado se restaura en D1 sin tablas ajenas. Las llaves de R2 no tocan disco ni registros. |
 | T90 | **Navegador del agente.**<br>• Chromium solo como último recurso, cuando la página HTTP cargó sin precio ni existencia; nunca ante un bloqueo.<br>• Antes de abrirlo se espera turno en el dominio con la misma separación.<br>• Se reinicia por páginas o si los procesos hijos pasan de 900 MB (RSS leído de `/proc`, sin psutil).<br>• No existe sin `PLAYWRIGHT_ENABLED` o sin Playwright instalado. | Por el spike B ninguna tienda lo necesita y cuesta 8–23 s y más de 600 MB por página. Una segunda petición inmediata a la misma tienda rompería la regla 10. Leer `/proc` evita otra dependencia nativa en un servidor sin AVX2. |
+| T91 | **El agente tiene su propio proyecto de compose** (`agent/compose.yaml`, proyecto `maunedas`).<br>• Se levanta con `docker compose -f agent/compose.yaml up -d --build` desde la raíz del repo.<br>• Datos en `~/proyectos/maunedas/datos-agente` (cambiable con `MAUNEDAS_DATA`).<br>• Mientras no haya producción, corre contra dev. | En el servidor, Home Assistant corre como contenedor suelto y el único compose es el de nefrobalance, otra app; no había compose del servidor donde pegar el fragmento. Un proyecto propio no toca a los demás contenedores y queda versionado en el repo. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -403,3 +407,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-01** — T-230 (avance): `POST /agent/v1/backup/pull` en el Worker con tablas del registro, tablas del servidor por `created_at` y `user_identities` completa (T88).
 - **2026-11-01** — T-230 (avance): espejo diario de D1, volcado semanal con rotación y copia de fotos con rclone en el agente (T89); faltan el token de R2 de solo lectura y el agente en el servidor.
 - **2026-11-01** — T-204: navegador Playwright como último recurso, con reinicio por páginas y por memoria, probado con Chromium real en la imagen (T90).
+- **2026-11-01** — T-200/T-201: token de dev cargado; el agente corre en el servidor con su propio compose (T91) y su primer respaldo coincide con D1 de dev en las 24 tablas.

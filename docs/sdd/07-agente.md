@@ -16,7 +16,7 @@ agent/
 ├── pyproject.toml              # uv; extras: [browser], [images]
 ├── uv.lock
 ├── Dockerfile
-├── compose.snippet.yaml
+├── compose.yaml                # proyecto de compose propio (`maunedas`)
 ├── .env.example
 ├── maunedas_agent/
 │   ├── __main__.py             # arranque: config, logging, loops asyncio, apagado limpio
@@ -613,16 +613,18 @@ CMD ["uv", "run", "python", "-m", "maunedas_agent"]
 La versión de la imagen de Playwright y la del paquete `playwright` de Python deben coincidir. En E3 se agrega `--extra images` y se descarga el modelo de rembg durante el build.
 
 ```yaml
-# agent/compose.snippet.yaml — pegar en el compose del servidor
+# agent/compose.yaml — proyecto de compose propio del agente (decisión T91)
+name: maunedas
 services:
   maunedas-agent:
     build:
-      context: ./ahorrando-maunedas
+      context: ..
       dockerfile: agent/Dockerfile
+    image: maunedas-agent:latest
     restart: unless-stopped
-    env_file: ./ahorrando-maunedas/agent/.env
+    env_file: .env
     volumes:
-      - ./data/maunedas:/data
+      - ${MAUNEDAS_DATA:-../../datos-agente}:/data   # fuera del repo
     mem_limit: 1200m          # spike B: pico de Chromium 759 MB; Playwright solo como último recurso
     cpus: 1.5
     shm_size: 512m
@@ -630,6 +632,8 @@ services:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
 ```
+
+En el servidor, Home Assistant corre como contenedor suelto y no hay un compose donde pegar un fragmento, así que el agente tiene su propio proyecto (`docker compose -f agent/compose.yaml up -d --build` desde la raíz del repo), que no toca a los demás contenedores. Corre desde el 2026-11-01 contra `maunedas-dev`, con los datos en `~/proyectos/maunedas/datos-agente`.
 
 ## 13. Registro y salud
 
