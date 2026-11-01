@@ -49,6 +49,18 @@ agent/
     ├── test_money.py  test_jsonld.py  test_adapters.py  test_scheduler.py  test_gate.py
 ```
 
+**Implementación (T-200, decisión T84):**
+- **Arranque:** `__main__.py` corre los ciclos con `asyncio`. Ante `SIGTERM` cancela el que esté esperando la red y cierra limpio; la SQLite es síncrona, así que ninguna transacción queda a medias.
+- **Ciclos:** una falla de un ciclo se registra y el ciclo sigue. Por ahora solo existe `poll`; los demás llegan con T-202 y siguientes.
+- **`poll`:**
+  - Toma hasta 25 páginas de `/work` por vuelta.
+  - Guarda listings, quitados, `store_defaults`, cursor y `min_spacing_s` en una sola transacción por página.
+  - Agenda cada "Revisar ahora" una sola vez, aunque `/work` lo repita hasta que llegue el resultado (`check_now_seen` en `kv`).
+  - Reporta en `info` el último error (máximo 500 caracteres) hasta que una vuelta salga bien.
+- **`api.py`:** reintenta 3 veces (esperas de 2 y 8 s) solo errores de red, 5xx y 429; un 4xx falla de inmediato.
+- **Registros:** líneas JSON con `structlog`. Las llaves `token`, `authorization`, `cookie(s)` y `password` se reemplazan por `[oculto]`.
+- **`info.blocked`:** cuenta solo listings activos.
+
 ## 3. Configuración
 
 ```dotenv
@@ -465,6 +477,17 @@ ENV PYTHONUNBUFFERED=1
 HEALTHCHECK --interval=60s --timeout=10s CMD ["uv", "run", "python", "-m", "maunedas_agent.health"]
 CMD ["uv", "run", "python", "-m", "maunedas_agent"]
 ```
+
+**Implementación (T-200):**
+- **Versiones:** imagen `playwright/python:v1.63.0-noble` con `playwright==1.63.0`, las que validó el spike B y la imagen que ya está en el servidor. `uv` está fijado en `0.13.1`.
+- **Arranque:** se usa el Python del venv (`/app/.venv/bin`) en lugar de `uv run`, que instalaría el grupo de desarrollo al arrancar.
+- **Contexto:** `agent/Dockerfile.dockerignore` deja pasar solo lo que se copia.
+- **Healthcheck:** `--start-period=30s`.
+- **Comprobado en el servidor con `docker run --rm`, sin tocar el compose:**
+  - el agente arranca y crea `/data/agent.sqlite`;
+  - el healthcheck responde;
+  - Chromium abre;
+  - `docker stop` termina en menos de 1 s.
 
 La versión de la imagen de Playwright y la del paquete `playwright` de Python deben coincidir. En E3 se agrega `--extra images` y se descarga el modelo de rembg durante el build.
 

@@ -1,0 +1,7 @@
+# Only what agent/Dockerfile copies from the repo root.
+*
+!agent/pyproject.toml
+!agent/uv.lock
+!agent/maunedas_agent/
+!apps/api/migrations/
+**/__pycache__

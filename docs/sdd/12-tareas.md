@@ -437,9 +437,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ## Etapa 2 · Agente y tracking
 
-### [ ] T-200 · Proyecto del agente
+### [~] T-200 · Proyecto del agente
 - **Docs:** 07 §2–4, 07 §12–13 · **Depende de:** T-011, T-201 (el healthcheck necesita `/work`)
 - **Hecho cuando:** contenedor corre en el servidor, SQLite local creada, logs JSON, healthcheck.
+- **Avance (2026-11-01, T84):**
+  - **Código:** configuración, registros JSON sin secretos, SQLite local de 07 §4, cliente de `/agent/v1` con reintentos, ciclo `poll` y healthcheck, con 21 pruebas.
+  - **Imagen:** `Dockerfile`, `compose.snippet.yaml`, y `agent-token.sh`, que ahora crea `agent/.env` desde el ejemplo y fija `API_BASE`.
+  - **Comprobado con `docker run --rm` contra dev:** arranque, base local, healthcheck, Chromium y apagado limpio.
+- **Falta (Mauricio):** correr `apps/api/scripts/agent-token.sh dev`, pegar `agent/compose.snippet.yaml` en el compose del servidor y levantarlo.
 ### [~] T-201 · `/agent/v1` auth y `/work`
 - **Docs:** 07 §5.1 · **Depende de:** T-026
 - **Avance (2026-10-29, T78):**
