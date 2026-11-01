@@ -241,6 +241,16 @@ Igual que `/v1/sync/pull` (`04-sincronizacion.md` §4) pero:
 - `users` con todas sus columnas,
 - incluye tablas de servidor necesarias para restaurar: `user_identities`, `receipt_extractions`, `ai_usage` (cursor `(created_at, pk)`).
 
+**Implementación (T-230, ruta del Worker; decisión T88):**
+- **Contenido:** `SELECT *` de todas las tablas del registro, de todos los usuarios y con lápidas, en orden de restauración (padres primero), con cursor `(version, pk)`.
+- **Tablas del servidor:** `receipt_extractions` y `ai_usage` solo se agregan, así que van por `(created_at, pk)`.
+- **`user_identities`:** viaja **completa** en cada respuesta (vacía también) y aparece en `replace`, que indica qué tablas sustituye el espejo en lugar de mezclar. El Worker borra filas de ella al quitar el acceso con Google, y un espejo por `created_at` conservaría ese acceso para una restauración.
+- **Fuera del respaldo:**
+  - `devices`, por sus tokens FCM, que se renuevan solos;
+  - `token_cache`, `off_cache` e `image_jobs`, por ser caché y cola;
+  - `sync_meta`: una restauración pone `version` en el máximo de las filas y `schema_version` según las migraciones.
+- **Validación:** `limit`, `tables` y la validación son los de `/v1/sync/pull`. Un cursor para una tabla que viaja completa, o para una tabla fuera del respaldo, es `400`.
+
 ## 6. Worker: ingesta de observaciones (T-211)
 
 ```ts

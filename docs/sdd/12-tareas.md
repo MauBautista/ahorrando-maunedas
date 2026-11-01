@@ -537,9 +537,15 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ## Etapa 2 · Respaldos y cierre
 
-### [ ] T-230 · Respaldos
+### [~] T-230 · Respaldos
 - **Docs:** 07 §5.4, 07 §10 · **Depende de:** T-200, T-201, T-032
 - **Hacer:** incluye la ruta `POST /agent/v1/backup/pull` en el Worker.
+- **Avance (2026-11-01, T88):**
+  - **Hecho:** la ruta `POST /agent/v1/backup/pull` en el Worker.
+  - **Pruebas:** 6, entre ellas que el conteo por tabla tras paginar sea igual al de D1 (RF-BAK-01).
+- **Falta:**
+  - **Agente:** el espejo y el volcado semanal.
+  - **Fotos de R2:** la copia con rclone necesita un token de R2 de solo lectura (Mauricio).
 ### [ ] T-231 · Prueba de restauración
 - **Hecho cuando:** procedimiento y resultado en `ESTADO.md` (RF-BAK-04).
 ### [ ] T-290 · Cierre de la Etapa 2

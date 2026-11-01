@@ -1,4 +1,6 @@
 import {
+  BackupPullRequestSchema,
+  type BackupPullResponse,
   AgentObservationsRequestSchema,
   type AgentObservationsResponse,
   AgentWorkRequestSchema,
@@ -9,6 +11,7 @@ import type { AppEnv } from '../env';
 import { ApiError } from '../errors';
 import { parseJsonBody } from '../util/validate';
 import { requireAgent } from './auth';
+import { backupPull } from './backup';
 import { fcmDeps } from '../fcm/send';
 import { afterIngest, ingest } from './observations';
 import { agentWork } from './work';
@@ -34,4 +37,10 @@ export const agent = new Hono<AppEnv>()
       accepted: result.accepted,
       observations_created: result.created.length,
     });
+  })
+
+  // 07 §5.4, §10: the home mirror's increments.
+  .post('/agent/v1/backup/pull', requireAgent, async (c) => {
+    const body = await parseJsonBody(c, BackupPullRequestSchema);
+    return c.json<BackupPullResponse>(await backupPull(c.env.DB, body, Date.now()));
   });
