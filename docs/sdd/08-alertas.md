@@ -74,6 +74,20 @@ Si una misma observación dispara varias reglas del **mismo usuario**, se envía
 
 Prioridad: `new_low` > `below_price` > `drop_pct` > `promo` > `back_in_stock`.
 
+**Implementación (T-212, decisión T80):**
+- **Código:** `alerts/evaluate.ts` (semántica de §3), `alerts/messages.ts` (§5, montos con `es-MX`) y `alerts/engine.ts`.
+- **Cuándo corre:** al terminar la ingesta (`afterIngest`, en `waitUntil`). Un error ahí queda en el log (`alerts_failed`) y no llega al agente.
+- **Llamadas a D1:** un número fijo, sin importar cuántas observaciones lleguen, por el límite de subpeticiones del plan Free:
+  - una tanda con las reglas, las presentaciones, las tiendas y el último disparo de cada regla;
+  - otra con los mínimos de `new_low`, solo si alguna regla los pide;
+  - una escritura final.
+- **Estado anterior sin precio** (una falla o un agotado): cuenta como "sin precio anterior". `below_price` puede disparar y `drop_pct` no.
+- **`new_low`:** usa `v_price_points` sin la propia observación ni lo observado después de ella: web del listing, web de la variante, o todo (compras, anaquel y web). Sin ese límite, de dos bajadas en un mismo envío del agente la primera se compararía con la segunda y nunca sería "más bajo".
+- **Silencio:** también vale dentro de la misma corrida, así dos listings de una variante no disparan dos veces la misma regla.
+- **Mensajes:** el porcentaje de `drop_pct` se redondea a entero. La notificación lleva el `event_id` del evento de mayor prioridad.
+- **Entrega:** es una función reemplazable. Hasta T-213 no se envía nada: sin dispositivos con token, el evento queda `no_devices`; con tokens, `failed` y una traza (`alert_not_delivered`).
+- **`GET /v1/alerts/events`:** solo los del usuario, por `fired_at` e `id` descendentes, con cursor opaco.
+
 ## 5. Mensajes
 
 `{p}` = "Producto · Variante", `{t}` = tienda, montos con formato `es-MX`.

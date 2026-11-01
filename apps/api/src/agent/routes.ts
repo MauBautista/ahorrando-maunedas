@@ -27,7 +27,7 @@ export const agent = new Hono<AppEnv>()
   .post('/agent/v1/observations', requireAgent, async (c) => {
     const { results } = await parseJsonBody(c, AgentObservationsRequestSchema);
     const result = await ingest(c.env.DB, results, Date.now());
-    c.executionCtx.waitUntil(afterIngest(result));
+    c.executionCtx.waitUntil(afterIngest(c.env, result, Date.now()));
     return c.json<AgentObservationsResponse>({
       accepted: result.accepted,
       observations_created: result.created.length,

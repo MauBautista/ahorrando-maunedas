@@ -471,10 +471,15 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - `POST /agent/v1/observations` con las cuatro reglas, el orden por `checked_at` y el reloj adelantado.
   - El trabajo posterior va en `waitUntil` (alertas en T-212 y aviso en T-213).
   - **Pruebas:** 7.
-### [ ] T-212 · Motor de alertas
+### [x] T-212 · Motor de alertas
 - **Docs:** 08 §2–5, 03 §11 · **Depende de:** T-211
 - **Hacer:** incluye `GET /v1/alerts/events`.
 - **Hecho cuando:** tabla de 08 §8 (casos 1–11) pasa.
+- **Hecho (2026-10-29, T80):**
+  - Casos 1–11, mensajes de 08 §5, agrupación por usuario y silencio también dentro de una corrida.
+  - `new_low` por alcance con `v_price_points` y `GET /v1/alerts/events`.
+  - La entrega real por FCM queda para T-213.
+  - **Pruebas:** 11.
 ### [ ] T-213 · Entrega FCM y avisos de sistema
 - **Docs:** 08 §6 · **Depende de:** T-212, T-022, T-027
 - **Hecho cuando:** caso 12 de 08 §8 pasa; avisos de sistema al admin.
