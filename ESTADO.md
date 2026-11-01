@@ -53,6 +53,13 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-200 (2026-11-01, avance):** el agente casero ya existe como programa y contenedor:
+  - pregunta al servidor cada minuto qué revisar;
+  - guarda lo que necesita en su propia base;
+  - reporta su estado y escribe registros sin secretos;
+  - se apaga limpio.
+  
+  Se probó en el servidor con un contenedor temporal, sin tocar el Docker Compose. Falta que Mauricio genere el token y agregue el agente al compose.
 - **T-210 (2026-11-01, Etapa 2 adelantada):** el servidor reconoce un enlace de Amazon, Costco o Sam's (también los cortos de Amazon y un texto compartido con el enlace dentro) y dice qué tienda es. Si no se puede seguir (Walmart, una búsqueda en vez de un producto), explica por qué. Ya existen el botón "Revisar ahora" y la lista de enlaces de cada presentación con su último precio, que usarán Android (T-220) y la web (T-223).
 - **T-214 (2026-11-01, Etapa 2 adelantada):** si el servidor casero lleva 2 horas sin reportarse, los admins reciben "Servidor casero sin conexión" una sola vez por caída. Cuando vuelve y se cae otra vez, se avisa de nuevo. El admin ya puede consultar el estado del agente: si está en línea y cuántas tiendas bloquean o fallan.
 - **T-213 (2026-11-01, Etapa 2 adelantada):** las alertas ya se envían como notificación a los teléfonos de cada usuario. Si un teléfono ya no existe para Firebase, se deja de intentar. Los admins reciben avisos cuando una tienda empieza a bloquear las revisiones y cuando el gasto de IA pasa del 80 % del mes. En Android se verán cuando registre su token (T-221).
@@ -126,6 +133,7 @@
 - **Spike E (T-014, 2026-10-21):** Firebase acepta el correo sintético `@maunedas.local`; alta, login (REST y Firebase JS), desactivación y cambio de contraseña funcionan con el código real del Worker. D9 cerrada (T47).
 
 ## En curso
+- Mauricio, para terminar T-200: correr `apps/api/scripts/agent-token.sh dev` en su terminal, pegar `agent/compose.snippet.yaml` en el compose del servidor y levantar `maunedas-agent`.
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); 5 fotos de tickets para el spike C y 10 fotos de productos para el spike A.
 - Spike C (T-012): rutas temporales y script listos en la rama `spike/c-receipts`, desplegada en `maunedas-dev` con `SPIKE_TOKEN` temporal; esperan las fotos.
 
@@ -223,6 +231,7 @@
 | T81 | **Entrega por FCM.**<br>• `sent` = todos los dispositivos, `partial` = algunos, `failed` = ninguno.<br>• Un token `unregistered` se borra; una falla lo conserva.<br>• Límite de 40 envíos por invocación.<br>• El aviso de IA al 80 % sale del Cron de cada hora con la marca de T-039, no del gateway.<br>• El de tienda bloqueada sale al ingerir. | 08 §6 decía "`sent` si al menos uno llegó" y a la vez listaba `partial`; el caso 12 (`failed` o `partial`) solo cuadra con esta lectura. El plan Free permite 50 subpeticiones y D1 también cuenta. El gateway de IA no debe esperar a Firebase ni fallar por él. |
 | T82 | **Watchdog del agente.**<br>• Corre en el Cron de cada hora.<br>• Avisa a los admins si el último latido tiene ≥ 2 h, una vez por caída, con la marca `agent_offline_notified` (30 días), que `/work` borra al volver el agente.<br>• No avisa de un agente que nunca se conectó.<br>• La hora se escribe en la Ciudad de México, con el día si fue otro.<br>• `GET /v1/admin/agent` cuenta solo listings vivos. | Mientras el agente no se instala (Etapa 2), avisar cada hora de un agente inexistente sería ruido. La marca de 30 días cubre cualquier caída y la limpieza diaria la quita después. Un listing borrado no es un problema del agente. |
 | T83 | **Enlaces de tiendas en línea.**<br>• Las reglas de adapter, URL canónica e id viven en `packages/shared` con el fixture nuevo `fixtures/enlaces.json`, que también probará el agente.<br>• La canónica quita consulta y fragmento.<br>• Los enlaces cortos se siguen hasta 5 saltos, solo por `Location`.<br>• El 422 dice la razón (`NO_URL`, `SHORT_LINK`, `NOT_TRACKED`, `NO_STORE`).<br>• La tienda es la que tiene ese `adapter`. | El Worker y el agente deben reconocer exactamente lo mismo, y la regla 7 pide vectores compartidos. Una URL con `ref`/`utm` distintos sería otro listing del mismo producto. Los clientes pueden dar un mensaje útil según la razón. |
+| T84 | **Proyecto del agente.**<br>• Playwright 1.63.0 (imagen y paquete), la versión del spike B que ya está en el servidor.<br>• El contenedor usa el Python del venv en vez de `uv run`.<br>• `api.py` reintenta solo red, 5xx y 429.<br>• `poll` agenda cada "Revisar ahora" una vez por solicitud.<br>• El último error se reporta hasta la siguiente vuelta buena.<br>• `SIGTERM` cancela la espera de red.<br>• `agent-token.sh` crea `agent/.env` desde el ejemplo y fija `API_BASE` del entorno elegido. | La 1.64 obligaría a bajar otros 3.5 GB al servidor sin ganar nada. `uv run` instalaría las dependencias de desarrollo en cada arranque. Un 4xx no se arregla reintentando. `/work` repite la solicitud hasta recibir el resultado, y sin la marca se revisaría dos veces. Docker mata el contenedor a los 10 s. Con solo el token, el agente no arrancaría. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -353,3 +362,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-01** — T-213: entrega de alertas por FCM, tokens dados de baja, avisos al admin (tienda bloqueada, IA al 80 %) (T81).
 - **2026-11-01** — T-214: watchdog del agente en el Cron (aviso de servidor casero sin conexión, una vez por caída) y `GET /v1/admin/agent` (T82).
 - **2026-11-01** — T-210: resolver enlaces de tiendas (cortos incluidos), "Revisar ahora" y lista de listings; reglas de enlaces compartidas con `fixtures/enlaces.json` (T83).
+- **2026-11-01** — T-200 (avance): agente en Python con configuración, registros JSON, SQLite local, cliente de `/agent/v1`, ciclo `poll`, healthcheck, `Dockerfile` y fragmento de compose; probado con `docker run --rm` (T84). Faltan el token y el compose (Mauricio).

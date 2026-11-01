@@ -3,11 +3,21 @@ name = "maunedas-agent"
 version = "0.1.0"
 description = "Agente del servidor casero: scraping, imágenes y respaldos (SDD 07)"
 requires-python = ">=3.12,<3.13"
-dependencies = []
+dependencies = [
+    "httpx==0.28.1",
+    "pydantic-settings==2.16.0",
+    "structlog==26.1.0",
+]
+
+[project.optional-dependencies]
+# Same version as the Docker image (playwright/python:v1.63.0-noble), the one spike B validated (07 §12).
+browser = ["playwright==1.63.0"]
 
 [dependency-groups]
 dev = [
     "pytest==9.1.1",
+    "pytest-asyncio==1.4.0",
+    "respx==0.23.1",
     "ruff==0.16.10",
 ]
 
@@ -17,6 +27,7 @@ package = false
 [tool.pytest.ini_options]
 pythonpath = ["."]
 testpaths = ["tests"]
+asyncio_mode = "auto"
 
 [tool.ruff]
 target-version = "py312"
