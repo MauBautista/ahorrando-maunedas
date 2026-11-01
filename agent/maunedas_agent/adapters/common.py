@@ -1,6 +1,7 @@
 """The common path of an adapter (07 §9): HTTP, block check, then the store's own reading (browser: T-204)."""
 
 import re
+import secrets
 import time
 from pathlib import Path
 
@@ -73,7 +74,8 @@ def save_failure(data_dir: Path, adapter: str, html: str) -> None:
     folder = data_dir / "fallos" / adapter
     try:
         folder.mkdir(parents=True, exist_ok=True)
-        (folder / f"{int(time.time() * 1000)}.html").write_text(html, encoding="utf-8")
+        # Nanoseconds sort by age; the random part keeps two pages of the same instant apart.
+        (folder / f"{time.time_ns()}-{secrets.token_hex(3)}.html").write_text(html, encoding="utf-8")
         for old in sorted(folder.glob("*.html"))[:-FAILURES_KEPT]:
             old.unlink()
     except OSError as e:

@@ -252,7 +252,7 @@ async def test_fetch_keeps_unreadable_pages_for_fixtures(settings: Settings, sto
     for _ in range(FAILURES_KEPT + 3):
         r = await COSTCO.fetch(url, ctx)
     assert (r.status, r.error, r.extra) == ("error", NO_PRICE, {"method": "http", "http_status": 200})
-    saved = list((settings.data_dir / "fallos" / "costco_mx").glob("*.html"))
+    saved = sorted((settings.data_dir / "fallos" / "costco_mx").glob("*.html"))
     assert len(saved) == FAILURES_KEPT
     assert "Rediseño" in saved[0].read_text()
 
