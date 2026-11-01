@@ -10,8 +10,11 @@ import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.OutOfQuotaPolicy
 import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
+import androidx.work.workDataOf
 import com.maubautista.maunedas.core.database.AppDatabase
 import dagger.hilt.android.qualifiers.ApplicationContext
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.map
 import java.util.concurrent.TimeUnit
 import javax.inject.Inject
 import javax.inject.Singleton
@@ -75,11 +78,35 @@ class SyncScheduler
             )
         }
 
+        /** "Revisar ahora" of a listing (S-20): one request per listing, with network and backoff. */
+        fun checkNow(listingId: String) {
+            work.enqueueUniqueWork(
+                CheckNowWorker.tagOf(listingId),
+                ExistingWorkPolicy.KEEP,
+                OneTimeWorkRequestBuilder<CheckNowWorker>()
+                    .setInputData(workDataOf(CheckNowWorker.LISTING_ID to listingId))
+                    .addTag(CheckNowWorker.TAG)
+                    .addTag(CheckNowWorker.tagOf(listingId))
+                    .setConstraints(connected)
+                    .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                    .build(),
+            )
+        }
+
+        /** The listings whose "Revisar ahora" has not been sent yet. */
+        fun pendingChecks(): Flow<Set<String>> =
+            work.getWorkInfosByTagFlow(CheckNowWorker.TAG).map { infos ->
+                infos.filter { !it.state.isFinished }
+                    .flatMap { info -> info.tags.filter { it.startsWith("check-now:") }.map { it.removePrefix("check-now:") } }
+                    .toSet()
+            }
+
         /** Signing out (02 §6.4). */
         fun cancelAll() {
             work.cancelUniqueWork(NOW)
             work.cancelUniqueWork(PERIODIC)
             work.cancelUniqueWork(UPLOAD)
+            work.cancelAllWorkByTag(CheckNowWorker.TAG)
         }
 
         companion object {

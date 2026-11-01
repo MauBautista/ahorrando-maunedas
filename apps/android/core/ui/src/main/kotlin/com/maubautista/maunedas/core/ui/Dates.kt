@@ -99,5 +99,19 @@ object Dates {
         }
     }
 
+    /** "hace un momento", "hace 5 min", "hace 3 h", and from a day on as [ago]: for checks that happen hourly. */
+    fun agoTime(
+        at: Long,
+        now: Long,
+    ): String {
+        val minutes = (now - at) / 60_000
+        return when {
+            minutes < 1 -> "hace un momento"
+            minutes < 60 -> "hace $minutes min"
+            minutes < 24 * 60 -> "hace ${minutes / 60} h"
+            else -> ago(at, now)
+        }
+    }
+
     private fun local(at: Long): ZonedDateTime = Instant.ofEpochMilli(at).atZone(HouseholdTime.ZONE)
 }

@@ -72,4 +72,15 @@ class DatesTest {
         assertEquals("12:00 p.m.", Dates.time(at("2026-10-22T18:00:00Z"), clock24h = false))
         assertEquals("10:46 p.m.", Dates.time(at("2026-10-23T04:46:00Z"), clock24h = false))
     }
+
+    @Test
+    fun agoTimeCountsMinutesAndHoursBeforeDays() {
+        assertEquals("hace un momento", Dates.agoTime(now - 59_000, now))
+        assertEquals("hace 1 min", Dates.agoTime(now - 60_000, now))
+        assertEquals("hace 59 min", Dates.agoTime(now - 59 * 60_000, now))
+        assertEquals("hace 1 h", Dates.agoTime(now - 60 * 60_000, now))
+        assertEquals("hace 23 h", Dates.agoTime(now - (24 * 60 - 1) * 60_000L, now))
+        // From a day on, calendar days as `ago`.
+        assertEquals("ayer", Dates.agoTime(now - 24 * 3_600_000L, now))
+    }
 }

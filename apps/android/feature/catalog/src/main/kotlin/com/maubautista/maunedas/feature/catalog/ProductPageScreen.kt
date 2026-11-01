@@ -65,6 +65,8 @@ data class ProductPageActions(
     val onMergeProduct: () -> Unit = {},
     val onMergeVariant: (PageVariant) -> Unit = {},
     val onDelete: () -> Unit = {},
+    /** "Precios en línea" of a variant (E2, S-20). */
+    val onTrackVariant: (String) -> Unit = {},
 )
 
 @Composable
@@ -73,6 +75,7 @@ fun ProductPageRoute(
     onEdit: (productId: String) -> Unit,
     onOpenVariant: (productId: String, variantId: String?) -> Unit,
     onMoved: (productId: String) -> Unit,
+    onTrackVariant: (variantId: String) -> Unit = {},
     viewModel: ProductPageViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -108,6 +111,7 @@ fun ProductPageRoute(
                 onMergeProduct = viewModel::startProductMerge,
                 onMergeVariant = viewModel::startVariantMerge,
                 onDelete = viewModel::askDelete,
+                onTrackVariant = onTrackVariant,
             ),
         history = HistoryTabState(historyVariantId, historyFilter, history, viewModel::pickHistoryVariant, viewModel::onHistoryFilter),
     )
@@ -223,6 +227,9 @@ private fun VariantCard(
             }
             if (variant.latest.isEmpty()) Text(stringResource(R.string.page_no_prices), style = MaterialTheme.typography.bodyMedium)
             variant.latest.forEach { LatestPrice(it, now) }
+            TextButton(onClick = { actions.onTrackVariant(variant.id) }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
+                Text(stringResource(R.string.page_track_variant))
+            }
             if (isAdmin) {
                 TextButton(onClick = { actions.onMergeVariant(variant) }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
                     Text(stringResource(R.string.page_merge_variant))

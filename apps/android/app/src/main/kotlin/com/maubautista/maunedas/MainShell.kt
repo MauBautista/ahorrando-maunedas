@@ -2,17 +2,24 @@ package com.maubautista.maunedas
 
 import androidx.annotation.DrawableRes
 import androidx.annotation.StringRes
+import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.Icon
 import androidx.compose.material3.NavigationBar
 import androidx.compose.material3.NavigationBarItem
+import androidx.compose.material3.PrimaryTabRow
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
+import androidx.compose.material3.Tab
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
@@ -33,6 +40,7 @@ import com.maubautista.maunedas.feature.scan.ScanActions
 import com.maubautista.maunedas.feature.scan.ScanRoute
 import com.maubautista.maunedas.feature.settings.SettingsRoute
 import com.maubautista.maunedas.feature.settings.SyncMessagesHost
+import com.maubautista.maunedas.feature.tracking.TrackingRoute
 import kotlinx.serialization.Serializable
 import kotlin.reflect.KClass
 import com.maubautista.maunedas.core.designsystem.R as DesignR
@@ -78,6 +86,7 @@ fun MainShell(
     onShelfPrice: () -> Unit,
     onReceiptPhoto: () -> Unit,
     scanActions: ScanActions,
+    onAddLink: (variantId: String?) -> Unit = {},
 ) {
     val nav = rememberNavController()
     val entry by nav.currentBackStackEntryAsState()
@@ -115,8 +124,30 @@ fun MainShell(
             }
             composable<PurchasesTab> { PurchasesRoute(onOpenPurchase = onOpenPurchase, onNewPurchase = { onOpenPurchase(null) }) }
             composable<ScanTab> { ScanRoute(scanActions) }
-            composable<CatalogTab> { CatalogRoute(onOpenProduct = onOpenProduct, onNewProduct = onNewProduct) }
+            composable<CatalogTab> { CatalogWithTracking(onOpenProduct, onNewProduct, onAddLink) }
             composable<SettingsTab> { SettingsRoute(onSignedOut = onSignedOut, onOpenSync = onOpenSync) }
+        }
+    }
+}
+
+/** Catálogo with Seguimiento as a tab, so the bar keeps five destinations (05 §4). */
+@Composable
+private fun CatalogWithTracking(
+    onOpenProduct: (String) -> Unit,
+    onNewProduct: () -> Unit,
+    onAddLink: (variantId: String?) -> Unit,
+) {
+    var tab by rememberSaveable { mutableIntStateOf(0) }
+    Column(Modifier.fillMaxSize()) {
+        PrimaryTabRow(selectedTabIndex = tab) {
+            listOf(R.string.catalog_tab_products, R.string.catalog_tab_tracking).forEachIndexed { i, label ->
+                Tab(selected = tab == i, onClick = { tab = i }, text = { Text(stringResource(label)) })
+            }
+        }
+        if (tab == 0) {
+            CatalogRoute(onOpenProduct = onOpenProduct, onNewProduct = onNewProduct)
+        } else {
+            TrackingRoute(onOpenProduct = onOpenProduct, onAdd = onAddLink)
         }
     }
 }

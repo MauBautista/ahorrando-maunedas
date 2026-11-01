@@ -334,6 +334,23 @@ Cámara o galería → reducir a ≤ 2048 px (JPEG 85) → (opcional E1) quitar 
 - **S-22 Reglas de alerta**: tipo, umbral, alcance, silencio (horas), activa.
 - **S-23 Historial de alertas**: lista de `alert_events` con enlace a la variante.
 
+**Implementación (T-220, decisión T95):**
+- **Datos:**
+  - `TrackingRepository` (`core:data`) lee de Room con `TrackingDao`: listings vivos, su estado, presentación y tienda, en el orden de la web.
+  - Escribe con `LocalWriter`: seguir, pausar o reanudar, y dejar de seguir (lápida).
+  - Resolver el enlace (`POST /v1/listings/resolve`) es la llamada directa permitida.
+  - Un enlace que ya se sigue no se agrega dos veces.
+- **"Revisar ahora":** va por `CheckNowWorker` (`core:sync`), no como llamada directa, porque no está entre las excepciones de §3.
+  - Hay un trabajo único por listing, con red y backoff.
+  - Si el listing aún espera en el outbox, primero se sincroniza.
+  - Tras el `202` se pide una sincronización para bajar `listing_state`.
+  - La tarjeta dice "Revisión solicitada" mientras el trabajo está pendiente o el estado aún no trae la revisión.
+- **Navegación:**
+  - Seguimiento es la pestaña "Productos · Seguimiento" dentro de Catálogo.
+  - La ficha de producto tiene "Precios en línea" en cada presentación, que abre S-20 solo para ella.
+  - "Seguir un enlace" (S-21) es una pantalla.
+- **Compartir:** `MainActivity` recibe `ACTION_SEND` de texto. El *intent filter* se llama "Seguir precio" en el menú de compartir. Abre S-21 con el texto y lo resuelve de inmediato; si no hay sesión, después del login.
+
 ## 6. Cálculos compartidos (`core:pricing`)
 
 Implementaciones Kotlin que pasan los fixtures de `fixtures/`:
