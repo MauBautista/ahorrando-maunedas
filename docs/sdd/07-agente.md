@@ -469,6 +469,34 @@ Walmart (`walmart.com.mx` y `super.walmart.com.mx`) no tiene adapter: responde c
 
 Extracción: `selectolax` ≥ 1.0 ya no trae el parser Modest; usar `selectolax.lexbor.LexborHTMLParser`.
 
+**Implementación (T-205, T-207, T-208; decisión T87):**
+- **Camino común (`adapters/common.py`):**
+  - Página HTTP, luego bloqueo (§8.4).
+  - 404/410 → `not_found`; otro ≥ 400 → `error`.
+  - Después, la lectura de la tienda. Si no encuentra ni precio ni existencia → `error` "no se encontró el precio en la página", y la página se guarda en `/data/fallos/<adapter>/` (las 20 más nuevas) para convertirla en fixture.
+  - `extra.http_status` acompaña cada resultado.
+  - `canonicalize` usa `maunedas_agent/urls.py`, que pasa `fixtures/enlaces.json` igual que el Worker.
+- **`amazon_mx`:**
+  - Se quitan `style`, `script` y `noscript` antes de leer textos.
+  - Precio a pagar: `.apex-pricetopay-value .a-offscreen`, que en la página real viene vacío; luego `#apex-pricetopay-accessibility-label`; luego los dígitos visibles; luego el diseño anterior (`.a-price` sin tachar y sin ser por unidad).
+  - Lista: `.apex-basisprice-value`, `.basisPrice` o un `.a-price` tachado, solo si es mayor.
+  - "No disponible" o `#outOfStock` → `in_stock = false` sin precio.
+  - Promoción: `#promoPriceBlockMessage_feature_div`. Vendedor en `extra.seller`.
+- **`sams_mx`:**
+  - Producto de `__NEXT_DATA__`: `currentPrice`, `wasPrice` o `listPrice` (solo si es mayor) y `availabilityStatus`.
+  - Promoción: los `badges.flags` con número, como "11 x 10"; "MSI" no cuenta.
+  - `extra.club` y `extra.postal_code` dicen qué club dio el precio.
+  - Si `__NEXT_DATA__` no sirve, se usa JSON-LD.
+- **`costco_mx`:**
+  - JSON-LD.
+  - Si falla, `.product-price-amount` solo dentro de `sip-product-details`, nunca el primero de la página.
+  - Sin precio de lista: no se conoce su marcado.
+- **Comprobación real (2026-11-01, una petición por tienda desde el servidor):**
+  - Amazon $118.69: ahora ubica la IP en "Puebla City 72210".
+  - Sam's $322.24: club por defecto `0000009996`, CP 11220, en la CDMX.
+  - Costco $529.00.
+  - La página de Amazon trajo una promoción y quedó como fixture `amazon_mx/ok_con_promocion.html`.
+
 ## 10. Respaldos (T-230)
 
 | Trabajo | Cuándo | Qué hace |

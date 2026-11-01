@@ -470,10 +470,22 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 ### [ ] T-204 · Navegador (Playwright)
 - **Docs:** 07 §8.2 · **Depende de:** T-203
 - **Hecho cuando:** reinicio por número de páginas y por memoria probado.
-### [ ] T-205 · Adapter `amazon_mx` · [ ] T-207 · `sams_mx` · [ ] T-208 · `costco_mx`
+### [~] T-205 · Adapter `amazon_mx` · [~] T-207 · `sams_mx` · [~] T-208 · `costco_mx`
 - **Docs:** 07 §9, `docs/spikes/spike-b-scraping.md` · **Depende de:** T-203 (ninguna requirió navegador en el spike B)
 - **T-206 · `walmart_mx`: descartada (2026-10-19).** Walmart bloquea con captcha de PerimeterX desde la primera petición; por la regla 10 no se sigue (decisión T34).
 - **Hecho cuando:** fixtures `ok`, `sin stock`, `con precio de lista` y `bloqueo` pasan; una URL real devuelve el precio correcto para CP 72750.
+- **Avance (2026-11-01, T87):**
+  - **Adapters:** los tres registrados.
+  - **Pasan:**
+    - `ok`, también el fixture real nuevo `amazon_mx/ok_con_promocion.html`;
+    - `sin stock`, en Amazon y Sam's con páginas reales y en Costco con una variante;
+    - `bloqueo`: captcha de Amazon y el reto de PerimeterX de Walmart para Sam's.
+  - **Comprobación con URLs reales:** una por tienda, precios correctos.
+  - **Pruebas:** el agente tiene 134; 20 mutaciones, todas detectadas.
+- **Falta:**
+  - **Páginas reales con precio de lista:** el spike B no vio ninguna; hoy se prueba con variantes de las reales. Se capturan cuando aparezcan.
+  - **Club de Sam's (Mauricio):** sin sesión, Sam's da el precio del club por defecto de la CDMX; hay que decidir qué club de Puebla usar y cómo fijarlo.
+  - **Costco:** no se conoce cómo marca el precio de lista.
 ### [x] T-210 · Resolver URL, revisar ahora, listar listings
 - **Docs:** 03 §11 · **Depende de:** T-031
 - **Hecho cuando:** enlaces cortos de Amazon resueltos solo con `Location`; URL no soportada → 422.
