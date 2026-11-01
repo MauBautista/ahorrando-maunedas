@@ -156,13 +156,20 @@
 - Mauricio, para T-207: qué club de Sam's de Puebla usar. Sin sesión, Sam's da el precio del club `0000009996` de la CDMX (CP 11220).
 - Mauricio, para terminar T-200: correr `apps/api/scripts/agent-token.sh dev` en su terminal, pegar `agent/compose.snippet.yaml` en el compose del servidor y levantar `maunedas-agent`.
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); 5 fotos de tickets para el spike C y 10 fotos de productos para el spike A.
-- Spike C (T-012): rutas temporales y script listos en la rama `spike/c-receipts`, desplegada en `maunedas-dev` con `SPIKE_TOKEN` temporal; esperan las fotos.
+- Spike C (T-012): rutas temporales y script listos en la rama local `spike/c-receipts`; `maunedas-dev` volvió a `main` y se borró `SPIKE_TOKEN`. Se vuelve a desplegar cuando estén las fotos.
 
 ## Siguiente
-1. Web: T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
-2. Pantallas de Android: T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
-3. Spike C en cuanto estén las fotos de tickets (luego T-040, T-124 y T-163); spike A con las 10 fotos de productos.
-4. Antes del primer despliegue a producción: T-004 (Firebase prod).
+1. **Agente en el servidor** (en cuanto Mauricio cargue el token y el compose):
+   - ver el primer `/work` y el estado en `GET /v1/admin/agent`;
+   - agregar un enlace real y ver su primera revisión;
+   - después del primer respaldo, T-231 (prueba de restauración).
+2. **Clientes de la Etapa 2:**
+   - T-223 (web: seguimiento, alertas y estado del agente), que necesita la revisión de Mauricio;
+   - T-220 a T-222 (Android), que necesitan pruebas en el teléfono.
+3. **Web:** T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
+4. **Pantallas de Android:** T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
+5. **Spikes:** el C en cuanto estén las fotos de tickets (luego T-040, T-124 y T-163); el A con las 10 fotos de productos.
+6. **Antes del primer despliegue a producción:** T-004 (Firebase prod).
 
 ## Decisiones tomadas
 
