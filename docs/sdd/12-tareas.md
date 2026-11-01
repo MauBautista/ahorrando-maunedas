@@ -467,9 +467,12 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Código:** cliente HTTP/2 con cookies persistentes, `parse_mxn` y `decimal_to_cents`, JSON-LD (objeto, lista, `AggregateOffer`, `@graph`, tipo en minúsculas), `__NEXT_DATA__` y detección de bloqueo.
   - **Pruebas:** con los fixtures del spike B (precios de Sam's y Costco, sin stock, Walmart como bloqueo, ninguna página de producto confundida con un bloqueo); el agente tiene 95 pruebas.
   - **Mutaciones:** 20; una es equivalente (el espacio duro ya cuenta como `\s`).
-### [ ] T-204 · Navegador (Playwright)
+### [x] T-204 · Navegador (Playwright)
 - **Docs:** 07 §8.2 · **Depende de:** T-203
 - **Hecho cuando:** reinicio por número de páginas y por memoria probado.
+- **Hecho (2026-11-01, T90):**
+  - **Código:** `BrowserFetcher` con reinicio por páginas y por memoria (RSS de los hijos, desde `/proc`), recursos bloqueados y una página a la vez. Los adapters lo usan como último recurso, tras esperar turno en el dominio y nunca ante un bloqueo.
+  - **Pruebas:** con un Chromium falso y con Chromium real en la imagen; 13 mutaciones, todas detectadas.
 ### [~] T-205 · Adapter `amazon_mx` · [~] T-207 · `sams_mx` · [~] T-208 · `costco_mx`
 - **Docs:** 07 §9, `docs/spikes/spike-b-scraping.md` · **Depende de:** T-203 (ninguna requirió navegador en el spike B)
 - **T-206 · `walmart_mx`: descartada (2026-10-19).** Walmart bloquea con captcha de PerimeterX desde la primera petición; por la regla 10 no se sigue (decisión T34).

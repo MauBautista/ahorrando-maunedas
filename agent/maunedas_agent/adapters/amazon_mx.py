@@ -58,6 +58,7 @@ class AmazonMx(BaseAdapter):
     name = "amazon_mx"
     domains = ("amazon.com.mx",)
     min_spacing_s = 45
+    price_selector = "#corePriceDisplay_desktop_feature_div, #availability"
 
     def extract(self, tree: LexborHTMLParser) -> ScrapeResult | None:
         # No JSON-LD to keep here; inline styles and scripts leak into texts (spike B: #availability).

@@ -10,6 +10,7 @@ from maunedas_agent import log
 from maunedas_agent.adapters.base import Adapter, ScrapeResult
 from maunedas_agent.adapters.registry import ADAPTERS
 from maunedas_agent.context import AgentContext
+from maunedas_agent.fetch.gate import spacing_for
 from maunedas_agent.store import DueListing, now_ms
 
 Jitter = Callable[[float, float], float]
@@ -47,11 +48,6 @@ def plan(item: DueListing, status: str, now: int, jitter: Jitter = random.unifor
         return now + int(BACKOFF_CAP_MS * jitter(0.9, 1.1)), MAX_LEVEL, streak
     at, level = next_check(status, item.backoff_level, item.interval_min, now, jitter)
     return at, level, streak
-
-
-def spacing_for(adapter: Adapter, config: Mapping[str, int]) -> int:
-    """The stricter of the adapter's own spacing and the Worker's (`config.min_spacing_s`)."""
-    return max(adapter.min_spacing_s, config.get(adapter.gate_key, config.get("default", 0)))
 
 
 def payload(listing_id: str, checked_at: int, r: ScrapeResult) -> dict[str, Any]:

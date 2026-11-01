@@ -385,6 +385,25 @@ Las cookies por dominio se guardan en `kv` para mantener la sucursal/CP seleccio
 - `wait_until="domcontentloaded"` + espera del selector de precio (timeout `BROWSER_TIMEOUT_S`).
 - Una página a la vez; reinicio del navegador cada `BROWSER_RESTART_EVERY` páginas o si RSS > 900 MB.
 
+**Implementación (T-204, decisión T90):**
+- **`fetch/browser.py`:**
+  - Arranca Chromium la primera vez que se necesita y lo reinicia antes de una página si ya abrió `BROWSER_RESTART_EVERY` o si sus procesos pasan de 900 MB.
+  - La memoria es la suma del RSS de los procesos hijos del agente, leída de `/proc`.
+  - Bloquea imágenes, fuentes, medios y dominios de analítica.
+  - Espera `domcontentloaded` y el `price_selector` del adapter; si no aparece, devuelve la página igual.
+  - Siempre cierra la página.
+- **Cuándo se usa:**
+  - Solo como último recurso dentro de `BaseAdapter.fetch`: cuando la página HTTP cargó sin precio ni existencia.
+  - Nunca ante un bloqueo (regla 10).
+  - Antes de abrirlo, `wait_turn` espera a que el dominio admita otra petición, con la misma separación de §7.
+  - `extra.method` dice `browser_…`.
+- **Sin navegador:** no se crea si `PLAYWRIGHT_ENABLED` está apagado o falta Playwright (pruebas y CI; la imagen lo trae con el extra `browser`).
+- **Comprobado con Chromium real en la imagen:**
+  - se reinicia cada 2 páginas y por memoria;
+  - espera un elemento que aparece tarde;
+  - no hubo peticiones de imágenes;
+  - Chromium ocupó unos 515 MB.
+
 ### 8.3 Precio
 
 ```python

@@ -39,6 +39,7 @@ class SamsMx(BaseAdapter):
     name = "sams_mx"
     domains = ("sams.com.mx",)
     min_spacing_s = 30
+    price_selector = "script#__NEXT_DATA__"
 
     def extract(self, tree: LexborHTMLParser) -> ScrapeResult | None:
         product = dig(next_data(tree), PRODUCT_PATH)
