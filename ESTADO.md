@@ -54,7 +54,7 @@
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
 - **T-231 (2026-11-02):** se probó restaurar la base desde el respaldo del servidor casero. El procedimiento y el resultado están en la sección "Restauración".
-- **T-222 (2026-11-02, avance):** en la app de Android, la gráfica de historial dibuja los precios en línea como escalones: cada precio se mantiene hasta el siguiente o hasta la última revisión. El admin ve en Ajustes el estado del servidor casero (último reporte, pendientes, tiendas que bloquean, errores y respaldos), y Seguimiento avisa a todos si dejó de reportarse. Falta verlo en el teléfono.
+- **T-222 (2026-11-02):** en la app de Android, la gráfica de historial dibuja los precios en línea como escalones: cada precio se mantiene hasta el siguiente o hasta la última revisión. El admin ve en Ajustes el estado del servidor casero (último reporte, pendientes, tiendas que bloquean, errores y respaldos), y Seguimiento avisa a todos si dejó de reportarse. Mauricio lo probó en el teléfono.
 - **T-221 (2026-11-02):** la app de Android ya tiene las alertas de precio:
   - **Reglas:** crear, editar, pausar y quitar (baja a un precio, baja un porcentaje, precio más bajo, promoción, vuelve a haber).
   - **Historial:** los avisos que han saltado.
@@ -184,8 +184,7 @@
    - agregar un enlace real y ver su primera revisión;
    - las fotos esperan el token de R2.
 2. **Clientes de la Etapa 2:**
-   - T-223 (web) espera la revisión de Mauricio en dev;
-   - T-222 (Android) espera la prueba en el teléfono (PR #88).
+   - T-223 (web) espera la revisión de Mauricio en dev.
 3. **T-207:** fijar el club de Sam's de Forjadores.
 4. **Web:** T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
 5. **Pantallas de Android:** T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
@@ -485,3 +484,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-02** — T-221 terminada: alerta de prueba en dev entregada por FCM al Samsung y abierta en la ficha del producto.
 - **2026-11-02** — T-222 (avance): escalones web en la gráfica de Android y estado del servidor casero en Ajustes y Seguimiento (T98); falta verlo en el teléfono.
 - **2026-11-02** — T-231: restauración probada; el respaldo del 2026-11-01 entra completo en una D1 nueva (57 filas, sin llaves rotas). Procedimiento en "Restauración" (T99).
+- **2026-11-02** — T-222 terminada: probada en el teléfono. Bloques de agente, Worker y clientes de la Etapa 2 completos en `PLAN.md`.
