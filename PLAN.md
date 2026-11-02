@@ -45,10 +45,10 @@ Datos semilla (T-026):
 
 Objetivo: monitorear precios web desde casa (CP 72750) y avisar por push.
 
-- [ ] Agente: proyecto, `/work`, scheduler, descarga y extracción, navegador — T-200 a T-204
+- [x] Agente: proyecto, `/work`, scheduler, descarga y extracción, navegador — T-200 a T-204
 - [ ] Adapters Amazon, Sam's y Costco — T-205, T-207, T-208 (T-206 Walmart descartada, T34)
-- [ ] Worker: resolver URL, ingesta, alertas, FCM, watchdog — T-210 a T-214
-- [ ] Android y web: listings, reglas, historial de alertas, serie web, estado del agente — T-220 a T-223
+- [x] Worker: resolver URL, ingesta, alertas, FCM, watchdog — T-210 a T-214
+- [x] Android y web: listings, reglas, historial de alertas, serie web, estado del agente — T-220 a T-223
 - [ ] Respaldos y restauración probada — T-230, T-231
 - [ ] Cierre — T-290
 

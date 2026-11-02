@@ -36,19 +36,58 @@ import com.patrykandpatrick.vico.compose.common.Fill
 import com.patrykandpatrick.vico.compose.common.component.rememberShapeComponent
 import com.maubautista.maunedas.core.designsystem.R as DesignR
 
-/** One series of the chart: x is the calendar day in Mexico City, y the price per unit in pesos. */
+/**
+ * One series of the chart: x is the calendar day in Mexico City, y the price per unit in pesos. [steps] series are
+ * lines without points; the others, points without lines.
+ */
 data class ChartSeries(
     val source: String,
     val x: List<Long>,
     val y: List<Double>,
-)
+    val steps: Boolean = false,
+    /** The listing of a web steps series. */
+    val listingId: String? = null,
+) {
+    val key: String get() = if (steps) "$STEPS_PREFIX$listingId" else source
+}
 
-/** The history drawn as points per source (RF-PRE-02); the web steps arrive with T-222. Empty sources are left out. */
-fun chartSeries(points: List<HistoryPoint>): List<ChartSeries> =
-    SOURCES.mapNotNull { source ->
-        val own = points.filter { it.source == source }
-        if (own.isEmpty()) null else ChartSeries(source, own.map { HouseholdTime.epochDay(it.observedAt) }, own.map { it.displayCents / 100.0 })
-    }
+private const val STEPS_PREFIX = "web-steps:"
+
+/**
+ * The history (RF-PRE-02): purchases and shelf prices as points, web prices as points over steps (T-222), one per
+ * listing: each price holds until the next one, and the last until the listing's last check ([confirmedUntil],
+ * `web_confirmed_until`). Steps go first so the points are drawn over them; empty sources are left out.
+ */
+fun chartSeries(
+    points: List<HistoryPoint>,
+    confirmedUntil: Map<String, Long> = emptyMap(),
+): List<ChartSeries> {
+    val steps =
+        points.filter { it.source == "web" && it.listingId != null }.groupBy { it.listingId!! }.mapNotNull { (listing, own) ->
+            val xs = mutableListOf<Long>()
+            val ys = mutableListOf<Double>()
+            own.forEachIndexed { i, p ->
+                val x = HouseholdTime.epochDay(p.observedAt)
+                if (i > 0) {
+                    xs += x
+                    ys += ys.last()
+                }
+                xs += x
+                ys += p.displayCents / 100.0
+            }
+            confirmedUntil[listing]?.let(HouseholdTime::epochDay)?.takeIf { it > xs.last() }?.let { until ->
+                xs += until
+                ys += ys.last()
+            }
+            if (xs.size < 2) null else ChartSeries("web", xs, ys, steps = true, listingId = listing)
+        }
+    val dots =
+        SOURCES.mapNotNull { source ->
+            val own = points.filter { it.source == source }
+            if (own.isEmpty()) null else ChartSeries(source, own.map { HouseholdTime.epochDay(it.observedAt) }, own.map { it.displayCents / 100.0 })
+        }
+    return steps + dots
+}
 
 /** A sentence for screen readers: how many prices, from when to when, the lowest and the highest. */
 @Composable
@@ -79,12 +118,13 @@ fun HistoryChart(
     now: Long,
     modifier: Modifier = Modifier,
 ) {
-    val series = remember(history.points) { chartSeries(history.points) }
+    val series = remember(history.points, history.webConfirmedUntil) { chartSeries(history.points, history.webConfirmedUntil) }
     val producer = remember { CartesianChartModelProducer() }
     LaunchedEffect(series) {
-        producer.runTransaction { lineSeries { series.forEach { series(x = it.x, y = it.y, key = it.source) } } }
+        producer.runTransaction { lineSeries { series.forEach { series(x = it.x, y = it.y, key = it.key) } } }
     }
-    // Only the points: the line between two prices of a source would suggest prices nobody saw.
+    // Points without lines: a line between two purchases would suggest prices nobody saw. Web prices are known to
+    // hold between checks, so they also get steps (T-222).
     val colors = mapOf("purchase" to MaunedasTheme.extended.purchase, "shelf" to MaunedasTheme.extended.shelf, "web" to MaunedasTheme.extended.web)
     val lines =
         SOURCES.associateWith { source ->
@@ -94,7 +134,11 @@ fun HistoryChart(
                 pointProvider = LineCartesianLayer.PointProvider.single(LineCartesianLayer.Point(rememberShapeComponent(Fill(color), CircleShape), 10.dp)),
             )
         }
-    val lineProvider = remember(lines) { LineCartesianLayer.LineProvider { key, _, _ -> lines.getValue(key as String) } }
+    val webSteps = LineCartesianLayer.rememberLine(fill = remember { LineCartesianLayer.LineFill.single(Fill(colors.getValue("web"))) }, pointProvider = null)
+    val lineProvider =
+        remember(lines, webSteps) {
+            LineCartesianLayer.LineProvider { key, _, _ -> if ((key as String).startsWith(STEPS_PREFIX)) webSteps else lines.getValue(key) }
+        }
     // About five dates on the axis, whatever the period.
     val span = series.flatMap { it.x }.let { xs -> if (xs.isEmpty()) 0L else xs.max() - xs.min() }
     val spacing = (span / 4).toInt().coerceAtLeast(1)

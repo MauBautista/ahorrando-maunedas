@@ -100,4 +100,22 @@
     <string name="reason_not_owner">es de otra persona</string>
     <string name="reason_web">los precios web los registra el agente</string>
     <string name="reason_other">rechazado (%1$s)</string>
+    <!-- RF-ADM-03, admin only -->
+    <string name="settings_agent_title">Servidor casero</string>
+    <string name="settings_agent_never">El servidor casero todavía no se ha conectado.</string>
+    <string name="settings_agent_online">En línea · último reporte %1$s</string>
+    <string name="settings_agent_offline">Sin conexión: último reporte %1$s. Los precios en línea están en pausa.</string>
+    <string name="settings_agent_version">Versión del agente: %1$s</string>
+    <string name="settings_agent_queue">Por revisar: %1$d · Por enviar: %2$d</string>
+    <string name="settings_agent_blocked">Tiendas bloqueando: %1$s</string>
+    <string name="settings_agent_error">Último error: %1$s</string>
+    <string name="settings_agent_none">ninguno</string>
+    <string name="settings_agent_mirror">Copia diaria de la base: %1$s</string>
+    <string name="settings_agent_dump">Volcado semanal: %1$s</string>
+    <string name="settings_agent_photos">Fotos: %1$s</string>
+    <string name="settings_job_rows">%1$s filas</string>
+    <string name="settings_job_file">%1$s</string>
+    <string name="settings_job_files">%1$s archivos</string>
+    <string name="settings_job_failed">falló (%1$s)</string>
+    <string name="settings_job_not_yet">aún no corre</string>
 </resources>

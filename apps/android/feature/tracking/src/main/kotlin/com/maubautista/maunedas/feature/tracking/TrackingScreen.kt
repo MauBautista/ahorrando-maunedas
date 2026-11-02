@@ -122,6 +122,15 @@ fun TrackingScreen(
                     Text(stringResource(R.string.tracking_title), style = MaterialTheme.typography.titleLarge, modifier = Modifier.semantics { heading() })
                 }
                 state.variantName?.let { Text(stringResource(R.string.tracking_only, it), style = MaterialTheme.typography.bodyMedium) }
+                state.agent?.takeIf { !it.online(now) }?.lastHeartbeatAt?.let { at ->
+                    Surface(color = MaterialTheme.colorScheme.errorContainer, shape = MaterialTheme.shapes.small) {
+                        Text(
+                            stringResource(R.string.tracking_agent_offline, Dates.agoTime(at, now)),
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(Spacing.md),
+                        )
+                    }
+                }
                 Button(onClick = actions.onAdd, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.tracking_add)) }
                 if (!state.loading && state.listings.isEmpty()) {
                     Text(stringResource(R.string.tracking_empty), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)

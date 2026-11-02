@@ -240,7 +240,8 @@ Pestañas:
 - **Historial (T-115, decisión T58):**
   - `VariantHistoryRepository` (`core:data`) aplica en Room las reglas de `GET /v1/variants/:id/history`: compras confirmadas con el cupón prorrateado (la vista), rango inclusivo, orden por fecha y la unidad de su medida si no corresponde a la del producto.
   - **Filtros:** presentación, fuentes (Pagado, Anaquel, Web), periodo (3 meses, 1 año por omisión como la API, todo) y tienda.
-  - **Gráfica (Vico):** una serie por fuente con su color y solo puntos (una línea entre dos precios sugeriría precios que nadie vio); x es el día en la Ciudad de México y y el precio por unidad. La serie web en escalones llega con T-222.
+  - **Gráfica (Vico):** una serie por fuente con su color y solo puntos (una línea entre dos precios sugeriría precios que nadie vio); x es el día en la Ciudad de México y y el precio por unidad.
+  - **Serie web en escalones (T-222, decisión T98):** los precios web llevan, debajo de sus puntos, una línea escalonada por listing. Cada precio se mantiene hasta el siguiente, y el último hasta la última revisión del listing (`listing_state.last_checked_at`, el `web_confirmed_until` de 03 §7). Se calcula en Room, respeta los filtros de fuente y tienda, y un listing con un solo precio y sin revisión posterior queda solo como punto.
   - **Lista y accesibilidad:** debajo va la lista de precios, del más nuevo al más viejo, con "Con promoción". La gráfica lleva una descripción para lectores de pantalla (cuántos precios, de cuándo a cuándo, el más bajo y el más alto).
 
 ### S-09 Editor de producto
@@ -368,6 +369,11 @@ Cámara o galería → reducir a ≤ 2048 px (JPEG 85) → (opcional E1) quitar 
   - Seguimiento es la pestaña "Productos · Seguimiento" dentro de Catálogo.
   - La ficha de producto tiene "Precios en línea" en cada presentación, que abre S-20 solo para ella.
   - "Seguir un enlace" (S-21) es una pantalla.
+- **Estado del agente (T-222, RF-ADM-03, decisión T98):**
+  - `AgentStatusRepository` lee el reporte más reciente de `agent_status` en Room: último latido, versión, por revisar y por enviar, tiendas que bloquean, último error y los tres respaldos.
+  - **Sin conexión:** como el estado baja a lo más cada 10 min (T78) y la sync automática corre cada 15, el teléfono considera al agente sin conexión después de 30 min sin reporte.
+  - **S-20:** avisa a todos cuando el servidor casero dejó de reportarse ("los precios en línea están en pausa").
+  - **Ajustes (S-15):** el admin ve la sección "Servidor casero" con el detalle.
 - **Ficha de producto (hallazgo, T97):** S-08 pide una cuarta pestaña "Seguimiento". En su lugar, cada presentación tiene "Precios en línea" y "Alertas", que abren S-20 y S-22 para ella. Así `feature:catalog` no depende de `feature:tracking`, y queda igual que la web (T92).
 - **Compartir:** `MainActivity` recibe `ACTION_SEND` de texto. El *intent filter* se llama "Seguir precio" en el menú de compartir. Abre S-21 con el texto y lo resuelve de inmediato; si no hay sesión, después del login.
 

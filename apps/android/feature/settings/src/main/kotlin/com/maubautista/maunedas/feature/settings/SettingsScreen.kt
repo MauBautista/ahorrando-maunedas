@@ -37,6 +37,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.maubautista.maunedas.core.auth.SessionUser
+import com.maubautista.maunedas.core.data.AgentHealth
+import com.maubautista.maunedas.core.data.BackupJob
 import com.maubautista.maunedas.core.designsystem.Spacing
 import com.maubautista.maunedas.core.sync.SyncStatus
 import com.maubautista.maunedas.core.ui.Dates
@@ -64,6 +66,7 @@ fun SettingsRoute(
     val password by viewModel.password.collectAsStateWithLifecycle()
     val message by viewModel.message.collectAsStateWithLifecycle()
     val confirmSignOut by viewModel.confirmSignOut.collectAsStateWithLifecycle()
+    val agent by viewModel.agent.collectAsStateWithLifecycle()
     LaunchedEffect(viewModel) { viewModel.signedOut.collect { onSignedOut() } }
     // The tab keeps its view model; photos taken or freed meanwhile change the size, so it is read each time it shows.
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { viewModel.refreshPhotos() }
@@ -76,6 +79,7 @@ fun SettingsRoute(
         schema = viewModel.client.schema,
         actions = SettingsActions(viewModel::openPassword, onOpenSync, viewModel::syncNow, viewModel::freeSpace, viewModel::askSignOut),
         canChangePassword = viewModel.canChangePassword,
+        agent = AgentSection(agent, viewModel.now()),
     )
     password?.let { PasswordDialog(it, viewModel::onPassword, viewModel::changePassword, viewModel::closePassword) }
     message?.let { m ->
@@ -112,6 +116,7 @@ fun SettingsScreen(
     schema: Int,
     actions: SettingsActions,
     canChangePassword: Boolean = true,
+    agent: AgentSection = AgentSection(null, 0),
 ) {
     var freeing by rememberSaveable { mutableStateOf(false) }
     Column(
@@ -134,6 +139,11 @@ fun SettingsScreen(
         Button(onClick = actions.onSyncNow, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.settings_sync_now)) }
         OutlinedButton(onClick = actions.onOpenSync, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.settings_sync_details)) }
         HorizontalDivider()
+        if (user?.role == "admin") {
+            Section(R.string.settings_agent_title)
+            AgentStatusText(agent)
+            HorizontalDivider()
+        }
         Section(R.string.settings_storage_title)
         photosBytes?.let { Text(stringResource(R.string.settings_photos_size, Formatter.formatShortFileSize(LocalContext.current, it)), style = MaterialTheme.typography.bodyLarge) }
         OutlinedButton(onClick = { freeing = true }, modifier = Modifier.fillMaxWidth().heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.settings_free_space)) }
@@ -160,6 +170,48 @@ internal fun syncText(sync: SyncStatus): String =
         is SyncStatus.Synced -> stringResource(R.string.settings_sync_ok, Dates.time(sync.at, clock24h()))
         is SyncStatus.Failed -> stringResource(R.string.settings_sync_failed, sync.reason)
         SyncStatus.UpgradeRequired -> stringResource(R.string.settings_sync_upgrade)
+    }
+
+/** RF-ADM-03 for the admin: the agent's latest report and when it was taken. */
+data class AgentSection(
+    val health: AgentHealth?,
+    val now: Long,
+)
+
+@Composable
+private fun AgentStatusText(section: AgentSection) {
+    val a = section.health
+    val now = section.now
+    val style = MaterialTheme.typography.bodyLarge
+    if (a?.lastHeartbeatAt == null) {
+        Text(stringResource(R.string.settings_agent_never), style = style)
+        return
+    }
+    val ago = Dates.agoTime(a.lastHeartbeatAt!!, now)
+    if (a.online(now)) {
+        Text(stringResource(R.string.settings_agent_online, ago), style = style)
+    } else {
+        Text(stringResource(R.string.settings_agent_offline, ago), style = style, color = MaterialTheme.colorScheme.error)
+    }
+    a.version?.let { Text(stringResource(R.string.settings_agent_version, it), style = style) }
+    Text(stringResource(R.string.settings_agent_queue, a.due ?: 0, a.outbox ?: 0), style = style)
+    Text(stringResource(R.string.settings_agent_blocked, a.blocked.joinToString(", ").ifEmpty { stringResource(R.string.settings_agent_none) }), style = style)
+    Text(stringResource(R.string.settings_agent_error, a.lastError ?: stringResource(R.string.settings_agent_none)), style = style)
+    Text(stringResource(R.string.settings_agent_mirror, jobText(a.mirror, now, R.string.settings_job_rows)), style = style)
+    Text(stringResource(R.string.settings_agent_dump, jobText(a.dump, now, R.string.settings_job_file)), style = style)
+    Text(stringResource(R.string.settings_agent_photos, jobText(a.photos, now, R.string.settings_job_files)), style = style)
+}
+
+@Composable
+private fun jobText(
+    job: BackupJob,
+    now: Long,
+    detail: Int,
+): String =
+    when (job.ok) {
+        true -> listOfNotNull(job.detail?.let { stringResource(detail, it) }, job.at?.let { Dates.agoTime(it, now) }).joinToString(" · ")
+        false -> stringResource(R.string.settings_job_failed, job.error.orEmpty())
+        null -> job.error ?: stringResource(R.string.settings_job_not_yet)
     }
 
 @Composable
