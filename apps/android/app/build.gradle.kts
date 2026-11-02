@@ -15,6 +15,9 @@ fun quoted(value: String) = "\"$value\""
 val releaseStore = providers.gradleProperty("maunedas.release.storeFile").orNull
 
 android {
+    // NotificationsTest reads the channel names (08 §7).
+    testOptions.unitTests.isIncludeAndroidResources = true
+
     defaultConfig {
         applicationId = "com.maubautista.maunedas"
         versionCode = 1
@@ -80,8 +83,14 @@ dependencies {
     implementation(libs.coil.compose)
     implementation(libs.coil.network.okhttp)
     implementation(libs.okhttp)
+    // Alerts (08 §7): data messages, the app builds the notification.
+    implementation(platform(libs.firebase.bom))
+    implementation(libs.firebase.messaging)
     testImplementation(libs.junit)
     testImplementation(libs.robolectric)
     testImplementation(libs.androidx.test.core)
     testImplementation(libs.kotlinx.coroutines.test)
+    // PushHandler asks WorkManager for a sync.
+    testImplementation(libs.androidx.work.testing)
+    testImplementation(project(":core:database"))
 }

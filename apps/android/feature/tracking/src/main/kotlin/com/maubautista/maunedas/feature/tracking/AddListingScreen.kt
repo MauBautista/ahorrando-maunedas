@@ -109,7 +109,7 @@ fun AddListingScreen(
                 Text(stringResource(R.string.add_followed, twin), color = MaterialTheme.colorScheme.error)
             } else {
                 Text(stringResource(R.string.add_variant), style = MaterialTheme.typography.titleSmall)
-                VariantPicker(state, actions)
+                VariantSearch(state.variant, state.query, state.results, state.searched, actions.onQuery, actions.onChoose, actions.onChangeVariant)
             }
             Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
                 TextButton(onClick = actions.onOtherLink, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.add_other)) }
@@ -125,37 +125,4 @@ fun AddListingScreen(
 private fun Problem(state: AddListingState) {
     val text = state.problem?.let { stringResource(it) } ?: state.problemText ?: return
     Text(text, color = MaterialTheme.colorScheme.error)
-}
-
-@Composable
-private fun VariantPicker(
-    state: AddListingState,
-    actions: AddListingActions,
-) {
-    val chosen = state.variant
-    if (chosen != null) {
-        Card(Modifier.fillMaxWidth()) {
-            Row(Modifier.fillMaxWidth().padding(Spacing.md), horizontalArrangement = Arrangement.SpaceBetween, verticalAlignment = Alignment.CenterVertically) {
-                Text(chosen.name, modifier = Modifier.weight(1f))
-                TextButton(onClick = actions.onChangeVariant) { Text(stringResource(R.string.add_change)) }
-            }
-        }
-        return
-    }
-    OutlinedTextField(
-        value = state.query,
-        onValueChange = actions.onQuery,
-        label = { Text(stringResource(R.string.add_search)) },
-        singleLine = true,
-        modifier = Modifier.fillMaxWidth(),
-    )
-    if (state.searched && state.results.isEmpty()) {
-        Text(stringResource(R.string.add_no_results), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
-    }
-    state.results.forEach { option ->
-        Text(
-            listOfNotNull(option.name, option.brand).joinToString(" · "),
-            modifier = Modifier.fillMaxWidth().clickable { actions.onChoose(option) }.padding(vertical = Spacing.sm),
-        )
-    }
 }

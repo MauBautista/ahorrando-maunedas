@@ -334,6 +334,25 @@ Cámara o galería → reducir a ≤ 2048 px (JPEG 85) → (opcional E1) quitar 
 - **S-22 Reglas de alerta**: tipo, umbral, alcance, silencio (horas), activa.
 - **S-23 Historial de alertas**: lista de `alert_events` con enlace a la variante.
 
+**Implementación (T-221, decisión T97):**
+- **Datos:** `AlertsRepository` (`core:data`) lee de Room con `TrackingDao`:
+  - mis reglas vivas, con su presentación y la tienda si vigila un solo enlace;
+  - mis alertas, de la más nueva a la más vieja (las 100 más recientes).
+  
+  Al guardar, borra los campos que el tipo no usa (umbral en pesos solo para `below_price`, porcentaje solo para `drop_pct`, alcance solo para `new_low`) y escribe por `LocalWriter`.
+- **S-22:**
+  - **Lista:** "Alertas" es la tercera pestaña de Catálogo; también se abre por presentación desde la ficha y desde el grupo de S-20.
+  - **Editor:** una hoja inferior con tipo, precio objetivo, porcentaje, alcance, "Solo {tienda}" o cualquiera, silencio en horas y activa. La presentación de una regla guardada no cambia.
+  - **Validación:** la misma que la web (precio > 0, porcentaje entre 1 y 100, silencio entera de 0 a 720).
+  - **Permiso:** `POST_NOTIFICATIONS` se pide al guardar la primera regla (API 33+).
+- **S-23:** el título, el cuerpo, hace cuánto saltó y su entrega (enviada, a algunos teléfonos, falló, sin teléfono registrado), con "Ver producto".
+- **FCM:**
+  - **Servicio:** `MaunedasMessagingService` (`app`) solo entrega cada mensaje de datos a `PushHandler`.
+  - **Notificaciones:** `price_alert` va al canal `price_alerts` (importancia alta), con la etiqueta de la presentación para que una alerta nueva reemplace la anterior; `system` va al canal `system`. Después se pide una sincronización.
+  - **Sin permiso:** no se muestra nada y la alerta queda en S-23.
+- **Token:** `onNewToken` y cada arranque con sesión, también tras el login, pasan el token a `DeviceTokenWorker` (`core:sync`), que hace `POST /v1/devices` solo si cambió. Cerrar sesión lo olvida junto con el id del dispositivo.
+- **Enlace:** tocar una alerta abre `MainActivity` con `maunedas://variant/{id}`, que lleva a la ficha del producto. Si la presentación aún no bajó, sincroniza y espera 10 s; si no llega, abre el historial.
+
 **Implementación (T-220, decisión T95):**
 - **Datos:**
   - `TrackingRepository` (`core:data`) lee de Room con `TrackingDao`: listings vivos, su estado, presentación y tienda, en el orden de la web.
@@ -349,6 +368,7 @@ Cámara o galería → reducir a ≤ 2048 px (JPEG 85) → (opcional E1) quitar 
   - Seguimiento es la pestaña "Productos · Seguimiento" dentro de Catálogo.
   - La ficha de producto tiene "Precios en línea" en cada presentación, que abre S-20 solo para ella.
   - "Seguir un enlace" (S-21) es una pantalla.
+- **Ficha de producto (hallazgo, T97):** S-08 pide una cuarta pestaña "Seguimiento". En su lugar, cada presentación tiene "Precios en línea" y "Alertas", que abren S-20 y S-22 para ella. Así `feature:catalog` no depende de `feature:tracking`, y queda igual que la web (T92).
 - **Compartir:** `MainActivity` recibe `ACTION_SEND` de texto. El *intent filter* se llama "Seguir precio" en el menú de compartir. Abre S-21 con el texto y lo resuelve de inmediato; si no hay sesión, después del login.
 
 ## 6. Cálculos compartidos (`core:pricing`)

@@ -67,6 +67,8 @@ data class ProductPageActions(
     val onDelete: () -> Unit = {},
     /** "Precios en línea" of a variant (E2, S-20). */
     val onTrackVariant: (String) -> Unit = {},
+    /** "Alertas" of a variant (E2, S-22). */
+    val onAlertsVariant: (String) -> Unit = {},
 )
 
 @Composable
@@ -76,6 +78,7 @@ fun ProductPageRoute(
     onOpenVariant: (productId: String, variantId: String?) -> Unit,
     onMoved: (productId: String) -> Unit,
     onTrackVariant: (variantId: String) -> Unit = {},
+    onAlertsVariant: (variantId: String) -> Unit = {},
     viewModel: ProductPageViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -112,6 +115,7 @@ fun ProductPageRoute(
                 onMergeVariant = viewModel::startVariantMerge,
                 onDelete = viewModel::askDelete,
                 onTrackVariant = onTrackVariant,
+                onAlertsVariant = onAlertsVariant,
             ),
         history = HistoryTabState(historyVariantId, historyFilter, history, viewModel::pickHistoryVariant, viewModel::onHistoryFilter),
     )
@@ -227,8 +231,13 @@ private fun VariantCard(
             }
             if (variant.latest.isEmpty()) Text(stringResource(R.string.page_no_prices), style = MaterialTheme.typography.bodyMedium)
             variant.latest.forEach { LatestPrice(it, now) }
-            TextButton(onClick = { actions.onTrackVariant(variant.id) }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
-                Text(stringResource(R.string.page_track_variant))
+            Row(horizontalArrangement = Arrangement.spacedBy(Spacing.sm)) {
+                TextButton(onClick = { actions.onTrackVariant(variant.id) }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
+                    Text(stringResource(R.string.page_track_variant))
+                }
+                TextButton(onClick = { actions.onAlertsVariant(variant.id) }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
+                    Text(stringResource(R.string.page_alerts_variant))
+                }
             }
             if (isAdmin) {
                 TextButton(onClick = { actions.onMergeVariant(variant) }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {

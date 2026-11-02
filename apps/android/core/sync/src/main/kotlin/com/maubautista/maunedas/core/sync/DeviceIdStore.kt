@@ -20,10 +20,21 @@ class DeviceIdStore
         fun get(): String =
             prefs.getString(KEY, null) ?: Uuids.v7().also { prefs.edit { putString(KEY, it) } }
 
-        fun clear() = prefs.edit { remove(KEY) }
+        /** The FCM token the Worker last accepted for this device: a new one is sent once (08 §6). */
+        fun registeredToken(): String? = prefs.getString(TOKEN, null)
+
+        fun saveRegisteredToken(token: String) = prefs.edit { putString(TOKEN, token) }
+
+        /** Signing out forgets both: the next session registers again. */
+        fun clear() =
+            prefs.edit {
+                remove(KEY)
+                remove(TOKEN)
+            }
 
         private companion object {
             const val PREFS = "maunedas_sync"
             const val KEY = "device_id"
+            const val TOKEN = "registered_fcm_token"
         }
     }

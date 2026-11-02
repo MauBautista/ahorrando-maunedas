@@ -32,12 +32,15 @@ class MaunedasApplication :
 
     @Inject lateinit var http: dagger.Lazy<OkHttpClient>
 
+    @Inject lateinit var notifier: AlertNotifier
+
     override val workManagerConfiguration: Configuration
         get() = Configuration.Builder().setWorkerFactory(workerFactory).build()
 
     override fun onCreate() {
         super.onCreate()
         ProcessLifecycleOwner.get().lifecycle.addObserver(foregroundSync)
+        notifier.createChannels()
     }
 
     override fun newImageLoader(context: PlatformContext): ImageLoader =

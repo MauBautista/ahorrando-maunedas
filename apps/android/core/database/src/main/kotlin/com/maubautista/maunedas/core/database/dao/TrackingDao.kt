@@ -32,6 +32,34 @@ data class VariantNameRow(
     @ColumnInfo(name = "variant_label") val variantLabel: String,
 )
 
+/** One of my alert rules with what it watches (S-22). */
+data class AlertRuleRow(
+    val id: String,
+    @ColumnInfo(name = "variant_id") val variantId: String,
+    @ColumnInfo(name = "listing_id") val listingId: String?,
+    val type: String,
+    @ColumnInfo(name = "threshold_cents") val thresholdCents: Long?,
+    @ColumnInfo(name = "threshold_pct") val thresholdPct: Double?,
+    val scope: String,
+    @ColumnInfo(name = "cooldown_hours") val cooldownHours: Long,
+    val active: Int,
+    @ColumnInfo(name = "product_id") val productId: String,
+    @ColumnInfo(name = "product_name") val productName: String,
+    @ColumnInfo(name = "variant_label") val variantLabel: String,
+    @ColumnInfo(name = "store_name") val storeName: String?,
+)
+
+/** One of my alerts (S-23), with the variant of its rule when it is still here. */
+data class AlertEventRow(
+    val id: String,
+    @ColumnInfo(name = "fired_at") val firedAt: Long,
+    val title: String,
+    val body: String,
+    @ColumnInfo(name = "delivery_status") val deliveryStatus: String,
+    @ColumnInfo(name = "variant_id") val variantId: String?,
+    @ColumnInfo(name = "product_id") val productId: String?,
+)
+
 @Dao
 interface TrackingDao {
     /** S-20: every live listing, or those of [variantId], by product, variant and store, as the web (T-223). */
@@ -73,4 +101,47 @@ interface TrackingDao {
 
     @Query("SELECT name FROM stores WHERE id = :storeId")
     suspend fun storeName(storeId: String): String?
+
+    /** S-22: my live rules, or those of [variantId], by product and variant as the web (T-223). */
+    @Query(
+        """
+        SELECT r.id, r.variant_id, r.listing_id, r.type, r.threshold_cents, r.threshold_pct, r.scope, r.cooldown_hours,
+               r.active, v.product_id, p.name AS product_name, v.label AS variant_label, s.name AS store_name
+        FROM alert_rules r
+        JOIN variants v ON v.id = r.variant_id
+        JOIN products p ON p.id = v.product_id
+        LEFT JOIN listings l ON l.id = r.listing_id
+        LEFT JOIN stores s ON s.id = l.store_id
+        WHERE r.user_id = :userId AND r.deleted_at IS NULL AND (:variantId IS NULL OR r.variant_id = :variantId)
+        ORDER BY p.name COLLATE NOCASE, v.label COLLATE NOCASE, r.created_at, r.id
+        """,
+    )
+    fun rules(
+        userId: String,
+        variantId: String?,
+    ): Flow<List<AlertRuleRow>>
+
+    @Query("SELECT count(*) FROM alert_rules WHERE user_id = :userId AND deleted_at IS NULL")
+    suspend fun ruleCount(userId: String): Int
+
+    /** S-23: my alerts, newest first. */
+    @Query(
+        """
+        SELECT e.id, e.fired_at, e.title, e.body, e.delivery_status, r.variant_id, v.product_id
+        FROM alert_events e
+        LEFT JOIN alert_rules r ON r.id = e.rule_id
+        LEFT JOIN variants v ON v.id = r.variant_id
+        WHERE e.user_id = :userId
+        ORDER BY e.fired_at DESC, e.id DESC
+        LIMIT :limit
+        """,
+    )
+    fun events(
+        userId: String,
+        limit: Int,
+    ): Flow<List<AlertEventRow>>
+
+    /** The product of a notification's variant (`maunedas://variant/{id}`); null until a pull brings it. */
+    @Query("SELECT product_id FROM variants WHERE id = :variantId")
+    fun productOfVariant(variantId: String): Flow<String?>
 }

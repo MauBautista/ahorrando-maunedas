@@ -545,8 +545,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Probado (2026-11-01):**
   - En el Samsung, compartir un producto desde la app de Amazon con "Seguir precio" creó el listing: el enlace corto `a.co` se resolvió a la página del producto.
   - El agente lo revisó en menos de un minuto y el precio coincidió con la app de Amazon.
-### [ ] T-221 · Android: reglas, historial de alertas, FCM y deep link (S-22, S-23)
+### [~] T-221 · Android: reglas, historial de alertas, FCM y deep link (S-22, S-23)
 - **Docs:** 08 §7 · **Depende de:** T-213, T-220
+- **Avance (2026-11-02, T97):**
+  - **Pantallas:** S-22 (pestaña "Alertas" en Catálogo, por presentación desde la ficha y desde S-20; editor en hoja inferior) y S-23.
+  - **FCM:** canales `price_alerts` y `system`, token por `DeviceTokenWorker`, enlace `maunedas://variant/{id}` a la ficha y permiso al guardar la primera regla.
+  - **Pruebas:** 4 del repositorio, 3 del Worker del token, 7 de la feature y 4 de la app (notificaciones y enlace).
+- **Falta (Mauricio):** la prueba en el teléfono: crear una alerta, recibir la notificación cuando el agente vea el precio y abrirla.
 ### [ ] T-222 · Android: serie web escalonada y estado del agente
 - **Nota (T-115):** hoy la serie web se dibuja como puntos, igual que las otras; esta tarea la convierte en escalones hasta `web_confirmed_until`.
 - **Depende de:** T-115, T-211
