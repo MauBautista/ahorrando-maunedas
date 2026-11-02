@@ -87,6 +87,7 @@
     <string name="page_price_at">%1$s · %2$s</string>
     <string name="page_merge_variant">Fusionar con otra presentación</string>
     <string name="page_track_variant">Precios en línea</string>
+    <string name="page_alerts_variant">Alertas</string>
     <string name="page_compare_empty">Sin precios en los últimos 90 días.</string>
     <string name="page_compare_cheapest">Más barato</string>
     <string name="page_compare_last">Último</string>

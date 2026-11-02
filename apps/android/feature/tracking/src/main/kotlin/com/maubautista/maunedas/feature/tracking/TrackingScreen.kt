@@ -54,6 +54,7 @@ data class TrackingActions(
     val onCheckNow: (TrackedListing) -> Unit = {},
     val onToggle: (TrackedListing) -> Unit = {},
     val onStop: (TrackedListing) -> Unit = {},
+    val onOpenAlerts: (variantId: String) -> Unit = {},
 )
 
 /** S-20 inside Catálogo (05 §4), or for one variant from its product page ([onBack] then shows a back arrow). */
@@ -62,6 +63,7 @@ fun TrackingRoute(
     onOpenProduct: (productId: String) -> Unit,
     onAdd: (variantId: String?) -> Unit,
     onBack: (() -> Unit)? = null,
+    onOpenAlerts: (variantId: String) -> Unit = {},
     viewModel: TrackingViewModel = hiltViewModel(),
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
@@ -84,6 +86,7 @@ fun TrackingRoute(
                     onCheckNow = viewModel::checkNow,
                     onToggle = viewModel::toggle,
                     onStop = viewModel::askStop,
+                    onOpenAlerts = onOpenAlerts,
                 ),
             modifier = Modifier.weight(1f),
         )
@@ -128,14 +131,18 @@ fun TrackingScreen(
         groups.forEach { group ->
             val first = group.first()
             item(key = "variant:${first.variantId}") {
-                Text(
-                    "${first.productName} · ${first.variantLabel}",
-                    style = MaterialTheme.typography.titleMedium,
-                    modifier =
-                        Modifier.padding(horizontal = Spacing.lg)
-                            .clickable { actions.onOpenProduct(first.productId) }
-                            .semantics { heading() },
-                )
+                Row(
+                    Modifier.fillMaxWidth().padding(horizontal = Spacing.lg),
+                    horizontalArrangement = Arrangement.SpaceBetween,
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        "${first.productName} · ${first.variantLabel}",
+                        style = MaterialTheme.typography.titleMedium,
+                        modifier = Modifier.weight(1f).clickable { actions.onOpenProduct(first.productId) }.semantics { heading() },
+                    )
+                    TextButton(onClick = { actions.onOpenAlerts(first.variantId) }) { Text(stringResource(R.string.alerts_title_short)) }
+                }
             }
             items(group, key = { it.id }) { ListingCard(it, now, actions) }
         }

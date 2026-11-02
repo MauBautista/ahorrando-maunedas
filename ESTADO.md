@@ -53,6 +53,12 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-221 (2026-11-02):** la app de Android ya tiene las alertas de precio:
+  - **Reglas:** crear, editar, pausar y quitar (baja a un precio, baja un porcentaje, precio más bajo, promoción, vuelve a haber).
+  - **Historial:** los avisos que han saltado.
+  - **Notificaciones:** cuando el servidor dispara una alerta, el teléfono la muestra y al tocarla abre el producto.
+  
+  El permiso de notificaciones se pide al crear la primera alerta. Se probó en el teléfono: una alerta de Amazon llegó como notificación y al tocarla abrió el producto.
 - **T-220 (2026-11-01):** la app de Android ya tiene el seguimiento de precios en línea, dentro de Catálogo y desde cada presentación de la ficha:
   - cada enlace con su último precio y estado, y las acciones "Revisar ahora", pausar y dejar de seguir;
   - "Seguir un enlace", que también aparece al compartir un producto desde la app de Amazon u otra tienda ("Seguir precio" en el menú de compartir).
@@ -286,6 +292,7 @@
 | T94 | **Separación de 2 minutos con Sam's** (decisión de Mauricio, 2026-11-01): `MIN_SPACING_S.sams_mx` = 120 en el Worker y en el adapter. | Al buscar el club de Forjadores, Sam's bloqueó la IP de la casa tras 6 peticiones en unos 4 minutos separadas 30 s. Con revisiones cada 8 h no cambia nada en el día a día, y una tanda (la primera corrida, varios "Revisar ahora") ya no se vuelve una ráfaga. |
 | T95 | **Seguimiento en Android.**<br>• "Revisar ahora" va por un Worker (`CheckNowWorker`), uno por listing, que primero empuja el listing si sigue en el outbox.<br>• Resolver el enlace es la única llamada directa (05 §3).<br>• Seguimiento es una pestaña dentro de Catálogo, armada en `app` para no acoplar features.<br>• La app recibe `ACTION_SEND` de texto como "Seguir precio". | La regla 12 solo permite como llamadas directas las de §3. Un Worker además reintenta sin red. Las features no dependen entre sí. Compartir desde la app de la tienda es como la familia encuentra los productos. |
 | T96 | **Muestras de páginas con precio de lista.** El agente guarda en `/data/muestras/<adapter>/` la página de un resultado con precio de lista: una por URL y las primeras 5 por tienda. | Las ofertas duran poco: la de Amazon del 2026-11-01 terminó antes de guardarla. Así el fixture `con precio de lista` sale de lo que el agente ya descargó, sin peticiones extra. |
+| T97 | **Alertas en Android.**<br>• FCM solo con mensajes de datos: la app arma la notificación en `price_alerts` o `system`, con la etiqueta de la presentación.<br>• El token va por `DeviceTokenWorker` y solo se reenvía si cambia.<br>• Tocar una alerta abre `maunedas://variant/{id}` y de ahí la ficha; si la presentación no ha bajado, se espera una sincronización.<br>• Hallazgo: la ficha no tiene pestaña "Seguimiento" (S-08); cada presentación lleva "Precios en línea" y "Alertas". | La notificación se ve igual con la app abierta o cerrada. La red solo desde Workers (regla 12). Las features no dependen entre sí, y así queda igual que en la web. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -429,3 +436,5 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-01** — T-207: Sam's bloqueó la IP de la casa durante la búsqueda del club; separación de 2 minutos con Sam's (T94).
 - **2026-11-01** — T-220 (avance): seguimiento en Android (S-20, S-21) con "Revisar ahora" por Worker y la opción "Seguir precio" al compartir (T95); falta la prueba en el teléfono.
 - **2026-11-02** — T-220 terminada (probada en el teléfono desde la app de Amazon); el agente guarda muestras de páginas con precio de lista (T96).
+- **2026-11-02** — T-221 (avance): reglas e historial de alertas en Android, FCM con canales, registro del token por Worker y enlace a la ficha (T97); falta la prueba en el teléfono.
+- **2026-11-02** — T-221 terminada: alerta de prueba en dev entregada por FCM al Samsung y abierta en la ficha del producto.

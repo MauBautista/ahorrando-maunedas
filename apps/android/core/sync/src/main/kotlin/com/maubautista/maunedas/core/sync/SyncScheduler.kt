@@ -93,6 +93,19 @@ class SyncScheduler
             )
         }
 
+        /** A new FCM token (08 §6): sent by a worker, once, with network and backoff; the newest one wins. */
+        fun registerToken(token: String) {
+            work.enqueueUniqueWork(
+                DEVICE_TOKEN,
+                ExistingWorkPolicy.REPLACE,
+                OneTimeWorkRequestBuilder<DeviceTokenWorker>()
+                    .setInputData(workDataOf(DeviceTokenWorker.TOKEN to token))
+                    .setConstraints(connected)
+                    .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                    .build(),
+            )
+        }
+
         /** The listings whose "Revisar ahora" has not been sent yet. */
         fun pendingChecks(): Flow<Set<String>> =
             work.getWorkInfosByTagFlow(CheckNowWorker.TAG).map { infos ->
@@ -107,11 +120,13 @@ class SyncScheduler
             work.cancelUniqueWork(PERIODIC)
             work.cancelUniqueWork(UPLOAD)
             work.cancelAllWorkByTag(CheckNowWorker.TAG)
+            work.cancelUniqueWork(DEVICE_TOKEN)
         }
 
         companion object {
             const val NOW = "sync-now"
             const val PERIODIC = "sync-periodic"
             const val UPLOAD = "upload"
+            const val DEVICE_TOKEN = "device-token"
         }
     }

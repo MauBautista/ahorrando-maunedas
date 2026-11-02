@@ -7,6 +7,8 @@ android {
 }
 
 dependencies {
+    // The notification permission asked with the first rule (05 §8).
+    implementation(libs.androidx.activity.compose)
     testImplementation(platform(libs.androidx.compose.bom))
     testImplementation(libs.androidx.compose.ui.test.junit4)
     testImplementation(libs.robolectric)
