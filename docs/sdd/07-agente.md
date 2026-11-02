@@ -555,6 +555,13 @@ Resultado de cada trabajo en `kv` y en `info` del siguiente `/work` (visible en 
   - Sin credenciales se reporta "sin credenciales de R2"; si rclone falla, se reintenta a la hora.
 - **Estado:** queda en `kv` `backup_status` y viaja en `info.backup` de `/work`. Un fallo también queda en `last_error`.
 
+**Restauración (T-231, RF-BAK-04, decisión T99):** el procedimiento probado y su resultado están en `ESTADO.md`, sección "Restauración".
+- **`python -m maunedas_agent.restore <copia>`** convierte el espejo (`mirror.sqlite`) o un volcado (`.sql.gz`) en el SQL que D1 acepta: solo filas, padres primero, sin `BEGIN`/`COMMIT` (D1 los rechaza) y con `PRAGMA defer_foreign_keys` para revisar las llaves al final. Con `--counts` da las filas esperadas por tabla.
+- **El esquema sale de las migraciones de D1**, no de la copia. `sync_meta` no se copia: `version` queda en el máximo de las filas como un número, porque D1 rechaza un `SELECT` compuesto sobre todas las tablas.
+- **Después de restaurar:**
+  - cada teléfono cierra sesión y vuelve a entrar, porque sus cursores pueden ir por delante de la base restaurada;
+  - el espejo se rehace desde cero, por la misma razón.
+
 ## 11. Imágenes (E3, T-300)
 
 ```python
