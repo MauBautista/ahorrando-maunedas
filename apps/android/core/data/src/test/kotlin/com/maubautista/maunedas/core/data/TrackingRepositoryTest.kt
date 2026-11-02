@@ -62,7 +62,7 @@ class TrackingRepositoryTest {
             db.stores().upsertAll(
                 listOf(
                     StoreEntity(id = "s-amazon", name = "Amazon", kind = "online", adapter = "amazon_mx", defaultCheckIntervalMin = 480, createdAt = 1, updatedAt = 1),
-                    StoreEntity(id = "s-costco", name = "Costco", kind = "both", adapter = "costco_mx", defaultCheckIntervalMin = 480, createdAt = 1, updatedAt = 1),
+                    StoreEntity(id = "s-costco", name = "Costco", kind = "both", adapter = "costco_mx", defaultCheckIntervalMin = 720, createdAt = 1, updatedAt = 1),
                 ),
             )
             db.products().upsertAll(
@@ -146,7 +146,8 @@ class TrackingRepositoryTest {
             assertEquals("https://www.amazon.com.mx/dp/a?ref=x", a.url)
             // A list price below the price is no struck price.
             val b = byId.getValue("b")
-            assertEquals(listOf(ListingHealth.OUT_OF_STOCK, null, 240L, "Costco"), listOf(b.health, b.listPriceCents, b.intervalMin, b.storeName))
+            assertEquals(listOf(ListingHealth.OUT_OF_STOCK, null, 240L, 720L, "Costco"), listOf(b.health, b.listPriceCents, b.intervalMin, b.storeIntervalMin, b.storeName))
+            assertEquals(listOf(null, 480L), listOf(a.intervalMin, a.storeIntervalMin))
             val c = byId.getValue("c")
             assertEquals(listOf(ListingHealth.PAUSED, null, false), listOf(c.health, c.lastCheckedAt, c.active))
             val t = byId.getValue("t")
@@ -185,12 +186,19 @@ class TrackingRepositoryTest {
             assertEquals(0, db.listings().byId(id)!!.active)
             tracking.setActive(id, true)
             assertEquals(1, db.listings().byId(id)!!.active)
+            // RF-TRK-02: its own interval, then the store's again; each change goes up by sync.
+            tracking.setInterval(id, 240)
+            assertEquals(listOf(240L, now), db.listings().byId(id)!!.let { listOf(it.checkIntervalMin, it.updatedAt) })
+            assertEquals(listOf("listings/$id"), outbox())
+            tracking.setInterval(id, null)
+            assertNull(db.listings().byId(id)!!.checkIntervalMin)
             now += 1_000
             tracking.stopFollowing(id)
             assertEquals(now, db.listings().byId(id)!!.deletedAt)
             assertTrue(tracking.listings(null).first().isEmpty())
             // Nothing happens to a listing that is not here.
             tracking.setActive("nope", true)
+            tracking.setInterval("nope", 120)
             tracking.stopFollowing("nope")
             assertNull(db.listings().byId("nope"))
         }

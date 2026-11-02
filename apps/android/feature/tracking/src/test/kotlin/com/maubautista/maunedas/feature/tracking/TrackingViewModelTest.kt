@@ -46,8 +46,12 @@ import org.robolectric.RobolectricTestRunner
 @RunWith(RobolectricTestRunner::class)
 class TrackingViewModelTest {
     private val context = ApplicationProvider.getApplicationContext<Context>()
-    private val db = Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries().build()
-    private val clock = Clock { 1_000_000L }
+    // Direct executors: a write launched by the view model ends inside the call, so "nothing written" can be checked.
+    private val db =
+        Room.inMemoryDatabaseBuilder(context, AppDatabase::class.java).allowMainThreadQueries()
+            .setQueryExecutor(Runnable::run).setTransactionExecutor(Runnable::run).build()
+    private var nowMs = 1_000_000L
+    private val clock = Clock { nowMs }
     private lateinit var tracking: TrackingRepository
 
     @Before
@@ -98,5 +102,36 @@ class TrackingViewModelTest {
             assertNull(vm.confirmStop.value)
             assertEquals(emptyList<Any>(), vm.state.first { it.listings.isEmpty() }.listings)
             assertEquals(1_000_000L, db.listings().byId("l1")!!.deletedAt)
+        }
+
+    @Test
+    fun choosesAnIntervalAndGoesBackToTheStores() =
+        runTest {
+            val vm = TrackingViewModel(SavedStateHandle(mapOf("variantId" to "v1")), tracking, clock, AgentStatusRepository(db))
+            val listing = vm.state.first { !it.loading }.listings.single()
+            assertEquals(listOf(null, 480L), listOf(listing.intervalMin, listing.storeIntervalMin))
+            vm.askInterval(listing)
+            assertEquals("l1", vm.intervalFor.value?.id)
+            vm.dismissInterval()
+            assertNull(vm.intervalFor.value)
+            // Without asking first, nothing is written.
+            vm.setInterval(120)
+            assertEquals(null, db.listings().byId("l1")!!.checkIntervalMin)
+
+            vm.askInterval(listing)
+            vm.setInterval(240)
+            assertNull(vm.intervalFor.value)
+            val chosen = vm.state.first { it.listings.single().intervalMin == 240L }.listings.single()
+            assertEquals(240L, db.listings().byId("l1")!!.checkIntervalMin)
+            // The current one again writes nothing; the store's is null.
+            val written = db.listings().byId("l1")!!.updatedAt
+            nowMs += 1_000
+            vm.askInterval(chosen)
+            vm.setInterval(240)
+            assertEquals(written, db.listings().byId("l1")!!.updatedAt)
+            vm.askInterval(chosen)
+            vm.setInterval(null)
+            assertEquals(null, vm.state.first { it.listings.single().intervalMin == null }.listings.single().intervalMin)
+            assertEquals(null, db.listings().byId("l1")!!.checkIntervalMin)
         }
 }

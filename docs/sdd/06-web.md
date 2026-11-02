@@ -77,6 +77,7 @@ Las pantallas replican el contenido y las reglas de Android (`05-android.md` §5
   - **Contenido:** los listings agrupados por presentación, con la tienda, el último precio (el de lista tachado solo si es mayor), la promoción y el estado (al día, agotado, bloqueado, con error, ya no existe, por revisar o en pausa).
   - **Revisión:** cuándo se revisó por última vez ("hace 2 h"), el intervalo propio y si se pidió revisar ahora.
   - **Acciones:** "Revisar ahora" (`POST …/check-now`), pausar o reanudar, abrir en la tienda y dejar de seguir (con confirmación). Las tres que escriben van por sync.
+  - **"Revisar cada" (T-224, RF-TRK-02, decisión T100):** una lista con "De la tienda (8 h)", 2 h, 4 h, 12 h y 24 h, que escribe `check_interval_min` por sync (`null` para la de la tienda). El intervalo de la tienda llega en `store_interval_min`. Un intervalo propio fuera de esas opciones aparece al final, para que no parezca otro.
   - **"Seguir un enlace":** se pega el enlace o el texto compartido, `POST /v1/listings/resolve` lo resuelve, se elige la presentación y el listing se crea por sync.
   - **Rechazos:** un enlace que ya se sigue se rechaza con el nombre de su presentación; los rechazos del Worker se explican según `details.reason`.
 - **W-21 Alertas:**

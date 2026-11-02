@@ -33,6 +33,8 @@ data class TrackedListing(
     val storeName: String,
     val url: String,
     val intervalMin: Long?,
+    /** The store's `default_check_interval_min`, which a listing without its own interval follows. */
+    val storeIntervalMin: Long,
     val active: Boolean,
     val health: ListingHealth,
     val lastCheckedAt: Long?,
@@ -158,6 +160,15 @@ class TrackingRepository
             writer.write(listingsTable, listOf(row.copy(active = if (active) 1 else 0)))
         }
 
+        /** RF-TRK-02: null follows the store's interval; the agent reschedules from the last check (T-224). */
+        suspend fun setInterval(
+            listingId: String,
+            minutes: Long?,
+        ) {
+            val row = db.listings().byId(listingId) ?: return
+            writer.write(listingsTable, listOf(row.copy(checkIntervalMin = minutes)))
+        }
+
         /** A tombstone: the prices already kept stay (history). */
         suspend fun stopFollowing(listingId: String) {
             val row = db.listings().byId(listingId) ?: return
@@ -202,6 +213,7 @@ private fun TrackedListingRow.toListing(pendingCheck: Boolean): TrackedListing {
         storeName = storeName,
         url = url,
         intervalMin = checkIntervalMin,
+        storeIntervalMin = storeIntervalMin,
         active = active == 1,
         health = TrackingRepository.health(active == 1, lastStatus, lastInStock),
         lastCheckedAt = lastCheckedAt,

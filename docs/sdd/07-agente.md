@@ -339,6 +339,9 @@ def next_check(result_status: str, backoff_level: int, interval_min: int, now: i
   - El intervalo es el del listing, si no el de la tienda, si no 480 min.
   - Se revisa la `canonical_url` cuando existe.
   - Hasta 10 vencidos por vuelta (`SCRAPE_TICK_S`).
+  - **Cambio de intervalo (T-224, decisión T100):** si una respuesta de `/work` cambia el intervalo efectivo de un listing, el agente reprograma su siguiente revisión. Puede venir del intervalo del listing o del de su tienda.
+    - **Cálculo:** la última revisión más el nuevo intervalo, con el mismo ±10 %.
+    - **No se reprograman:** un listing en espera por errores, uno ya vencido (un "Revisar ahora" entre ellos) y uno que nunca se ha revisado.
 - **Separación:**
   - Se toma el dominio justo antes de la petición, ya dentro del cupo HTTP o de navegador; esperar cupo nunca acorta la separación.
   - La separación es la mayor entre la del adapter y la que manda el Worker (`config.min_spacing_s`, o `default`).

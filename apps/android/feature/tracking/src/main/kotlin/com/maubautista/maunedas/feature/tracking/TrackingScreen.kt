@@ -12,6 +12,8 @@ import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.selection.selectable
+import androidx.compose.foundation.selection.selectableGroup
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
@@ -19,6 +21,7 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.RadioButton
 import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
@@ -33,6 +36,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalUriHandler
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
@@ -55,6 +59,7 @@ data class TrackingActions(
     val onToggle: (TrackedListing) -> Unit = {},
     val onStop: (TrackedListing) -> Unit = {},
     val onOpenAlerts: (variantId: String) -> Unit = {},
+    val onInterval: (TrackedListing) -> Unit = {},
 )
 
 /** S-20 inside Catálogo (05 §4), or for one variant from its product page ([onBack] then shows a back arrow). */
@@ -68,6 +73,7 @@ fun TrackingRoute(
 ) {
     val state by viewModel.state.collectAsStateWithLifecycle()
     val confirm by viewModel.confirmStop.collectAsStateWithLifecycle()
+    val intervalFor by viewModel.intervalFor.collectAsStateWithLifecycle()
     val snackbar = remember { SnackbarHostState() }
     // Prepared here, so the text follows the configuration (the store's name goes in when it arrives).
     val asked = stringResource(R.string.tracking_check_asked, "%s")
@@ -87,11 +93,13 @@ fun TrackingRoute(
                     onToggle = viewModel::toggle,
                     onStop = viewModel::askStop,
                     onOpenAlerts = onOpenAlerts,
+                    onInterval = viewModel::askInterval,
                 ),
             modifier = Modifier.weight(1f),
         )
         SnackbarHost(snackbar)
     }
+    intervalFor?.let { IntervalDialog(it, onPick = viewModel::setInterval, onDismiss = viewModel::dismissInterval) }
     confirm?.let { listing ->
         AlertDialog(
             onDismissRequest = viewModel::dismissStop,
@@ -237,6 +245,9 @@ private fun ListingCard(
                 TextButton(onClick = { actions.onToggle(listing) }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
                     Text(stringResource(if (listing.active) R.string.tracking_pause else R.string.tracking_resume))
                 }
+                TextButton(onClick = { actions.onInterval(listing) }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
+                    Text(stringResource(R.string.tracking_interval))
+                }
                 TextButton(onClick = { uri.openUri(listing.url) }, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
                     Text(stringResource(R.string.tracking_open))
                 }
@@ -247,3 +258,42 @@ private fun ListingCard(
         }
     }
 }
+
+/** RF-TRK-02 (T-224, decisión T100): the store's interval, then 2 h, 4 h, 12 h and a day. */
+internal val INTERVAL_OPTIONS: List<Long?> = listOf(null, 120L, 240L, 720L, 1440L)
+
+/** How often the home agent checks [listing]; picking an option saves it. */
+@Composable
+fun IntervalDialog(
+    listing: TrackedListing,
+    onPick: (minutes: Long?) -> Unit,
+    onDismiss: () -> Unit,
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = { Text(stringResource(R.string.tracking_interval_title)) },
+        text = {
+            Column(Modifier.selectableGroup()) {
+                INTERVAL_OPTIONS.forEach { minutes ->
+                    val chosen = listing.intervalMin == minutes
+                    val label = minutes?.let { span(it) } ?: stringResource(R.string.tracking_interval_store, span(listing.storeIntervalMin))
+                    Row(
+                        Modifier
+                            .fillMaxWidth()
+                            .heightIn(min = Spacing.touchTarget)
+                            .selectable(selected = chosen, role = Role.RadioButton, onClick = { onPick(minutes) }),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        RadioButton(selected = chosen, onClick = null)
+                        Text(label, style = MaterialTheme.typography.bodyLarge, modifier = Modifier.padding(start = Spacing.md))
+                    }
+                }
+            }
+        },
+        confirmButton = { TextButton(onClick = onDismiss) { Text(stringResource(R.string.tracking_cancel)) } },
+    )
+}
+
+@Composable
+private fun span(minutes: Long): String =
+    if (minutes % 60 == 0L) stringResource(R.string.tracking_hours, (minutes / 60).toInt()) else stringResource(R.string.tracking_minutes, minutes.toInt())

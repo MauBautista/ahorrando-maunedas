@@ -331,6 +331,7 @@ Cámara o galería → reducir a ≤ 2048 px (JPEG 85) → (opcional E1) quitar 
 
 ### E2 · S-20 a S-23
 - **S-20 Seguimiento**: listings de la variante con tienda, último precio, última revisión, estado, intervalo; "Revisar ahora".
+  - **"Cada cuánto" (T-224, RF-TRK-02, decisión T100):** abre un diálogo de elección simple con "De la tienda (8 h)" (el `default_check_interval_min` de su tienda), 2 h, 4 h, 12 h y 24 h. Tocar una opción la guarda en `check_interval_min` por sync (`null` para la de la tienda) y cierra; elegir la actual no escribe nada.
 - **S-21 Agregar URL**: campo URL (o llega por *Compartir* desde el navegador o la app de la tienda: `intent-filter` `ACTION_SEND` `text/plain`) → `POST /v1/listings/resolve` → seleccionar variante → guardar listing por sync.
 - **S-22 Reglas de alerta**: tipo, umbral, alcance, silencio (horas), activa.
 - **S-23 Historial de alertas**: lista de `alert_events` con enlace a la variante.

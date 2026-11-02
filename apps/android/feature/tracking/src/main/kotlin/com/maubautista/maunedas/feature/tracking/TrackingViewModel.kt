@@ -54,6 +54,11 @@ class TrackingViewModel
         /** The listing whose "Dejar de seguir" waits for confirmation. */
         val confirmStop: StateFlow<TrackedListing?> = stopping.asStateFlow()
 
+        private val choosing = MutableStateFlow<TrackedListing?>(null)
+
+        /** The listing whose interval is being chosen (RF-TRK-02). */
+        val intervalFor: StateFlow<TrackedListing?> = choosing.asStateFlow()
+
         private val notices = Channel<String>(Channel.BUFFERED)
 
         /** The store whose check was asked, for "El servidor casero revisará … en unos minutos". */
@@ -68,6 +73,17 @@ class TrackingViewModel
 
         fun toggle(listing: TrackedListing) {
             viewModelScope.launch { tracking.setActive(listing.id, !listing.active) }
+        }
+
+        fun askInterval(listing: TrackedListing) = choosing.tryEmit(listing)
+
+        fun dismissInterval() = choosing.tryEmit(null)
+
+        /** Null goes back to the store's interval; picking the current one writes nothing. */
+        fun setInterval(minutes: Long?) {
+            val listing = choosing.value ?: return
+            choosing.value = null
+            if (minutes != listing.intervalMin) viewModelScope.launch { tracking.setInterval(listing.id, minutes) }
         }
 
         fun askStop(listing: TrackedListing) = stopping.tryEmit(listing)

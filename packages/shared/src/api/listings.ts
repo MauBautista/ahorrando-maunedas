@@ -53,6 +53,8 @@ export interface ListingWithState {
   brand: string | null;
   variant_label: string;
   store_name: string;
+  /** The store's `default_check_interval_min`, which a listing without its own interval follows (T-224). */
+  store_interval_min: number;
   state: ListingStateRow | null;
 }
 

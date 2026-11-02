@@ -1,9 +1,10 @@
 """The agent's local SQLite (07 §4): listings to check, their schedule, the outbox and small state."""
 
 import json
+import random
 import sqlite3
 import time
-from collections.abc import Iterator
+from collections.abc import Callable, Iterator
 from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
@@ -48,6 +49,13 @@ POLL_TICK_KEY = "poll_tick_at"
 WORK_OK_KEY = "work_ok_at"
 # stores.default_check_interval_min when the Worker has not sent the store yet (docs/esquema-d1.sql).
 DEFAULT_INTERVAL_MIN = 480
+
+# Each listing's own interval, else its store's, else the default; and when it was last checked.
+_EFFECTIVE_INTERVALS = """
+    SELECT s.listing_id, COALESCE(l.interval_min, d.interval_min, ?) AS interval_min, s.last_checked_at
+    FROM schedule s JOIN listing_cfg l ON l.id = s.listing_id
+    LEFT JOIN store_defaults d ON d.store_id = l.store_id
+"""
 
 
 @dataclass(frozen=True)
@@ -113,10 +121,20 @@ class Store:
 
     # What /work answers (07 §5.1)
 
-    def apply_work(self, work: dict[str, Any]) -> None:
-        """Listings, removals and store defaults of one /work answer, and its cursor, in one transaction."""
+    def apply_work(
+        self,
+        work: dict[str, Any],
+        now: int | None = None,
+        jitter: Callable[[float, float], float] = random.uniform,
+    ) -> None:
+        """Listings, removals and store defaults of one /work answer, and its cursor, in one transaction.
+
+        A listing whose interval changed is rescheduled from its last check (T-224).
+        """
         listings = work["listings"]
+        at = now_ms() if now is None else now
         with self.tx():
+            before = self._effective_intervals()
             for item in listings["upserts"]:
                 self.db.execute(
                     """INSERT INTO listing_cfg (id, adapter, url, canonical_url, external_id, store_id,
@@ -140,6 +158,21 @@ class Store:
                 )
             self.put(CURSOR_KEY, json.dumps(listings["cursor"]))
             self.put(MIN_SPACING_KEY, json.dumps(work["config"]["min_spacing_s"]))
+            for listing_id, (interval_min, last_checked_at) in self._effective_intervals().items():
+                unchanged = before.get(listing_id, (interval_min, None))[0] == interval_min
+                if unchanged or last_checked_at is None:
+                    continue
+                # The interval ±10 % after a good check, as loops/scrape.next_check. A listing waiting on its
+                # backoff keeps it, and one already due (a "Revisar ahora" among them) stays due.
+                self.db.execute(
+                    """UPDATE schedule SET next_check_at = ?
+                       WHERE listing_id = ? AND backoff_level = 0 AND next_check_at > ?""",
+                    (last_checked_at + int(interval_min * 60_000 * jitter(0.9, 1.1)), listing_id, at),
+                )
+
+    def _effective_intervals(self) -> dict[str, tuple[int, int | None]]:
+        rows = self.db.execute(_EFFECTIVE_INTERVALS, (DEFAULT_INTERVAL_MIN,)).fetchall()
+        return {r["listing_id"]: (r["interval_min"], r["last_checked_at"]) for r in rows}
 
     def request_checks(self, ids: list[str], at: int) -> list[str]:
         """Schedules "Revisar ahora" (07 §7) once per request; returns the listings scheduled now."""
