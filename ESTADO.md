@@ -53,12 +53,12 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
-- **T-221 (2026-11-02, avance):** la app de Android ya tiene las alertas de precio:
+- **T-221 (2026-11-02):** la app de Android ya tiene las alertas de precio:
   - **Reglas:** crear, editar, pausar y quitar (baja a un precio, baja un porcentaje, precio más bajo, promoción, vuelve a haber).
   - **Historial:** los avisos que han saltado.
   - **Notificaciones:** cuando el servidor dispara una alerta, el teléfono la muestra y al tocarla abre el producto.
   
-  El permiso de notificaciones se pide al crear la primera alerta. Falta probarlo en el teléfono.
+  El permiso de notificaciones se pide al crear la primera alerta. Se probó en el teléfono: una alerta de Amazon llegó como notificación y al tocarla abrió el producto.
 - **T-220 (2026-11-01):** la app de Android ya tiene el seguimiento de precios en línea, dentro de Catálogo y desde cada presentación de la ficha:
   - cada enlace con su último precio y estado, y las acciones "Revisar ahora", pausar y dejar de seguir;
   - "Seguir un enlace", que también aparece al compartir un producto desde la app de Amazon u otra tienda ("Seguir precio" en el menú de compartir).
@@ -437,3 +437,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-01** — T-220 (avance): seguimiento en Android (S-20, S-21) con "Revisar ahora" por Worker y la opción "Seguir precio" al compartir (T95); falta la prueba en el teléfono.
 - **2026-11-02** — T-220 terminada (probada en el teléfono desde la app de Amazon); el agente guarda muestras de páginas con precio de lista (T96).
 - **2026-11-02** — T-221 (avance): reglas e historial de alertas en Android, FCM con canales, registro del token por Worker y enlace a la ficha (T97); falta la prueba en el teléfono.
+- **2026-11-02** — T-221 terminada: alerta de prueba en dev entregada por FCM al Samsung y abierta en la ficha del producto.
