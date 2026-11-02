@@ -6,7 +6,7 @@ import pytest
 import respx
 
 from maunedas_agent.adapters.base import FetchContext, ScrapeResult
-from maunedas_agent.adapters.common import FAILURES_KEPT, NO_PRICE
+from maunedas_agent.adapters.common import FAILURES_KEPT, NO_PRICE, SAMPLES_KEPT
 from maunedas_agent.adapters.registry import ADAPTERS
 from maunedas_agent.config import Settings
 from maunedas_agent.fetch.http import HttpFetcher, Page
@@ -241,6 +241,56 @@ def test_costco_out_of_stock() -> None:
 
 
 # Fetch path
+
+
+def _list_price_page() -> str:
+    return html("amazon_mx/ok.html").replace(
+        '<span class="apex-basisprice-feature">',
+        '<span class="apex-basisprice-feature"><span class="a-price a-text-price apex-basisprice-value" '
+        'data-a-strike="true"><span class="a-offscreen">$149.00</span></span>',
+    )
+
+
+@respx.mock
+async def test_fetch_keeps_the_first_pages_with_a_list_price(settings: Settings, store: Store) -> None:
+    http = HttpFetcher(settings, store)
+    ctx = FetchContext(settings=settings, http=http)
+    folder = settings.data_dir / "muestras" / "amazon_mx"
+    respx.get("https://www.amazon.com.mx/dp/B0PLAIN").respond(200, html=html("amazon_mx/ok.html"))
+    await AMAZON.fetch("https://www.amazon.com.mx/dp/B0PLAIN", ctx)
+    assert not folder.exists()
+    for i in range(7):
+        respx.get(f"https://www.amazon.com.mx/dp/B0LIST{i}").respond(200, html=_list_price_page())
+    # The same page twice is one sample.
+    r = await AMAZON.fetch("https://www.amazon.com.mx/dp/B0LIST0", ctx)
+    assert r.list_price_cents == 14900
+    await AMAZON.fetch("https://www.amazon.com.mx/dp/B0LIST0", ctx)
+    assert len(list(folder.glob("*.html"))) == 1
+    assert "$149.00" in next(folder.glob("*.html")).read_text()
+    for i in range(1, 7):
+        await AMAZON.fetch(f"https://www.amazon.com.mx/dp/B0LIST{i}", ctx)
+    assert len(list(folder.glob("*.html"))) == SAMPLES_KEPT
+    await http.aclose()
+
+
+async def test_a_list_price_found_by_the_browser_is_kept_too(settings: Settings, store: Store) -> None:
+    class Pages:
+        def __init__(self, body: str) -> None:
+            self.body = body
+
+        async def get(self, url: str, wait_for: str | None = None) -> Page:
+            return Page(200, url, self.body, 1)
+
+    async def wait_turn(_adapter) -> None:
+        pass
+
+    url = "https://www.amazon.com.mx/dp/B0BROWSE"
+    ctx = FetchContext(
+        settings, http=Pages("<html></html>"), browser=Pages(_list_price_page()), wait_turn=wait_turn
+    )  # type: ignore[arg-type]
+    r = await AMAZON.fetch(url, ctx)
+    assert (r.extra["method"], r.list_price_cents) == ("browser_selectors", 14900)
+    assert len(list((settings.data_dir / "muestras" / "amazon_mx").glob("*.html"))) == 1
 
 
 @respx.mock

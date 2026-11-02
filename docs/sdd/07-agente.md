@@ -504,6 +504,7 @@ Extracción: `selectolax` ≥ 1.0 ya no trae el parser Modest; usar `selectolax.
   - 404/410 → `not_found`; otro ≥ 400 → `error`.
   - Después, la lectura de la tienda. Si no encuentra ni precio ni existencia → `error` "no se encontró el precio en la página", y la página se guarda en `/data/fallos/<adapter>/` (las 20 más nuevas) para convertirla en fixture.
   - `extra.http_status` acompaña cada resultado.
+  - Una página con precio de lista se guarda en `/data/muestras/<adapter>/`, una por URL y las primeras 5 por tienda, para convertirla en fixture `con precio de lista` sin peticiones extra (decisión T96).
   - `canonicalize` usa `maunedas_agent/urls.py`, que pasa `fixtures/enlaces.json` igual que el Worker.
 - **`amazon_mx`:**
   - Se quitan `style`, `script` y `noscript` antes de leer textos.
