@@ -53,6 +53,7 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-231 (2026-11-02):** se probó restaurar la base desde el respaldo del servidor casero. El procedimiento y el resultado están en la sección "Restauración".
 - **T-221 (2026-11-02):** la app de Android ya tiene las alertas de precio:
   - **Reglas:** crear, editar, pausar y quitar (baja a un precio, baja un porcentaje, precio más bajo, promoción, vuelve a haber).
   - **Historial:** los avisos que han saltado.
@@ -180,11 +181,10 @@
 ## Siguiente
 1. **Agente en el servidor (ya corre contra dev):**
    - agregar un enlace real y ver su primera revisión;
-   - T-231 (prueba de restauración con el volcado del 2026-11-01);
    - las fotos esperan el token de R2.
 2. **Clientes de la Etapa 2:**
    - T-223 (web) espera la revisión de Mauricio en dev;
-   - T-220 a T-222 (Android) necesitan pruebas en el teléfono.
+   - T-222 (Android) espera la prueba en el teléfono (PR #88).
 3. **T-207:** fijar el club de Sam's de Forjadores.
 4. **Web:** T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
 5. **Pantallas de Android:** T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
@@ -293,6 +293,7 @@
 | T95 | **Seguimiento en Android.**<br>• "Revisar ahora" va por un Worker (`CheckNowWorker`), uno por listing, que primero empuja el listing si sigue en el outbox.<br>• Resolver el enlace es la única llamada directa (05 §3).<br>• Seguimiento es una pestaña dentro de Catálogo, armada en `app` para no acoplar features.<br>• La app recibe `ACTION_SEND` de texto como "Seguir precio". | La regla 12 solo permite como llamadas directas las de §3. Un Worker además reintenta sin red. Las features no dependen entre sí. Compartir desde la app de la tienda es como la familia encuentra los productos. |
 | T96 | **Muestras de páginas con precio de lista.** El agente guarda en `/data/muestras/<adapter>/` la página de un resultado con precio de lista: una por URL y las primeras 5 por tienda. | Las ofertas duran poco: la de Amazon del 2026-11-01 terminó antes de guardarla. Así el fixture `con precio de lista` sale de lo que el agente ya descargó, sin peticiones extra. |
 | T97 | **Alertas en Android.**<br>• FCM solo con mensajes de datos: la app arma la notificación en `price_alerts` o `system`, con la etiqueta de la presentación.<br>• El token va por `DeviceTokenWorker` y solo se reenvía si cambia.<br>• Tocar una alerta abre `maunedas://variant/{id}` y de ahí la ficha; si la presentación no ha bajado, se espera una sincronización.<br>• Hallazgo: la ficha no tiene pestaña "Seguimiento" (S-08); cada presentación lleva "Precios en línea" y "Alertas". | La notificación se ve igual con la app abierta o cerrada. La red solo desde Workers (regla 12). Las features no dependen entre sí, y así queda igual que en la web. |
+| T99 | **Restauración desde el respaldo del servidor casero.**<br>• La herramienta del agente toma solo las filas de la copia; el esquema sale de las migraciones de D1.<br>• `sync_meta.version` queda en el máximo de las filas (07 §5.4).<br>• Tras restaurar, los teléfonos cierran sesión y entran de nuevo, y el espejo se rehace desde cero. | El volcado de SQLite no entra en D1 tal cual (`BEGIN`/`COMMIT`, filas en orden alfabético de tabla). Un teléfono o el espejo que sincronizaron después de la copia tienen cursores por delante de la base restaurada y se saltarían los cambios nuevos; cerrar sesión borra Room y baja todo de nuevo. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -320,6 +321,48 @@
 | RAM del servidor (6.7 GB) compartida con Home Assistant y otros contenedores; también es la máquina de desarrollo | Gradle con `-Xmx2g`; no correr Gradle y spikes a la vez; contenedores de spike con `--memory` y `--cpus`; no se toca el compose existente |
 | D1 Free: 50 consultas por invocación y 100 parámetros por consulta | Spike D: un batch de 150 sentencias y 60 consultas separadas pasaron sin error (el límite no se aplicó); las lecturas usan `json_each` para no depender de los 100 parámetros |
 | El handler de Firebase pidiera `/__/firebase/init.json`, que da 404 porque no hay sitio de Hosting | El SDK pasa la configuración por la URL; se confirma con el login con Google de la web (T-160); salida: desplegar un sitio vacío de Firebase Hosting |
+
+## Restauración (RF-BAK-04)
+
+### Procedimiento
+
+0. **Si la cuenta de Cloudflare está bien y el daño es reciente,** primero D1 Time Travel (`wrangler d1 time-travel restore`) regresa la base a un momento anterior, dentro de la retención del plan. Lo que sigue es para cuando eso no alcanza: cuenta perdida, base borrada o daño más viejo que la retención.
+1. **Elegir la copia más reciente:** el espejo diario `datos-agente/backups/mirror.sqlite`, de un día atrás a lo más. Si está dañado, el volcado más nuevo de `datos-agente/backups/weekly/`.
+2. **Generar el SQL y las cuentas esperadas** dentro del contenedor del agente (los archivos son de root), con su `python` y no `uv run`, que instalaría las dependencias de desarrollo:
+   ```bash
+   docker exec maunedas-maunedas-agent-1 python -m maunedas_agent.restore /data/backups/mirror.sqlite > restore.sql
+   docker exec maunedas-maunedas-agent-1 python -m maunedas_agent.restore /data/backups/mirror.sqlite --counts > esperado.json
+   ```
+3. **Base vacía con el esquema actual:**
+   - `wrangler d1 create maunedas` (o `maunedas-dev`), con el nuevo `database_id` en `apps/api/wrangler.jsonc`.
+   - Si la base anterior todavía existe, primero se baja su copia (`wrangler d1 export`) y solo después se borra (`wrangler d1 delete`).
+   - Luego `pnpm --filter api db:migrate:prod` (o `:dev`).
+4. **Cargar las filas:** `apps/api/node_modules/.bin/wrangler d1 execute maunedas --env '' --remote --file restore.sql` (dev: `maunedas-dev --env dev`).
+5. **Comprobar:**
+   - las filas por tabla iguales a `esperado.json`;
+   - `PRAGMA foreign_key_check` vacío;
+   - `SELECT value FROM sync_meta WHERE key = 'version'` igual al máximo de las filas.
+6. **Desplegar el Worker** (`pnpm --filter api deploy:prod`) si cambió el `database_id`.
+7. **Teléfonos:** "Sincronizar ahora" para subir lo pendiente y después cerrar sesión y volver a entrar. Así se borra Room con sus cursores, que pueden ir por delante de la base restaurada, y se baja todo de nuevo. La web no guarda copia local.
+8. **Espejo:** con el agente corriendo y fuera de `BACKUP_HOUR`, se aparta el espejo viejo para que la siguiente corrida haga uno nuevo; sus cursores también van por delante:
+   ```bash
+   docker exec maunedas-maunedas-agent-1 sh -c 'cd /data/backups && for f in mirror.sqlite*; do mv "$f" "antes-$f"; done'
+   ```
+9. **Fotos:** `rclone sync /data/backups/r2 r2:<bucket>` con un token de R2 de escritura temporal. Sin probar: todavía no hay copia de fotos (falta el token de solo lectura de T-230).
+
+### Prueba (T-231) — 2026-11-02
+
+- **Copia:** el volcado del domingo `maunedas-2026-11-01.sql.gz` (7.4 KB) y el espejo del mismo día dan exactamente el mismo SQL: 59 sentencias.
+- **Destino:** una D1 local nueva (`wrangler d1 migrations apply DB --local --persist-to <dir>` y `wrangler d1 execute DB --local --persist-to <dir> --file restore.sql`). Todas las sentencias se ejecutaron sin error.
+- **Resultado:**
+  - 57 filas en 28 tablas, iguales a las esperadas;
+  - `PRAGMA foreign_key_check` vacío;
+  - `sync_meta.version` 71 y `schema_version` 1;
+  - la vista de precios da sus 2 puntos;
+  - el usuario `mau` conserva sus 2 accesos con Google;
+  - la última migración es `0002_price_points_guard.sql`.
+- **Hallazgo:** D1 rechazó el primer intento, que calculaba la versión con un `SELECT` compuesto de ~20 tablas ("too many terms in compound SELECT"). La herramienta ahora escribe el número.
+- **Sin probar:** la carga en una D1 remota (no se creó una base en la cuenta solo para la prueba) y las fotos.
 
 ## Resultados de spikes
 
@@ -438,3 +481,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-02** — T-220 terminada (probada en el teléfono desde la app de Amazon); el agente guarda muestras de páginas con precio de lista (T96).
 - **2026-11-02** — T-221 (avance): reglas e historial de alertas en Android, FCM con canales, registro del token por Worker y enlace a la ficha (T97); falta la prueba en el teléfono.
 - **2026-11-02** — T-221 terminada: alerta de prueba en dev entregada por FCM al Samsung y abierta en la ficha del producto.
+- **2026-11-02** — T-231: restauración probada; el respaldo del 2026-11-01 entra completo en una D1 nueva (57 filas, sin llaves rotas). Procedimiento en "Restauración" (T99).

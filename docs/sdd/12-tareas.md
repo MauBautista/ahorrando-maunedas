@@ -576,8 +576,12 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Agente (T89):** espejo diario, volcado semanal con rotación y copia de fotos con rclone, con 147 pruebas en total; un volcado restaurado da los mismos conteos que el espejo.
   - **En el servidor (2026-11-01):** primer espejo (57 filas) y volcado (7 KB). Las 24 tablas tienen el mismo conteo que D1 de dev (RF-BAK-01).
 - **Falta (Mauricio):** crear un token de R2 de solo lectura y poner `R2_ENDPOINT`, `R2_ACCESS_KEY_ID` y `R2_SECRET_ACCESS_KEY` en `agent/.env`.
-### [ ] T-231 · Prueba de restauración
+### [x] T-231 · Prueba de restauración
 - **Hecho cuando:** procedimiento y resultado en `ESTADO.md` (RF-BAK-04).
+- **Hecho (2026-11-02, T99):**
+  - **Herramienta:** `maunedas_agent.restore` convierte el espejo o un volcado en SQL para D1.
+  - **Prueba:** el volcado del 2026-11-01 se cargó en una D1 local nueva, con las 57 filas en 28 tablas y sin llaves rotas. El espejo del mismo día da el mismo SQL.
+  - **Sin probar:** la carga en una D1 remota y la restauración de fotos (falta el token de R2).
 ### [ ] T-290 · Cierre de la Etapa 2
 - **Docs:** 11 §6
 
