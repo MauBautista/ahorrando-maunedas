@@ -563,7 +563,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Estado del agente:** en Ajustes para el admin (RF-ADM-03), y en S-20 un aviso para todos cuando lleva más de 30 min sin reportarse.
   - **Pruebas:** 7 nuevas (repositorios, gráfica, Seguimiento y Ajustes).
 - **Probada en el teléfono (2026-11-02):** Mauricio revisó la gráfica de microdacyn con sus escalones, la sección "Servidor casero" en Ajustes y Seguimiento sin aviso.
-### [~] T-224 · Intervalo por listing (RF-TRK-02)
+### [x] T-224 · Intervalo por listing (RF-TRK-02)
 - **Docs:** 05 §5 S-20, 06 W-20, 07 §7 · **Depende de:** T-220, T-223
 - **Hallazgo (T-290, 2026-11-02):** S-20 y W-20 muestran el intervalo propio de un listing, pero ninguno permite cambiarlo; al agregar un listing queda el de la tienda.
 - **Hacer (decisión T100):**
@@ -575,7 +575,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Web:** "Revisar cada" en W-20, con `store_interval_min` en `GET /v1/listings`.
   - **Agente:** reprograma al cambiar el intervalo.
   - **Pruebas:** nuevas, 2 de Android (diálogo y ViewModel), 2 de la web y 3 del agente; además se ampliaron las del repositorio y la tarjeta de Android y la de la ruta.
-- **Falta (Mauricio):** cambiar el listing de microdacyn a 4 h desde el teléfono y comprobar en el agente que se refleja en ≤ 2 min.
+- **Probada (2026-11-02):** Mauricio cambió el listing de microdacyn a 4 h desde el teléfono. El agente lo tuvo 63 s después y reprogramó la siguiente revisión a 241 min de la última. Esa hora ya había pasado, así que revisó enseguida; la siguiente quedó a 227 min.
 ### [x] T-223 · Web: seguimiento, alertas y agente (W-20 a W-22)
 - **Depende de:** T-210, T-212, T-161
 - **Hecho (2026-11-01, T92):**
@@ -602,15 +602,15 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Sin probar:** la carga en una D1 remota y la restauración de fotos (falta el token de R2).
 ### [ ] T-290 · Cierre de la Etapa 2
 - **Docs:** 11 §6
-- **Avance (2026-11-02):** 5 de los 8 puntos de 11 §6:
+- **Avance (2026-11-02):** 6 de los 8 puntos de 11 §6:
   - compartir desde Amazon (19 s);
   - regla "debajo de $X";
   - dos reglas → una notificación;
   - agente apagado 2 h;
-  - restauración en una D1 remota nueva.
+  - restauración en una D1 remota nueva;
+  - intervalo de 4 h en ≤ 2 min (T-224, 63 s).
 - **Faltan:**
   - **Sam's:** el precio para la zona, con el club de Forjadores (T-207).
-  - **Intervalo de 4 h (RF-TRK-02):** hallazgo, ningún cliente permite cambiar el intervalo de un listing; S-20 y W-20 solo lo muestran. Se agrega T-224.
   - **Fotos:** `rclone` con el mismo número de objetos, que necesita el token de R2 de T-230.
   - **Criterio de la etapa:** 30 listings durante dos semanas con ≥ 95 % de revisiones exitosas.
 

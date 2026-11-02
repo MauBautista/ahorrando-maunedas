@@ -53,14 +53,16 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
-- **T-224 (2026-11-02, avance):** ya se puede elegir cada cuánto se revisa un enlace, en Android ("Cada cuánto") y en la web ("Revisar cada"): de la tienda, 2 h, 4 h, 12 h o 24 h. Al cambiarlo, el servidor casero reprograma la siguiente revisión desde la última. Falta probarlo desde el teléfono.
-- **Cierre de la Etapa 2 (2026-11-02, avance):** cinco de las ocho comprobaciones de 11 §6 pasaron.
+- **T-224 (2026-11-02):** ya se puede elegir cada cuánto se revisa un enlace, en Android ("Cada cuánto") y en la web ("Revisar cada"): de la tienda, 2 h, 4 h, 12 h o 24 h. Al cambiarlo, el servidor casero reprograma la siguiente revisión desde la última. Probado desde el teléfono: el agente tomó las 4 h en 63 s.
+- **Cierre de la Etapa 2 (2026-11-02, avance):** seis de las ocho comprobaciones de 11 §6 pasaron.
   - **Dos reglas en una observación:** dos reglas temporales en dev ("debajo de $755.00" y "bajó 1 %") y una revisión simulada de $749.00 dieron dos eventos y una sola notificación en el teléfono. La regla de $750 estaba en enfriamiento y no sonó. Las reglas temporales se borraron.
   - **Agente apagado 2 h 36 min:**
     - los Cron de las 10:07 y 11:07 no avisaron, y el de las 12:07 sí;
     - al encender, el agente borró la marca y revisó en 2 s el listing que se atrasó durante la caída.
   - **Restauración en una D1 remota temporal:** completa; ver "Restauración".
+  - **Intervalo de 4 h:** con T-224, el agente tomó el cambio 63 s después de hacerlo en el teléfono.
   - **Ya probadas antes:** compartir desde Amazon (revisado a los 19 s) y la regla "debajo de $X" (T-221).
+  - **Faltan:** el precio de Sam's para la zona (T-207), las fotos con `rclone` (token de R2) y las dos semanas con 30 listings.
 - **T-231 (2026-11-02):** se probó restaurar la base desde el respaldo del servidor casero. El procedimiento y el resultado están en la sección "Restauración".
 - **T-222 (2026-11-02):** en la app de Android, la gráfica de historial dibuja los precios en línea como escalones: cada precio se mantiene hasta el siguiente o hasta la última revisión. El admin ve en Ajustes el estado del servidor casero (último reporte, pendientes, tiendas que bloquean, errores y respaldos), y Seguimiento avisa a todos si dejó de reportarse. Mauricio lo probó en el teléfono.
 - **T-221 (2026-11-02):** la app de Android ya tiene las alertas de precio:
@@ -194,7 +196,7 @@
 2. **Clientes de la Etapa 2:**
    - T-223 (web) espera la revisión de Mauricio en dev.
 3. **T-207:** fijar el club de Sam's de Forjadores.
-   - **Hallazgo de T-290:** RF-TRK-02 (intervalo propio por listing) no tenía editor en S-20 ni en W-20; se agrega T-224 (decisión T100).
+   - **Hallazgo de T-290:** RF-TRK-02 (intervalo propio por listing) no tenía editor en S-20 ni en W-20; quedó resuelto con T-224 (decisión T100).
 4. **Web:** T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
 5. **Pantallas de Android:** T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
 6. **Spikes:** el C en cuanto estén las fotos de tickets (luego T-040, T-124 y T-163); el A con las 10 fotos de productos.
@@ -512,3 +514,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-02** — T-222 terminada: probada en el teléfono. Bloques de agente, Worker y clientes de la Etapa 2 completos en `PLAN.md`.
 - **2026-11-02** — Cierre de la Etapa 2 (avance): dos reglas → una notificación, agente apagado 2 h con aviso y retoma, restauración en una D1 remota temporal; hallazgo: RF-TRK-02 sin editor en los clientes.
 - **2026-11-02** — T-224 (avance): intervalo por listing en Android y web; el agente reprograma al cambiarlo (T100). Falta la prueba en el teléfono.
+- **2026-11-02** — T-224 terminada: probada desde el teléfono, el agente tomó las 4 h en 63 s; 6 de 8 comprobaciones del cierre de la Etapa 2.
