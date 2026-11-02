@@ -489,7 +489,9 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Comprobación con URLs reales:** una por tienda, precios correctos.
   - **Pruebas:** el agente tiene 134; 20 mutaciones, todas detectadas.
 - **Falta:**
-  - **Páginas reales con precio de lista:** el spike B no vio ninguna; hoy se prueba con variantes de las reales. Se capturan cuando aparezcan.
+  - **Páginas reales con precio de lista:** el spike B no vio ninguna; hoy se prueba con variantes de las reales.
+    - El 2026-11-01 el agente leyó bien una real de Amazon ($759.06 con lista de $858.81, confirmada en la app), pero la oferta terminó antes de guardarla.
+    - Desde T96 el agente guarda solas las primeras páginas con precio de lista en `/data/muestras/`.
   - **Club de Sam's:** Mauricio eligió el de **Forjadores, Puebla** (T93).
     - Sam's guarda el club en las cookies `assortmentStoreId` y `locDataV3`; sin ellas da el precio del club `0000009996` de la CDMX.
     - El sitio no publica los números de club; falta el de Forjadores (Mauricio, por ejemplo de un ticket) y probar con calma que esas cookies lo fijen.
@@ -534,13 +536,15 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - Aviso "Servidor casero sin conexión" a los admins desde el Cron, una vez por caída, con la marca que `/work` borra al volver el agente.
   - `GET /v1/admin/agent`.
   - **Pruebas:** 4.
-### [~] T-220 · Android: agregar URL y listings (S-20, S-21)
+### [x] T-220 · Android: agregar URL y listings (S-20, S-21)
 - **Depende de:** T-210, T-126 · **Hecho cuando:** compartir desde la app de Amazon crea el listing.
 - **Avance (2026-11-01, T95):**
   - **Pantallas:** S-20 (pestaña en Catálogo y por presentación desde la ficha) y S-21 (pegar o compartir, resolver, elegir presentación, seguir).
   - **Acciones:** "Revisar ahora" por Worker, pausar, reanudar y dejar de seguir por sync.
   - **Pruebas:** 7 del repositorio, 4 del Worker, 15 de la feature y 1 de fechas.
-- **Falta (Mauricio):** la prueba en el teléfono de compartir desde la app de Amazon.
+- **Probado (2026-11-01):**
+  - En el Samsung, compartir un producto desde la app de Amazon con "Seguir precio" creó el listing: el enlace corto `a.co` se resolvió a la página del producto.
+  - El agente lo revisó en menos de un minuto y el precio coincidió con la app de Amazon.
 ### [ ] T-221 · Android: reglas, historial de alertas, FCM y deep link (S-22, S-23)
 - **Docs:** 08 §7 · **Depende de:** T-213, T-220
 ### [ ] T-222 · Android: serie web escalonada y estado del agente
