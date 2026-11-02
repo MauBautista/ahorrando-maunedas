@@ -53,6 +53,13 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **Cierre de la Etapa 2 (2026-11-02, avance):** cinco de las ocho comprobaciones de 11 §6 pasaron.
+  - **Dos reglas en una observación:** dos reglas temporales en dev ("debajo de $755.00" y "bajó 1 %") y una revisión simulada de $749.00 dieron dos eventos y una sola notificación en el teléfono. La regla de $750 estaba en enfriamiento y no sonó. Las reglas temporales se borraron.
+  - **Agente apagado 2 h 36 min:**
+    - los Cron de las 10:07 y 11:07 no avisaron, y el de las 12:07 sí;
+    - al encender, el agente borró la marca y revisó en 2 s el listing que se atrasó durante la caída.
+  - **Restauración en una D1 remota temporal:** completa; ver "Restauración".
+  - **Ya probadas antes:** compartir desde Amazon (revisado a los 19 s) y la regla "debajo de $X" (T-221).
 - **T-231 (2026-11-02):** se probó restaurar la base desde el respaldo del servidor casero. El procedimiento y el resultado están en la sección "Restauración".
 - **T-222 (2026-11-02):** en la app de Android, la gráfica de historial dibuja los precios en línea como escalones: cada precio se mantiene hasta el siguiente o hasta la última revisión. El admin ve en Ajustes el estado del servidor casero (último reporte, pendientes, tiendas que bloquean, errores y respaldos), y Seguimiento avisa a todos si dejó de reportarse. Mauricio lo probó en el teléfono.
 - **T-221 (2026-11-02):** la app de Android ya tiene las alertas de precio:
@@ -186,6 +193,7 @@
 2. **Clientes de la Etapa 2:**
    - T-223 (web) espera la revisión de Mauricio en dev.
 3. **T-207:** fijar el club de Sam's de Forjadores.
+   - **Hallazgo de T-290:** RF-TRK-02 (intervalo propio por listing) no tenía editor en S-20 ni en W-20; se agrega T-224 (decisión T100).
 4. **Web:** T-163 (tickets) espera a T-040; T-160 se cierra al probar Google en Safari del iPhone.
 5. **Pantallas de Android:** T-124 (revisión de ticket; la extracción necesita el spike C y la key de OpenRouter); T-118 (recorte en el teléfono) es opcional.
 6. **Spikes:** el C en cuanto estén las fotos de tickets (luego T-040, T-124 y T-163); el A con las 10 fotos de productos.
@@ -295,6 +303,7 @@
 | T97 | **Alertas en Android.**<br>• FCM solo con mensajes de datos: la app arma la notificación en `price_alerts` o `system`, con la etiqueta de la presentación.<br>• El token va por `DeviceTokenWorker` y solo se reenvía si cambia.<br>• Tocar una alerta abre `maunedas://variant/{id}` y de ahí la ficha; si la presentación no ha bajado, se espera una sincronización.<br>• Hallazgo: la ficha no tiene pestaña "Seguimiento" (S-08); cada presentación lleva "Precios en línea" y "Alertas". | La notificación se ve igual con la app abierta o cerrada. La red solo desde Workers (regla 12). Las features no dependen entre sí, y así queda igual que en la web. |
 | T98 | **Escalones web y estado del agente en Android.**<br>• Escalones por listing hasta su `last_checked_at`, debajo de los puntos.<br>• El agente cuenta como sin conexión en el teléfono tras 30 min sin reporte, no 3 como en el Worker.<br>• El detalle va en Ajustes solo para el admin (RF-ADM-03); el aviso de pausa en S-20 es para todos. | Un precio web se sabe vigente entre revisiones, uno de compra no. El estado solo baja cada 10 min y la sync corre cada 15: con 3 min el teléfono diría "sin conexión" casi siempre. A todos les sirve saber por qué un precio no se actualiza. |
 | T99 | **Restauración desde el respaldo del servidor casero.**<br>• La herramienta del agente toma solo las filas de la copia; el esquema sale de las migraciones de D1.<br>• `sync_meta.version` queda en el máximo de las filas (07 §5.4).<br>• Tras restaurar, los teléfonos cierran sesión y entran de nuevo, y el espejo se rehace desde cero. | El volcado de SQLite no entra en D1 tal cual (`BEGIN`/`COMMIT`, filas en orden alfabético de tabla). Un teléfono o el espejo que sincronizaron después de la copia tienen cursores por delante de la base restaurada y se saltarían los cambios nuevos; cerrar sesión borra Room y baja todo de nuevo. |
+| T100 | **Intervalo por listing (RF-TRK-02, T-224).**<br>• Selector en S-20 y W-20: "De la tienda (8 h)", 2 h, 4 h, 12 h y 24 h.<br>• El mínimo en la app es 2 h, aunque el servidor acepte desde 60 min.<br>• Al cambiar el intervalo, el agente reprograma la siguiente revisión desde la última; un listing en espera por errores la conserva. | Opciones elegidas por Mauricio (2026-11-02). Con 2 h como mínimo no se carga a las tiendas (regla 10). Sin reprogramar, bajar de 8 h a 4 h esperaría a la siguiente revisión, hasta 8 h, y no se cumpliría "≤ 2 min". |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -363,7 +372,22 @@
   - el usuario `mau` conserva sus 2 accesos con Google;
   - la última migración es `0002_price_points_guard.sql`.
 - **Hallazgo:** D1 rechazó el primer intento, que calculaba la versión con un `SELECT` compuesto de ~20 tablas ("too many terms in compound SELECT"). La herramienta ahora escribe el número.
-- **Sin probar:** la carga en una D1 remota (no se creó una base en la cuenta solo para la prueba) y las fotos.
+- **Sin probar entonces:** la carga en una D1 remota (ver la prueba siguiente) y las fotos.
+
+### Prueba en una D1 remota (cierre de la Etapa 2) — 2026-11-02
+
+- **Copia:** el espejo del 2026-11-02 a las 09:00, con 65 filas que ya incluyen el listing, las reglas, los eventos y las observaciones. Da 67 sentencias.
+- **Destino:** una base temporal `maunedas-restore-test` en la cuenta de Maunedas, con una configuración de wrangler propia en `apps/api/.wrangler/` (ignorada por git). Migraciones con `d1 migrations apply --remote` y filas con `d1 execute --remote --file` (importación).
+- **Resultado:**
+  - 65 filas en 28 tablas, iguales a las esperadas;
+  - `PRAGMA foreign_key_check` vacío;
+  - `sync_meta.version` 175 y `schema_version` 1;
+  - 5 puntos en la vista de precios;
+  - la regla activa conserva su evento.
+  
+  La base temporal se borró al terminar.
+- **Cuidado:** el perfil `maunedas` de wrangler va ligado a la carpeta del repositorio. Con una configuración fuera de ella (`--config /otra/ruta`), wrangler usa el perfil por omisión, que es otra cuenta. El primer intento falló así, sin cambiar nada en esa cuenta. Antes de un comando con `--config`, conviene revisar que diga "Active profile: maunedas".
+- **Sin probar:** las fotos.
 
 ## Resultados de spikes
 
@@ -485,3 +509,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-02** — T-222 (avance): escalones web en la gráfica de Android y estado del servidor casero en Ajustes y Seguimiento (T98); falta verlo en el teléfono.
 - **2026-11-02** — T-231: restauración probada; el respaldo del 2026-11-01 entra completo en una D1 nueva (57 filas, sin llaves rotas). Procedimiento en "Restauración" (T99).
 - **2026-11-02** — T-222 terminada: probada en el teléfono. Bloques de agente, Worker y clientes de la Etapa 2 completos en `PLAN.md`.
+- **2026-11-02** — Cierre de la Etapa 2 (avance): dos reglas → una notificación, agente apagado 2 h con aviso y retoma, restauración en una D1 remota temporal; hallazgo: RF-TRK-02 sin editor en los clientes.

@@ -563,6 +563,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Estado del agente:** en Ajustes para el admin (RF-ADM-03), y en S-20 un aviso para todos cuando lleva más de 30 min sin reportarse.
   - **Pruebas:** 7 nuevas (repositorios, gráfica, Seguimiento y Ajustes).
 - **Probada en el teléfono (2026-11-02):** Mauricio revisó la gráfica de microdacyn con sus escalones, la sección "Servidor casero" en Ajustes y Seguimiento sin aviso.
+### [ ] T-224 · Intervalo por listing (RF-TRK-02)
+- **Docs:** 05 §5 S-20, 06 W-20, 07 §7 · **Depende de:** T-220, T-223
+- **Hallazgo (T-290, 2026-11-02):** S-20 y W-20 muestran el intervalo propio de un listing, pero ninguno permite cambiarlo; al agregar un listing queda el de la tienda.
+- **Hacer (decisión T100):**
+  - **Selector en S-20 y W-20:** "De la tienda (8 h)" (el `default_check_interval_min` de su tienda), 2 h, 4 h, 12 h y 24 h. Se escribe `check_interval_min` por sync, con `null` para "De la tienda".
+  - **Agente:** al cambiar el intervalo de un listing, reprograma su siguiente revisión desde la última, con el mismo azar de ±10 %. Un listing en espera por errores la conserva.
+- **Hecho cuando:** cambiar a 4 h desde Android o desde la web se refleja en el agente en ≤ 2 min (RF-TRK-02, 11 §6).
 ### [x] T-223 · Web: seguimiento, alertas y agente (W-20 a W-22)
 - **Depende de:** T-210, T-212, T-161
 - **Hecho (2026-11-01, T92):**
@@ -589,6 +596,17 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - **Sin probar:** la carga en una D1 remota y la restauración de fotos (falta el token de R2).
 ### [ ] T-290 · Cierre de la Etapa 2
 - **Docs:** 11 §6
+- **Avance (2026-11-02):** 5 de los 8 puntos de 11 §6:
+  - compartir desde Amazon (19 s);
+  - regla "debajo de $X";
+  - dos reglas → una notificación;
+  - agente apagado 2 h;
+  - restauración en una D1 remota nueva.
+- **Faltan:**
+  - **Sam's:** el precio para la zona, con el club de Forjadores (T-207).
+  - **Intervalo de 4 h (RF-TRK-02):** hallazgo, ningún cliente permite cambiar el intervalo de un listing; S-20 y W-20 solo lo muestran. Se agrega T-224.
+  - **Fotos:** `rclone` con el mismo número de objetos, que necesita el token de R2 de T-230.
+  - **Criterio de la etapa:** 30 listings durante dos semanas con ≥ 95 % de revisiones exitosas.
 
 ---
 

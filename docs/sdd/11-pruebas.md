@@ -132,14 +132,14 @@ Dos teléfonos Android (A y B), una computadora y un iPhone.
 
 ## 6. Checklist manual — cierre de Etapa 2
 
-- [ ] Compartir una URL de Amazon desde su app → listing creado y revisado en ≤ 5 min.
+- [x] Compartir una URL de Amazon desde su app → listing creado y revisado en ≤ 5 min. *(2026-11-01: revisado a los 19 s.)*
 - [ ] Una URL por cada tienda prioritaria (Amazon, Costco, Sam's) con precio correcto para la zona (Amazon ubica por IP; Sam's: ver club en T-207).
 - [ ] Cambiar el intervalo de un listing a 4 h se refleja en el agente en ≤ 2 min.
-- [ ] Regla "debajo de $X": forzar el caso con un umbral alto → notificación, toque abre la variante.
-- [ ] Dos reglas del mismo usuario en la misma observación → una sola notificación.
-- [ ] Apagar el agente 2 h → aviso al admin; al encenderlo, retoma sin perder resultados.
+- [x] Regla "debajo de $X": forzar el caso con un umbral alto → notificación, toque abre la variante. *(2026-11-02, T-221.)*
+- [x] Dos reglas del mismo usuario en la misma observación → una sola notificación. *(2026-11-02: dos eventos, una notificación en el teléfono.)*
+- [x] Apagar el agente 2 h → aviso al admin; al encenderlo, retoma sin perder resultados. *(2026-11-02: 2 h 36 min apagado, aviso en el Cron de las 12:07; al encender borró la marca y revisó en 2 s el listing que se atrasó.)*
 - [ ] Respaldo diario y volcado semanal presentes; `rclone` con el mismo número de objetos.
-- [ ] Restauración en un D1 nuevo con conteos iguales (documentada en `ESTADO.md`).
+- [x] Restauración en un D1 nuevo con conteos iguales (documentada en `ESTADO.md`). *(2026-11-02: D1 local y D1 remota temporal.)*
 
 ## 7. Protocolos de spikes (Etapa 0)
 
