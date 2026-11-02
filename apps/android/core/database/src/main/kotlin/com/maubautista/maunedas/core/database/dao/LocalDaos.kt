@@ -24,6 +24,13 @@ interface OutboxDao {
     @Insert(onConflict = OnConflictStrategy.REPLACE)
     suspend fun enqueueAll(entries: List<OutboxEntry>)
 
+    /** Whether [rowId] of [table] still waits to be pushed ("Revisar ahora" of a listing just created). */
+    @Query("SELECT count(*) FROM outbox WHERE table_name = :table AND row_id = :rowId")
+    suspend fun pendingFor(
+        table: String,
+        rowId: String,
+    ): Int
+
     /**
      * Entries enqueued before [enqueuedBefore], parents before children (the `order` of the sync registry,
      * so a push never sends a row before the one it references), then by queue order.

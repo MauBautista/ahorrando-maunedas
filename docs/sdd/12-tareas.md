@@ -534,8 +534,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - Aviso "Servidor casero sin conexión" a los admins desde el Cron, una vez por caída, con la marca que `/work` borra al volver el agente.
   - `GET /v1/admin/agent`.
   - **Pruebas:** 4.
-### [ ] T-220 · Android: agregar URL y listings (S-20, S-21)
+### [~] T-220 · Android: agregar URL y listings (S-20, S-21)
 - **Depende de:** T-210, T-126 · **Hecho cuando:** compartir desde la app de Amazon crea el listing.
+- **Avance (2026-11-01, T95):**
+  - **Pantallas:** S-20 (pestaña en Catálogo y por presentación desde la ficha) y S-21 (pegar o compartir, resolver, elegir presentación, seguir).
+  - **Acciones:** "Revisar ahora" por Worker, pausar, reanudar y dejar de seguir por sync.
+  - **Pruebas:** 7 del repositorio, 4 del Worker, 15 de la feature y 1 de fechas.
+- **Falta (Mauricio):** la prueba en el teléfono de compartir desde la app de Amazon.
 ### [ ] T-221 · Android: reglas, historial de alertas, FCM y deep link (S-22, S-23)
 - **Docs:** 08 §7 · **Depende de:** T-213, T-220
 ### [ ] T-222 · Android: serie web escalonada y estado del agente

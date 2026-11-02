@@ -1,5 +1,6 @@
 package com.maubautista.maunedas
 
+import android.content.Intent
 import android.os.Bundle
 import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
@@ -8,6 +9,7 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.safeDrawingPadding
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -29,9 +31,12 @@ import com.maubautista.maunedas.feature.scan.ScanActions
 import com.maubautista.maunedas.feature.scan.ScanCodeRoute
 import com.maubautista.maunedas.feature.settings.SyncStatusRoute
 import com.maubautista.maunedas.feature.shelf.ShelfRoute
+import com.maubautista.maunedas.feature.tracking.AddListingRoute
+import com.maubautista.maunedas.feature.tracking.TrackingRoute
 import dagger.hilt.android.AndroidEntryPoint
-import javax.inject.Inject
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.serialization.Serializable
+import javax.inject.Inject
 
 @Serializable
 object LoginDestination
@@ -82,6 +87,19 @@ data class ScanCodeDestination(
 @Serializable
 object SyncDestination
 
+/** S-20 for one variant: its product page's "Precios en línea". */
+@Serializable
+data class TrackingDestination(
+    val variantId: String? = null,
+)
+
+/** S-21; [text] is what another app shared (`ACTION_SEND`), [variantId] the variant it is for when known. */
+@Serializable
+data class AddListingDestination(
+    val text: String? = null,
+    val variantId: String? = null,
+)
+
 /**
  * S-04; null [purchaseId] starts a new purchase; [addVariantId] opens the line sheet with that variant (S-12);
  * [receipt] opens the document scanner once there is a store ("Foto de ticket" in Inicio, T-123).
@@ -104,13 +122,24 @@ data class VariantEditorDestination(
     val packCount: String? = null,
 )
 
-/** Single activity (05 §4). With a saved session it opens at home without network (RF-AUTH-08). */
+/**
+ * Single activity (05 §4). With a saved session it opens at home without network (RF-AUTH-08). A link shared from a
+ * store's app (`ACTION_SEND` text, T-220) opens "Seguir un enlace" once signed in.
+ */
 @AndroidEntryPoint
 class MainActivity : ComponentActivity() {
     @Inject lateinit var auth: AuthService
 
+    private val shared = MutableStateFlow<String?>(null)
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        sharedText(intent)?.let { shared.value = it }
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
+        if (savedInstanceState == null) shared.value = sharedText(intent)
         enableEdgeToEdge()
         setContent {
             MaunedasTheme {
@@ -120,10 +149,22 @@ class MainActivity : ComponentActivity() {
                     LaunchedEffect(Unit) { start = if (auth.isSignedIn()) MainDestination else LoginDestination }
                     start?.let { first ->
                         val nav = rememberNavController()
+                        val share by shared.collectAsState()
+                        LaunchedEffect(share) {
+                            val text = share ?: return@LaunchedEffect
+                            if (auth.isSignedIn()) {
+                                shared.value = null
+                                nav.navigate(AddListingDestination(text = text))
+                            }
+                        }
                         NavHost(navController = nav, startDestination = first, modifier = Modifier.safeDrawingPadding()) {
                             composable<LoginDestination> {
                                 LoginRoute(onSignedIn = {
                                     nav.navigate(MainDestination) { popUpTo<LoginDestination> { inclusive = true } }
+                                    shared.value?.let { text ->
+                                        shared.value = null
+                                        nav.navigate(AddListingDestination(text = text))
+                                    }
                                 })
                             }
                             composable<MainDestination> {
@@ -135,6 +176,7 @@ class MainActivity : ComponentActivity() {
                                     onOpenSync = { nav.navigate(SyncDestination) },
                                     onShelfPrice = { nav.navigate(ShelfPriceDestination()) },
                                     onReceiptPhoto = { nav.navigate(PurchaseEditorDestination(receipt = true)) },
+                                    onAddLink = { nav.navigate(AddListingDestination(variantId = it)) },
                                     scanActions =
                                         ScanActions(
                                             onAddToPurchase = { draft, variant -> nav.navigate(PurchaseEditorDestination(draft, variant)) },
@@ -146,6 +188,14 @@ class MainActivity : ComponentActivity() {
                                 )
                             }
                             composable<ShelfPriceDestination> { ShelfRoute(onDone = { nav.popBackStack() }) }
+                            composable<TrackingDestination> {
+                                TrackingRoute(
+                                    onOpenProduct = { nav.navigate(ProductDestination(it)) },
+                                    onAdd = { nav.navigate(AddListingDestination(variantId = it)) },
+                                    onBack = { nav.popBackStack() },
+                                )
+                            }
+                            composable<AddListingDestination> { AddListingRoute(onDone = { nav.popBackStack() }) }
                             composable<SyncDestination> { SyncStatusRoute(onBack = { nav.popBackStack() }) }
                             composable<PurchaseEditorDestination> {
                                 PurchaseEditorRoute(onDone = { nav.popBackStack() }, onRegisterCode = { nav.navigate(ScanCodeDestination(it)) })
@@ -174,6 +224,7 @@ class MainActivity : ComponentActivity() {
                                     onOpenVariant = { productId, variantId -> nav.navigate(VariantEditorDestination(productId, variantId)) },
                                     // Merged into another product: its page replaces this one.
                                     onMoved = { nav.navigate(ProductDestination(it)) { popUpTo<ProductDestination> { inclusive = true } } },
+                                    onTrackVariant = { nav.navigate(TrackingDestination(it)) },
                                 )
                             }
                             composable<ProductEditorDestination> {
@@ -190,6 +241,13 @@ class MainActivity : ComponentActivity() {
         }
     }
 }
+
+/** The text of a share from another app (a store's link), or null for any other start. */
+private fun sharedText(intent: Intent?): String? =
+    intent
+        ?.takeIf { it.action == Intent.ACTION_SEND && it.type?.startsWith("text/") == true }
+        ?.getStringExtra(Intent.EXTRA_TEXT)
+        ?.takeIf { it.isNotBlank() }
 
 /** S-09 prefilled from a scanned code and what an open catalog knows (T-116). */
 private fun productEditor(

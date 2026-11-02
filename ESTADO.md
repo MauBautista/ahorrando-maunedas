@@ -53,6 +53,11 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-220 (2026-11-01, avance):** la app de Android ya tiene el seguimiento de precios en línea, dentro de Catálogo y desde cada presentación de la ficha:
+  - cada enlace con su último precio y estado, y las acciones "Revisar ahora", pausar y dejar de seguir;
+  - "Seguir un enlace", que también aparece al compartir un producto desde la app de Amazon u otra tienda ("Seguir precio" en el menú de compartir).
+  
+  Falta probarlo en el teléfono.
 - **T-223 (2026-11-01):** la web ya tiene las pantallas de la Etapa 2:
   - **Seguimiento:** los enlaces de tiendas en línea con su último precio y estado. Ahí se agrega un enlace pegándolo, se pide "Revisar ahora", se pausa o se deja de seguir.
   - **Alertas:** las reglas propias y el historial de avisos.
@@ -279,6 +284,7 @@
 | T92 | **Web de la Etapa 2.**<br>• Seguimiento y Alertas son pestañas dentro de Catálogo, como en Android.<br>• La ficha de producto enlaza cada presentación con `?producto=&variante=`.<br>• Para la web, que no guarda copia local: `GET /v1/listings` acepta ir sin presentación y trae nombres, hay un `GET /v1/alerts/rules` nuevo y cada alerta trae su presentación.<br>• Un enlace que ya se sigue no se agrega dos veces. | Así la navegación es la misma en las dos apps. Pedir los nombres al Worker evita una petición por listing o por regla. Seguir dos veces la misma página duplicaría revisiones y alertas. |
 | T93 | **El club de Sam's es el de Forjadores, Puebla** (decisión de Mauricio, 2026-11-01). | Es el que más usa la casa; sin fijarlo, Sam's da el precio de un club de la CDMX. |
 | T94 | **Separación de 2 minutos con Sam's** (decisión de Mauricio, 2026-11-01): `MIN_SPACING_S.sams_mx` = 120 en el Worker y en el adapter. | Al buscar el club de Forjadores, Sam's bloqueó la IP de la casa tras 6 peticiones en unos 4 minutos separadas 30 s. Con revisiones cada 8 h no cambia nada en el día a día, y una tanda (la primera corrida, varios "Revisar ahora") ya no se vuelve una ráfaga. |
+| T95 | **Seguimiento en Android.**<br>• "Revisar ahora" va por un Worker (`CheckNowWorker`), uno por listing, que primero empuja el listing si sigue en el outbox.<br>• Resolver el enlace es la única llamada directa (05 §3).<br>• Seguimiento es una pestaña dentro de Catálogo, armada en `app` para no acoplar features.<br>• La app recibe `ACTION_SEND` de texto como "Seguir precio". | La regla 12 solo permite como llamadas directas las de §3. Un Worker además reintenta sin red. Las features no dependen entre sí. Compartir desde la app de la tienda es como la familia encuentra los productos. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -420,3 +426,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-01** — T-200/T-201: token de dev cargado; el agente corre en el servidor con su propio compose (T91) y su primer respaldo coincide con D1 de dev en las 24 tablas.
 - **2026-11-01** — T-223: web de seguimiento, alertas y servidor casero (W-20 a W-22) con las lecturas nuevas de la API (T92). Mauricio eligió el Sam's de Forjadores (T93).
 - **2026-11-01** — T-207: Sam's bloqueó la IP de la casa durante la búsqueda del club; separación de 2 minutos con Sam's (T94).
+- **2026-11-01** — T-220 (avance): seguimiento en Android (S-20, S-21) con "Revisar ahora" por Worker y la opción "Seguir precio" al compartir (T95); falta la prueba en el teléfono.

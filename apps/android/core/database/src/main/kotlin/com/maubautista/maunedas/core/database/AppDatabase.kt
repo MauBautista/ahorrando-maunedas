@@ -91,6 +91,8 @@ abstract class AppDatabase : RoomDatabase() {
 
     abstract fun shelf(): ShelfDao
 
+    abstract fun tracking(): TrackingDao
+
     companion object {
         const val NAME = "maunedas.db"
     }

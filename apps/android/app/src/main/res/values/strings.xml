@@ -8,4 +8,9 @@
     <string name="tab_scan">Escanear</string>
     <string name="tab_catalog">Catálogo</string>
     <string name="tab_settings">Ajustes</string>
+    <!-- Seguimiento lives inside Catálogo (05 §4). -->
+    <string name="catalog_tab_products">Productos</string>
+    <string name="catalog_tab_tracking">Seguimiento</string>
+    <!-- What the share sheet says for a store's link (S-21). -->
+    <string name="share_label">Seguir precio</string>
 </resources>

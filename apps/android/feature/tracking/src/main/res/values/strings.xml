@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- S-20 Seguimiento -->
+    <string name="tracking_title">Seguimiento de precios en línea</string>
+    <string name="tracking_add">Seguir un enlace</string>
+    <string name="tracking_back">Atrás</string>
+    <string name="tracking_empty">Aún no sigues ningún precio en línea. Comparte el enlace de un producto de Amazon, Sam’s Club o Costco con esta app, o pégalo en «Seguir un enlace».</string>
+    <string name="tracking_only">Solo %1$s</string>
+    <string name="tracking_health_paused">En pausa</string>
+    <string name="tracking_health_waiting">Por revisar</string>
+    <string name="tracking_health_ok">Al día</string>
+    <string name="tracking_health_out_of_stock">Agotado</string>
+    <string name="tracking_health_not_found">Ya no existe</string>
+    <string name="tracking_health_blocked">Bloqueado</string>
+    <string name="tracking_health_error">Con error</string>
+    <string name="tracking_help_paused">No se revisa hasta que lo reanudes.</string>
+    <string name="tracking_help_waiting">El servidor casero lo revisará en unos minutos.</string>
+    <string name="tracking_help_not_found">La tienda ya no tiene esta página.</string>
+    <string name="tracking_help_blocked">La tienda está bloqueando las revisiones; se reintentará más tarde.</string>
+    <string name="tracking_help_error">No se pudo leer la página; se reintentará más tarde.</string>
+    <string name="tracking_checked">Revisado %1$s</string>
+    <string name="tracking_not_checked">Aún no se revisa</string>
+    <string name="tracking_every_hours">Cada %1$d h</string>
+    <string name="tracking_every_minutes">Cada %1$d min</string>
+    <string name="tracking_requested">Revisión solicitada</string>
+    <string name="tracking_last_price">Último precio visto</string>
+    <string name="tracking_list_price">Antes %1$s</string>
+    <string name="tracking_check_now">Revisar ahora</string>
+    <string name="tracking_pause">Pausar</string>
+    <string name="tracking_resume">Reanudar</string>
+    <string name="tracking_open">Abrir en la tienda</string>
+    <string name="tracking_stop">Dejar de seguir</string>
+    <string name="tracking_stop_confirm">¿Dejar de seguir %1$s en %2$s? Los precios ya guardados se conservan.</string>
+    <string name="tracking_cancel">Cancelar</string>
+    <string name="tracking_check_asked">El servidor casero revisará %1$s en unos minutos.</string>
+
+    <!-- S-21 Seguir un enlace -->
+    <string name="add_title">Seguir un enlace</string>
+    <string name="add_link_label">Enlace del producto</string>
+    <string name="add_link_hint">Pega el enlace de Amazon, Sam’s Club o Costco</string>
+    <string name="add_continue">Continuar</string>
+    <string name="add_resolving">Revisando…</string>
+    <string name="add_other">Otro enlace</string>
+    <string name="add_store_unknown">Tienda en línea</string>
+    <string name="add_variant">¿Qué presentación es?</string>
+    <string name="add_search">Buscar presentación</string>
+    <string name="add_change">Cambiar</string>
+    <string name="add_no_results">No hay presentaciones con ese nombre. Créala primero en el catálogo.</string>
+    <string name="add_save">Seguir precio</string>
+    <string name="add_saving">Guardando…</string>
+    <string name="add_followed">Ese enlace ya está en seguimiento para %1$s.</string>
+    <string name="add_reason_no_url">No encontramos un enlace en lo que compartiste.</string>
+    <string name="add_reason_short_link">No pudimos abrir ese enlace corto. Copia el enlace completo de la página del producto.</string>
+    <string name="add_reason_not_tracked">Ese enlace no se puede seguir: por ahora solo productos de Amazon, Sam’s Club y Costco (Walmart bloquea las revisiones).</string>
+    <string name="add_reason_no_store">Falta dar de alta esa tienda. Avísale a quien administra la app.</string>
+    <string name="add_unsupported">Esa tienda todavía no se puede seguir.</string>
+    <string name="add_no_network">Sin conexión: revisar el enlace necesita internet. Inténtalo cuando tengas señal.</string>
+</resources>
