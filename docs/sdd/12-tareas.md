@@ -476,7 +476,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 - **Hecho (2026-11-01, T90):**
   - **Código:** `BrowserFetcher` con reinicio por páginas y por memoria (RSS de los hijos, desde `/proc`), recursos bloqueados y una página a la vez. Los adapters lo usan como último recurso, tras esperar turno en el dominio y nunca ante un bloqueo.
   - **Pruebas:** con un Chromium falso y con Chromium real en la imagen; 13 mutaciones, todas detectadas.
-### [~] T-205 · Adapter `amazon_mx` · [~] T-207 · `sams_mx` · [~] T-208 · `costco_mx`
+### [x] T-205 · Adapter `amazon_mx` · [~] T-207 · `sams_mx` · [~] T-208 · `costco_mx`
 - **Docs:** 07 §9, `docs/spikes/spike-b-scraping.md` · **Depende de:** T-203 (ninguna requirió navegador en el spike B)
 - **T-206 · `walmart_mx`: descartada (2026-10-19).** Walmart bloquea con captcha de PerimeterX desde la primera petición; por la regla 10 no se sigue (decisión T34).
 - **Hecho cuando:** fixtures `ok`, `sin stock`, `con precio de lista` y `bloqueo` pasan; una URL real devuelve el precio correcto para CP 72750.
@@ -488,10 +488,13 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
     - `bloqueo`: captcha de Amazon y el reto de PerimeterX de Walmart para Sam's.
   - **Comprobación con URLs reales:** una por tienda, precios correctos.
   - **Pruebas:** el agente tiene 134; 20 mutaciones, todas detectadas.
+- **T-205 terminada (2026-11-02):** fixture real `amazon_mx/con_precio_de_lista.html`.
+  - **Origen:** la página que el agente guardó sola el 2026-11-02 (T96): $759.06 con lista de $858.81, confirmada en la app de Amazon.
+  - **Recorte:** solo los bloques que lee el adapter, 12 KB, sin la ubicación ni datos de sesión.
+  - **Lectura:** la del recorte es idéntica a la de la página completa.
+  - **Selectores:** en la página real coinciden los tres de precio de lista (`.apex-basisprice-value`, `.basisPrice` y el tachado), y el "precio a pagar" fuera de pantalla viene vacío.
 - **Falta:**
-  - **Páginas reales con precio de lista:** el spike B no vio ninguna; hoy se prueba con variantes de las reales.
-    - El 2026-11-01 el agente leyó bien una real de Amazon ($759.06 con lista de $858.81, confirmada en la app), pero la oferta terminó antes de guardarla.
-    - Desde T96 el agente guarda solas las primeras páginas con precio de lista en `/data/muestras/`.
+  - **Páginas reales con precio de lista de Sam's y Costco:** hoy se prueban con variantes de las reales. El agente guardará solas las primeras en `/data/muestras/` (T96) cuando se siga algún enlace de esas tiendas con oferta.
   - **Club de Sam's:** Mauricio eligió el de **Forjadores, Puebla** (T93).
     - Sam's guarda el club en las cookies `assortmentStoreId` y `locDataV3`; sin ellas da el precio del club `0000009996` de la CDMX.
     - El sitio no publica los números de club; falta el de Forjadores (Mauricio, por ejemplo de un ticket) y probar con calma que esas cookies lo fijen.
