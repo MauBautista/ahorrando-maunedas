@@ -1,6 +1,14 @@
 import type { ListingWithState } from '@maunedas/shared/api/listings';
 import { agoTime, formatMoney } from '../../lib/format';
-import { checkRequested, HEALTH_HELP, HEALTH_LABEL, intervalText, listingHealth } from './labels';
+import {
+  checkRequested,
+  HEALTH_HELP,
+  HEALTH_LABEL,
+  INTERVAL_OPTIONS,
+  intervalText,
+  listingHealth,
+  spanText,
+} from './labels';
 
 const BADGE: Record<string, string> = {
   ok: 'border-primary text-primary',
@@ -17,6 +25,7 @@ export function ListingCard({
   onCheckNow,
   onToggle,
   onRemove,
+  onInterval,
 }: {
   listing: ListingWithState;
   now: number;
@@ -24,6 +33,8 @@ export function ListingCard({
   onCheckNow: () => void;
   onToggle: () => void;
   onRemove: () => void;
+  /** Null follows the store's interval (RF-TRK-02). */
+  onInterval: (minutes: number | null) => void;
 }) {
   const health = listingHealth(l);
   const s = l.state;
@@ -31,6 +42,10 @@ export function ListingCard({
   const list = s?.last_list_price_cents ?? null;
   const requested = checkRequested(l);
   const every = intervalText(l.check_interval_min);
+  // An interval set elsewhere stays visible instead of looking like another option.
+  const options = INTERVAL_OPTIONS.includes(l.check_interval_min)
+    ? INTERVAL_OPTIONS
+    : [...INTERVAL_OPTIONS, l.check_interval_min];
   return (
     <li className="flex flex-col gap-2 rounded-xl border border-outline/30 p-4">
       <div className="flex items-center justify-between gap-2">
@@ -62,6 +77,21 @@ export function ListingCard({
         {requested && ' · Revisión solicitada'}
       </p>
       {HEALTH_HELP[health] && <p className="text-label text-on-surface-variant">{HEALTH_HELP[health]}</p>}
+      <label className="flex flex-wrap items-center gap-2 text-label">
+        Revisar cada
+        <select
+          className="rounded-lg border border-outline/60 bg-surface px-2 py-1"
+          value={l.check_interval_min ?? ''}
+          disabled={busy}
+          onChange={(e) => onInterval(e.target.value === '' ? null : Number(e.target.value))}
+        >
+          {options.map((m) => (
+            <option key={m ?? 'store'} value={m ?? ''}>
+              {m === null ? `De la tienda (${spanText(l.store_interval_min)})` : spanText(m)}
+            </option>
+          ))}
+        </select>
+      </label>
       <div className="flex flex-wrap gap-2">
         <button
           type="button"

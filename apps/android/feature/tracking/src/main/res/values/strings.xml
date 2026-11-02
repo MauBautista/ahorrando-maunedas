@@ -29,6 +29,12 @@
     <string name="tracking_pause">Pausar</string>
     <string name="tracking_resume">Reanudar</string>
     <string name="tracking_open">Abrir en la tienda</string>
+    <!-- RF-TRK-02 (T-224) -->
+    <string name="tracking_interval">Cada cuánto</string>
+    <string name="tracking_interval_title">Revisar cada</string>
+    <string name="tracking_interval_store">De la tienda (%1$s)</string>
+    <string name="tracking_hours">%1$d h</string>
+    <string name="tracking_minutes">%1$d min</string>
     <string name="tracking_stop">Dejar de seguir</string>
     <string name="tracking_stop_confirm">¿Dejar de seguir %1$s en %2$s? Los precios ya guardados se conservan.</string>
     <string name="tracking_cancel">Cancelar</string>

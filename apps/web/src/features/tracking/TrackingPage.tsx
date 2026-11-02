@@ -63,6 +63,8 @@ export function TrackingPage() {
     });
   const toggle = (l: ListingWithState) =>
     act(l, () => write({ id: l.id, updated_at: touchedAt(l.updated_at), active: l.active === 1 ? 0 : 1 }));
+  const setInterval = (l: ListingWithState, minutes: number | null) =>
+    act(l, () => write({ id: l.id, updated_at: touchedAt(l.updated_at), check_interval_min: minutes }));
   const remove = (l: ListingWithState) =>
     act(l, async () => {
       setRemoving(null);
@@ -133,6 +135,7 @@ export function TrackingPage() {
                   onCheckNow={() => checkNow(l)}
                   onToggle={() => toggle(l)}
                   onRemove={() => setRemoving(l)}
+                  onInterval={(minutes) => setInterval(l, minutes)}
                 />
               ))}
             </ul>

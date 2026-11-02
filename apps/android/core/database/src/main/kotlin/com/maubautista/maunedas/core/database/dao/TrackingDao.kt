@@ -16,6 +16,7 @@ data class TrackedListingRow(
     val url: String,
     @ColumnInfo(name = "canonical_url") val canonicalUrl: String?,
     @ColumnInfo(name = "check_interval_min") val checkIntervalMin: Long?,
+    @ColumnInfo(name = "store_interval_min") val storeIntervalMin: Long,
     val active: Int,
     @ColumnInfo(name = "last_checked_at") val lastCheckedAt: Long?,
     @ColumnInfo(name = "last_status") val lastStatus: String?,
@@ -66,7 +67,8 @@ interface TrackingDao {
     @Query(
         """
         SELECT l.id, l.variant_id, v.product_id, p.name AS product_name, v.label AS variant_label,
-               s.name AS store_name, l.url, l.canonical_url, l.check_interval_min, l.active,
+               s.name AS store_name, l.url, l.canonical_url, l.check_interval_min,
+               s.default_check_interval_min AS store_interval_min, l.active,
                st.last_checked_at, st.last_status, st.last_price_cents, st.last_list_price_cents, st.last_in_stock,
                st.last_promo_text, st.check_requested_at
         FROM listings l

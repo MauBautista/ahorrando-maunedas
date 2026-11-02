@@ -45,10 +45,16 @@ export function checkRequested(l: ListingWithState): boolean {
 
 /** "Cada 8 h", "Cada 90 min"; null when the store's interval applies. */
 export function intervalText(minutes: number | null): string | null {
-  if (minutes === null) return null;
-  if (minutes % 60 === 0) return `Cada ${minutes / 60} h`;
-  return `Cada ${minutes} min`;
+  return minutes === null ? null : `Cada ${spanText(minutes)}`;
 }
+
+/** "8 h", or "90 min" when it is not whole hours. */
+export function spanText(minutes: number): string {
+  return minutes % 60 === 0 ? `${minutes / 60} h` : `${minutes} min`;
+}
+
+/** RF-TRK-02 (T-224, decisión T100): the store's interval (null), then 2 h, 4 h, 12 h and a day. */
+export const INTERVAL_OPTIONS: ReadonlyArray<number | null> = [null, 120, 240, 720, 1440];
 
 /** Why a link cannot be followed (`422 E-UNSUPPORTED_URL`, T-210). */
 export const UNSUPPORTED_REASON: Record<UnsupportedUrlReason, string> = {

@@ -2,9 +2,14 @@ package com.maubautista.maunedas.feature.tracking
 
 import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Surface
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.test.assertIsEnabled
 import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsNotSelected
+import androidx.compose.ui.test.assertIsSelected
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
@@ -38,7 +43,7 @@ class TrackingScreenTest {
         o: TrackedListing.() -> TrackedListing = { this },
     ) = TrackedListing(
         id = "l1", variantId = "v1", productId = "p1", productName = "Leche Lala Entera", variantLabel = "1 L", storeName = "Amazon",
-        url = "https://www.amazon.com.mx/dp/B1", intervalMin = null, active = health != ListingHealth.PAUSED, health = health,
+        url = "https://www.amazon.com.mx/dp/B1", intervalMin = null, storeIntervalMin = 480, active = health != ListingHealth.PAUSED, health = health,
         lastCheckedAt = now - 2 * 3_600_000, priceCents = 2_899, listPriceCents = null, promoText = null, checkRequested = false,
     ).o()
 
@@ -58,6 +63,7 @@ class TrackingScreenTest {
                 onCheckNow = { done += "check:${it.id}" },
                 onToggle = { done += "toggle:${it.id}" },
                 onStop = { done += "stop:${it.id}" },
+                onInterval = { done += "interval:${it.id}" },
             ),
         )
         compose.onNodeWithText("Al día").assertExists()
@@ -69,8 +75,26 @@ class TrackingScreenTest {
         compose.onNodeWithText("Seguir un enlace").performClick()
         compose.onNodeWithText("Revisar ahora").assertIsEnabled().performClick()
         compose.onNodeWithText("Pausar").performClick()
+        compose.onNodeWithText("Cada cuánto").performClick()
         compose.onNodeWithText("Dejar de seguir").performClick()
-        assertEquals(listOf("product:p1", "add", "check:l1", "toggle:l1", "stop:l1"), done)
+        assertEquals(listOf("product:p1", "add", "check:l1", "toggle:l1", "interval:l1", "stop:l1"), done)
+    }
+
+    @Test
+    fun theIntervalOffersTheStoresAndFourSpansWithTheCurrentOneChosen() {
+        val picked = mutableListOf<Any?>()
+        var listing by mutableStateOf(listing { copy(intervalMin = 240) })
+        compose.setContent { MaunedasTheme { IntervalDialog(listing, onPick = { picked += it }, onDismiss = { picked += "cancel" }) } }
+        compose.onNodeWithText("Revisar cada").assertExists()
+        compose.onNodeWithText("4 h").assertIsSelected()
+        for (other in listOf("De la tienda (8 h)", "2 h", "12 h", "24 h")) compose.onNodeWithText(other).assertIsNotSelected()
+        compose.onNodeWithText("12 h").performClick()
+        compose.onNodeWithText("De la tienda (8 h)").performClick()
+        compose.onNodeWithText("Cancelar").performClick()
+        assertEquals(listOf<Any?>(720L, null, "cancel"), picked)
+        // Following a store of 90 min: that one is chosen, in minutes.
+        listing = listing.copy(intervalMin = null, storeIntervalMin = 90)
+        compose.onNodeWithText("De la tienda (90 min)").assertIsSelected()
     }
 
     @Test

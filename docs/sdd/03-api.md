@@ -448,7 +448,7 @@ Resuelve enlaces cortos (`amzn.to`, `a.co`) siguiendo redirecciones con `redirec
 `200 { items: Array<AlertRuleRow & { product_id, product_name, brand, variant_label, store_name: string | null }> }`. Solo las reglas vivas del usuario; `variant_id` es opcional. Android las tiene por sync; la web no guarda copia local.
 
 **Ampliaciones para la web (T-223, decisión T92):**
-- **`GET /v1/listings`:** `variant_id` es **opcional**. Sin él devuelve todos los listings vivos (W-20), ordenados por producto, presentación y tienda. Cada uno trae `product_id`, `product_name`, `brand`, `variant_label` y `store_name`.
+- **`GET /v1/listings`:** `variant_id` es **opcional**. Sin él devuelve todos los listings vivos (W-20), ordenados por producto, presentación y tienda. Cada uno trae `product_id`, `product_name`, `brand`, `variant_label`, `store_name` y `store_interval_min` (el `default_check_interval_min` de su tienda, T-224).
 - **`GET /v1/alerts/events`:** cada alerta trae `variant_id`, `product_id`, `product_name`, `brand` y `variant_label` (de su regla), o `null` si la regla o la presentación ya no existen, para enlazarla a la ficha.
 
 ## 12. Administración (rol admin)

@@ -53,6 +53,7 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-224 (2026-11-02, avance):** ya se puede elegir cada cuánto se revisa un enlace, en Android ("Cada cuánto") y en la web ("Revisar cada"): de la tienda, 2 h, 4 h, 12 h o 24 h. Al cambiarlo, el servidor casero reprograma la siguiente revisión desde la última. Falta probarlo desde el teléfono.
 - **Cierre de la Etapa 2 (2026-11-02, avance):** cinco de las ocho comprobaciones de 11 §6 pasaron.
   - **Dos reglas en una observación:** dos reglas temporales en dev ("debajo de $755.00" y "bajó 1 %") y una revisión simulada de $749.00 dieron dos eventos y una sola notificación en el teléfono. La regla de $750 estaba en enfriamiento y no sonó. Las reglas temporales se borraron.
   - **Agente apagado 2 h 36 min:**
@@ -510,3 +511,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-02** — T-231: restauración probada; el respaldo del 2026-11-01 entra completo en una D1 nueva (57 filas, sin llaves rotas). Procedimiento en "Restauración" (T99).
 - **2026-11-02** — T-222 terminada: probada en el teléfono. Bloques de agente, Worker y clientes de la Etapa 2 completos en `PLAN.md`.
 - **2026-11-02** — Cierre de la Etapa 2 (avance): dos reglas → una notificación, agente apagado 2 h con aviso y retoma, restauración en una D1 remota temporal; hallazgo: RF-TRK-02 sin editor en los clientes.
+- **2026-11-02** — T-224 (avance): intervalo por listing en Android y web; el agente reprograma al cambiarlo (T100). Falta la prueba en el teléfono.

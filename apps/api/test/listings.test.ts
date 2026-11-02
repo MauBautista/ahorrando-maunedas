@@ -198,6 +198,7 @@ describe('listings: check now and list (03 §11)', () => {
       brand: null,
       variant_label: '1 L',
       store_name: 'Amazon',
+      store_interval_min: 480,
     });
     expect(withState.product_id).toEqual(expect.any(String));
     expect(withState.state).toMatchObject({

@@ -95,7 +95,8 @@ export const listings = new Hono<AppEnv>()
     const { results } = await c.env.DB.prepare(
       `SELECT l.id, l.variant_id, l.store_id, l.adapter, l.url, l.canonical_url, l.external_id, l.check_interval_min,
               l.active, l.created_at, l.updated_at, l.version, v.product_id, p.name AS product_name, p.brand,
-              v.label AS variant_label, s.name AS store_name, json_object(
+              v.label AS variant_label, s.name AS store_name, s.default_check_interval_min AS store_interval_min,
+              json_object(
                 'listing_id', st.listing_id, 'last_checked_at', st.last_checked_at, 'last_status', st.last_status,
                 'last_error', st.last_error, 'consecutive_failures', st.consecutive_failures,
                 'last_price_cents', st.last_price_cents, 'last_list_price_cents', st.last_list_price_cents,

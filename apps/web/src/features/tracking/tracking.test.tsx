@@ -1,6 +1,6 @@
 import type { AlertEventItem, AlertRuleItem } from '@maunedas/shared/api/alerts';
 import type { ListingWithState } from '@maunedas/shared/api/listings';
-import { screen, within } from '@testing-library/react';
+import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { detail } from '../../test/catalog';
@@ -39,6 +39,7 @@ function listing(o: Partial<ListingWithState> = {}): ListingWithState {
     brand: 'Lala',
     variant_label: '1 L',
     store_name: 'Amazon',
+    store_interval_min: 480,
     state: {
       listing_id: o.id ?? 'l1',
       last_checked_at: Date.now() - 2 * HOUR,
@@ -202,6 +203,51 @@ describe('W-20 seguimiento', () => {
       updated_at: expect.any(Number),
       deleted_at: expect.any(Number),
     });
+  });
+
+  it('changes how often a link is checked, and goes back to the store’s', async () => {
+    const w = worker();
+    renderAt('/seguimiento', w.fetchImpl);
+    const ui = userEvent.setup();
+    await screen.findByRole('heading', { name: 'Leche Lala Entera · 1 L' }, LAZY);
+    const [amazon, costco] = screen.getAllByRole('listitem');
+    const amazonEvery = within(amazon!).getByRole('combobox', { name: 'Revisar cada' }) as HTMLSelectElement;
+    expect([...amazonEvery.options].map((o) => o.text)).toEqual([
+      'De la tienda (8 h)',
+      '2 h',
+      '4 h',
+      '12 h',
+      '24 h',
+    ]);
+    expect(amazonEvery.selectedOptions[0]!.text).toBe('De la tienda (8 h)');
+    const costcoEvery = within(costco!).getByRole('combobox', { name: 'Revisar cada' }) as HTMLSelectElement;
+    expect(costcoEvery.selectedOptions[0]!.text).toBe('4 h');
+
+    await ui.selectOptions(amazonEvery, '4 h');
+    await ui.selectOptions(costcoEvery, 'De la tienda (8 h)');
+    await waitFor(() => expect(pushed(w)).toHaveLength(2));
+    const rows = pushed(w).map((m) => (m as Array<{ table: string; row: Record<string, unknown> }>)[0]!);
+    expect(rows[0]).toEqual({
+      table: 'listings',
+      row: { id: 'l1', updated_at: expect.any(Number), check_interval_min: 240 },
+    });
+    expect(rows[1]!.row).toEqual({ id: 'l2', updated_at: expect.any(Number), check_interval_min: null });
+  });
+
+  it('keeps an interval set elsewhere among the options', async () => {
+    const own = listing({ check_interval_min: 90, store_interval_min: 720 });
+    renderAt('/seguimiento', worker({ '/v1/listings': () => ({ items: [own] }) }).fetchImpl);
+    await screen.findByRole('heading', { name: 'Leche Lala Entera · 1 L' }, LAZY);
+    const every = screen.getByRole('combobox', { name: 'Revisar cada' }) as HTMLSelectElement;
+    expect([...every.options].map((o) => o.text)).toEqual([
+      'De la tienda (12 h)',
+      '2 h',
+      '4 h',
+      '12 h',
+      '24 h',
+      '90 min',
+    ]);
+    expect(every.selectedOptions[0]!.text).toBe('90 min');
   });
 
   it('follows a new link after resolving it and choosing the variant', async () => {
