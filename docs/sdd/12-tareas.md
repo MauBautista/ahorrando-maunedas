@@ -555,9 +555,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - En el Samsung, una alerta "Baja a $750" sobre un enlace de Amazon llegó al servidor por sync y el token del teléfono quedó registrado.
   - Una revisión simulada del agente en dev ($749) la disparó y FCM la entregó (`sent`).
   - La notificación salió en "Alertas de precio" con su título y su texto, y al tocarla abrió la ficha del producto.
-### [ ] T-222 · Android: serie web escalonada y estado del agente
+### [~] T-222 · Android: serie web escalonada y estado del agente
 - **Nota (T-115):** hoy la serie web se dibuja como puntos, igual que las otras; esta tarea la convierte en escalones hasta `web_confirmed_until`.
 - **Depende de:** T-115, T-211
+- **Avance (2026-11-02, T98):**
+  - **Gráfica:** escalones web por listing hasta su última revisión.
+  - **Estado del agente:** en Ajustes para el admin (RF-ADM-03), y en S-20 un aviso para todos cuando lleva más de 30 min sin reportarse.
+  - **Pruebas:** 7 nuevas (repositorios, gráfica, Seguimiento y Ajustes).
+- **Falta (Mauricio):** verlo en el teléfono: la gráfica de microdacyn con sus escalones y la sección "Servidor casero" en Ajustes.
 ### [x] T-223 · Web: seguimiento, alertas y agente (W-20 a W-22)
 - **Depende de:** T-210, T-212, T-161
 - **Hecho (2026-11-01, T92):**

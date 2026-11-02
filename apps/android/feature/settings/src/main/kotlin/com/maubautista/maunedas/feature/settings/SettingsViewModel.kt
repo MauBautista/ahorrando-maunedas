@@ -8,8 +8,11 @@ import com.maubautista.maunedas.core.auth.MIN_PASSWORD
 import com.maubautista.maunedas.core.auth.PasswordChange
 import com.maubautista.maunedas.core.auth.SessionStore
 import com.maubautista.maunedas.core.auth.SessionUser
+import com.maubautista.maunedas.core.data.AgentHealth
+import com.maubautista.maunedas.core.data.AgentStatusRepository
 import com.maubautista.maunedas.core.data.SyncCenter
 import com.maubautista.maunedas.core.data.SyncHealthRepository
+import com.maubautista.maunedas.core.model.Clock
 import com.maubautista.maunedas.core.network.ClientInfo
 import com.maubautista.maunedas.core.sync.SyncScheduler
 import com.maubautista.maunedas.core.sync.SyncStatus
@@ -57,7 +60,14 @@ class SettingsViewModel
         private val auth: AuthService,
         private val scheduler: SyncScheduler,
         val client: ClientInfo,
+        agents: AgentStatusRepository,
+        private val clock: Clock,
     ) : ViewModel() {
+        /** RF-ADM-03: the home agent's latest report, shown to the admin. */
+        val agent: StateFlow<AgentHealth?> = agents.status().stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), null)
+
+        fun now(): Long = clock.nowMillis()
+
         val user: StateFlow<SessionUser?> = session.user
 
         /** RF-AUTH-06 only for a session that signed in with username and password (T76). */

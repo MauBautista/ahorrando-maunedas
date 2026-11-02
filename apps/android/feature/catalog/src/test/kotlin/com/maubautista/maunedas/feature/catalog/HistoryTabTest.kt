@@ -75,6 +75,30 @@ class HistoryTabTest {
         assertEquals(emptyList<ChartSeries>(), chartSeries(emptyList()))
     }
 
+    @Test
+    fun webPricesAreStepsPerListingUntilTheirLastCheck() {
+        val web =
+            listOf(
+                HistoryPoint("w1", "web", "amazon", "Amazon", at("2026-10-01T18:00:00Z"), 2_900, 2_900, 2_900, false, "a"),
+                HistoryPoint("w2", "web", "amazon", "Amazon", at("2026-10-05T18:00:00Z"), 2_600, 2_600, 2_600, false, "a"),
+                HistoryPoint("w3", "web", "costco", "Costco", at("2026-10-03T18:00:00Z"), 2_500, 2_500, 2_500, false, "b"),
+                HistoryPoint("w4", "web", "costco", "Costco", at("2026-10-04T18:00:00Z"), 2_400, 2_400, 2_400, false, "c"),
+            )
+        val series = chartSeries(web, mapOf("a" to at("2026-10-09T18:00:00Z"), "b" to at("2026-10-02T18:00:00Z")))
+        // Steps first (drawn under the points): Amazon holds $29.00 until its next price, then $26.00 until its last check.
+        val amazon = series.first { it.listingId == "a" }
+        assertEquals(true, amazon.steps)
+        assertEquals("web-steps:a", amazon.key)
+        val day = { iso: String -> com.maubautista.maunedas.core.model.HouseholdTime.epochDay(at(iso)) }
+        assertEquals(listOf(day("2026-10-01T18:00:00Z"), day("2026-10-05T18:00:00Z"), day("2026-10-05T18:00:00Z"), day("2026-10-09T18:00:00Z")), amazon.x)
+        assertEquals(listOf(29.0, 29.0, 26.0, 26.0), amazon.y)
+        // A check older than its only price, or none at all: one price is no line, only its point.
+        assertEquals(listOf("a"), series.filter { it.steps }.map { it.listingId })
+        val dots = series.single { !it.steps }
+        assertEquals(listOf("web", 4), listOf(dots.key, dots.x.size))
+        assertEquals(listOf("purchase", "shelf", "web"), chartSeries(points).map { it.key })
+    }
+
     private fun show(
         tab: HistoryTabState,
         fontScale: Float = 1f,

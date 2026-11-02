@@ -10,6 +10,8 @@ import androidx.compose.ui.test.onNodeWithContentDescription
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.unit.dp
+import com.maubautista.maunedas.core.data.AgentHealth
+import com.maubautista.maunedas.core.data.BackupJob
 import com.maubautista.maunedas.core.data.ListingHealth
 import com.maubautista.maunedas.core.data.TrackedListing
 import com.maubautista.maunedas.core.designsystem.MaunedasTheme
@@ -96,6 +98,20 @@ class TrackingScreenTest {
         compose.onNodeWithText("Agotado").assertExists()
         compose.onNodeWithText("Último precio visto").assertExists()
         compose.onNodeWithText("Revisado hace 2 h · Cada 90 min").assertExists()
+    }
+
+    @Test
+    fun saysWhenTheHomeServerStoppedReporting() {
+        val stale = AgentHealth(now - 3 * 3_600_000, "0.1.0", 0, 0, emptyList(), null, BackupJob(null, null, null, null), BackupJob(null, null, null, null), BackupJob(null, null, null, null))
+        show(TrackingState(loading = false, listings = listOf(listing()), agent = stale))
+        compose.onNodeWithText("El servidor casero no se reporta desde hace 3 h: los precios en línea están en pausa.").assertExists()
+    }
+
+    @Test
+    fun aRecentReportSaysNothing() {
+        val fresh = AgentHealth(now - 20 * 60_000, "0.1.0", 0, 0, emptyList(), null, BackupJob(null, null, null, null), BackupJob(null, null, null, null), BackupJob(null, null, null, null))
+        show(TrackingState(loading = false, listings = listOf(listing()), agent = fresh))
+        compose.onNodeWithText("El servidor casero no se reporta", substring = true).assertDoesNotExist()
     }
 
     @Test

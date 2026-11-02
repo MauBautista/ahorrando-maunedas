@@ -7,6 +7,7 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.work.Configuration
 import androidx.work.testing.SynchronousExecutor
 import androidx.work.testing.WorkManagerTestInitHelper
+import com.maubautista.maunedas.core.data.AgentStatusRepository
 import com.maubautista.maunedas.core.data.PurchaseEditor
 import com.maubautista.maunedas.core.data.TrackingRepository
 import com.maubautista.maunedas.core.database.AppDatabase
@@ -75,7 +76,7 @@ class TrackingViewModelTest {
     @Test
     fun checksPausesAndStopsFollowingAfterConfirming() =
         runTest {
-            val vm = TrackingViewModel(SavedStateHandle(mapOf("variantId" to "v1")), tracking, clock)
+            val vm = TrackingViewModel(SavedStateHandle(mapOf("variantId" to "v1")), tracking, clock, AgentStatusRepository(db))
             val listing = vm.state.first { !it.loading }.let { s ->
                 assertEquals("Leche Lala Entera · 1 L", s.variantName)
                 s.listings.single()

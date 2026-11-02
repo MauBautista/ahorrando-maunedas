@@ -28,6 +28,15 @@ data class HistoryPointRow(
     @ColumnInfo(name = "cents_per_base") val centsPerBase: Double,
     @ColumnInfo(name = "has_promo") val hasPromo: Boolean,
     val measure: String,
+    /** The listing of a web point (its steps, T-222); null for purchases and shelf prices. */
+    @ColumnInfo(name = "listing_id") val listingId: String? = null,
+)
+
+/** When a variant's live listing was last checked: its web price holds until then (`web_confirmed_until`, 03 §7). */
+data class ListingCheckRow(
+    @ColumnInfo(name = "listing_id") val listingId: String,
+    @ColumnInfo(name = "store_id") val storeId: String,
+    @ColumnInfo(name = "last_checked_at") val lastCheckedAt: Long,
 )
 
 /** What the product page (S-08) observes; prices come from [CatalogQueryDao.allPricePoints]. */
@@ -59,13 +68,22 @@ interface ProductPageDao {
     @Query(
         """
         SELECT pp.point_id, pp.source, pp.store_id, s.name AS store_name, pp.observed_at, pp.list_unit_cents,
-               pp.effective_unit_cents, pp.cents_per_base, pp.has_promo, v.measure
+               pp.effective_unit_cents, pp.cents_per_base, pp.has_promo, v.measure, pp.listing_id
         FROM v_price_points pp JOIN variants v ON v.id = pp.variant_id LEFT JOIN stores s ON s.id = pp.store_id
         WHERE pp.variant_id = :variantId AND pp.cents_per_base IS NOT NULL
         ORDER BY pp.observed_at, pp.point_id
         """,
     )
     fun variantPoints(variantId: String): Flow<List<HistoryPointRow>>
+
+    @Query(
+        """
+        SELECT l.id AS listing_id, l.store_id, s.last_checked_at
+        FROM listings l JOIN listing_state s ON s.listing_id = l.id
+        WHERE l.variant_id = :variantId AND l.deleted_at IS NULL AND s.last_checked_at IS NOT NULL
+        """,
+    )
+    fun listingChecks(variantId: String): Flow<List<ListingCheckRow>>
 
     /** Other live products, to merge [exceptId] into one of them. */
     @Query("SELECT id, name, brand AS detail, search_key FROM products WHERE deleted_at IS NULL AND id != :exceptId ORDER BY search_key, id")

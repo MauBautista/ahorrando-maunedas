@@ -144,4 +144,8 @@ interface TrackingDao {
     /** The product of a notification's variant (`maunedas://variant/{id}`); null until a pull brings it. */
     @Query("SELECT product_id FROM variants WHERE id = :variantId")
     fun productOfVariant(variantId: String): Flow<String?>
+
+    /** The home agent's latest report (RF-ADM-03), as `GET /v1/admin/agent` picks it. */
+    @Query("SELECT * FROM agent_status ORDER BY last_heartbeat_at DESC LIMIT 1")
+    fun agentStatus(): Flow<com.maubautista.maunedas.core.database.entity.AgentStatusEntity?>
 }

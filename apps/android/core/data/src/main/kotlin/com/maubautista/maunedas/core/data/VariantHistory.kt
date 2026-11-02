@@ -6,7 +6,7 @@ import com.maubautista.maunedas.core.model.DisplayUnit
 import com.maubautista.maunedas.core.model.Measure
 import com.maubautista.maunedas.core.pricing.Units
 import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.combine
 import javax.inject.Inject
 import javax.inject.Singleton
 
@@ -37,6 +37,8 @@ data class HistoryPoint(
     /** Per [VariantHistory.unit], as `display_cents`. */
     val displayCents: Long,
     val hasPromo: Boolean,
+    /** The listing of a web point, for its steps (T-222). */
+    val listingId: String? = null,
 )
 
 /** A store that has prices of the variant, for the store filter. */
@@ -51,6 +53,8 @@ data class VariantHistory(
     val points: List<HistoryPoint>,
     /** Stores with any price of the variant, whatever the filter. */
     val stores: List<HistoryStore>,
+    /** listing → its last check: the web price holds until then (`web_confirmed_until`, 03 §7). */
+    val webConfirmedUntil: Map<String, Long> = emptyMap(),
 )
 
 /** RF-PRE-02 from Room, with the rules of `GET /v1/variants/:id/history` (03 §7). */
@@ -67,7 +71,7 @@ class VariantHistoryRepository
             productUnit: DisplayUnit,
             filter: HistoryFilter,
         ): Flow<VariantHistory> =
-            db.productPage().variantPoints(variantId).map { rows ->
+            combine(db.productPage().variantPoints(variantId), db.productPage().listingChecks(variantId)) { rows, checks ->
                 val to = clock.nowMillis()
                 val from = filter.period.days?.let { to - it * DAY_MS } ?: Long.MIN_VALUE
                 val measure = rows.firstOrNull()?.let { Measure.fromWire(it.measure) } ?: productUnit.measure
@@ -80,10 +84,16 @@ class VariantHistoryRepository
                             .map {
                                 HistoryPoint(
                                     it.pointId, it.source, it.storeId, it.storeName, it.observedAt, it.listUnitCents, it.effectiveUnitCents,
-                                    Units.displayCents(it.centsPerBase, measure, unit), it.hasPromo,
+                                    Units.displayCents(it.centsPerBase, measure, unit), it.hasPromo, it.listingId,
                                 )
                             },
                     stores = rows.distinctBy { it.storeId }.map { HistoryStore(it.storeId, it.storeName) }.sortedBy { it.name.orEmpty().lowercase() },
+                    webConfirmedUntil =
+                        if ("web" in filter.sources) {
+                            checks.filter { filter.storeId == null || it.storeId == filter.storeId }.associate { it.listingId to it.lastCheckedAt }
+                        } else {
+                            emptyMap()
+                        },
                 )
             }
 

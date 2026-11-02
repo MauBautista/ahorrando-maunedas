@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.material3.Surface
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.SemanticsActions
@@ -24,6 +27,8 @@ import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
 import androidx.test.core.app.ApplicationProvider
 import com.maubautista.maunedas.core.auth.SessionUser
+import com.maubautista.maunedas.core.data.AgentHealth
+import com.maubautista.maunedas.core.data.BackupJob
 import com.maubautista.maunedas.core.data.BarcodeConflict
 import com.maubautista.maunedas.core.data.PendingTable
 import com.maubautista.maunedas.core.data.RejectedChange
@@ -91,6 +96,47 @@ class SettingsScreensTest {
         compose.onNodeWithText("Se borran del teléfono", substring = true).assertExists()
         compose.onNode(hasText("Liberar espacio") and hasAnyAncestor(isDialog())).performClick()
         assertEquals(listOf("password", "sync", "now", "out", "free"), calls)
+    }
+
+    @Test
+    fun theAdminSeesTheHomeServer() {
+        val job = { ok: Boolean?, at: Long?, error: String?, detail: String? -> BackupJob(ok, at, error, detail) }
+        val health =
+            AgentHealth(
+                now - 5 * 60_000, "0.1.0", 5, 2, listOf("Sam’s Club"), "work: HTTP 503",
+                job(true, now - 2 * 3_600_000, null, "57"), job(false, null, "disco lleno", null), job(null, null, "sin credenciales de R2", null),
+            )
+        show { SettingsScreen(user, SyncStatus.Synced(now), 0, null, "0.1.0-dev", 1, SettingsActions(), agent = AgentSection(health, now)) }
+        for (text in listOf(
+            "En línea · último reporte hace 5 min",
+            "Versión del agente: 0.1.0",
+            "Por revisar: 5 · Por enviar: 2",
+            "Tiendas bloqueando: Sam’s Club",
+            "Último error: work: HTTP 503",
+            "Copia diaria de la base: 57 filas · hace 2 h",
+            "Volcado semanal: falló (disco lleno)",
+            "Fotos: sin credenciales de R2",
+        )) {
+            compose.onNodeWithText(text).performScrollTo().assertExists()
+        }
+    }
+
+    @Test
+    fun theAdminSeesWhenTheHomeServerStoppedOrNeverConnected() {
+        var section by mutableStateOf(AgentSection(null, now))
+        show { SettingsScreen(user, SyncStatus.Synced(now), 0, null, "0.1.0-dev", 1, SettingsActions(), agent = section) }
+        compose.onNodeWithText("El servidor casero todavía no se ha conectado.").performScrollTo().assertExists()
+        val none = BackupJob(null, null, null, null)
+        section = AgentSection(AgentHealth(now - 3 * 3_600_000, null, null, null, emptyList(), null, none, none, none), now)
+        compose.onNodeWithText("Sin conexión: último reporte hace 3 h. Los precios en línea están en pausa.").performScrollTo().assertExists()
+        compose.onNodeWithText("Tiendas bloqueando: ninguno").performScrollTo().assertExists()
+        compose.onNodeWithText("Copia diaria de la base: aún no corre").performScrollTo().assertExists()
+    }
+
+    @Test
+    fun aMemberDoesNotSeeTheHomeServer() {
+        show { SettingsScreen(SessionUser("u2", "pepe", "Pepe", "member", false), SyncStatus.Synced(now), 0, null, "0.1.0-dev", 1, SettingsActions()) }
+        compose.onNodeWithText("Servidor casero").assertDoesNotExist()
     }
 
     @Test

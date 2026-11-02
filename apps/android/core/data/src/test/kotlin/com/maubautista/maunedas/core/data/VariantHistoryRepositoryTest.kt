@@ -4,6 +4,8 @@ import android.content.Context
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import com.maubautista.maunedas.core.database.AppDatabase
+import com.maubautista.maunedas.core.database.entity.ListingEntity
+import com.maubautista.maunedas.core.database.entity.ListingStateEntity
 import com.maubautista.maunedas.core.database.entity.PriceObservationEntity
 import com.maubautista.maunedas.core.database.entity.ProductEntity
 import com.maubautista.maunedas.core.database.entity.PurchaseEntity
@@ -140,5 +142,31 @@ class VariantHistoryRepositoryTest {
         runTest {
             val h = history.history("sobres", DisplayUnit.KG, HistoryFilter()).first()
             assertEquals(DisplayUnit.PZ to 500L, h.unit to h.points.single().displayCents)
+        }
+
+    @Test
+    fun webPointsKnowTheirListingAndItsLastCheck() =
+        runTest {
+            db.listings().upsertAll(
+                listOf(
+                    ListingEntity(id = "listing", variantId = "l1", storeId = "amazon", adapter = "amazon_mx", url = "https://a", active = 1, createdAt = 1, updatedAt = 1),
+                    ListingEntity(id = "gone", variantId = "l1", storeId = "amazon", adapter = "amazon_mx", url = "https://b", active = 1, deletedAt = 5, createdAt = 1, updatedAt = 1),
+                    ListingEntity(id = "unchecked", variantId = "l1", storeId = "amazon", adapter = "amazon_mx", url = "https://c", active = 1, createdAt = 1, updatedAt = 1),
+                ),
+            )
+            db.listingState().upsertAll(
+                listOf(
+                    ListingStateEntity(listingId = "listing", lastCheckedAt = at(1), consecutiveFailures = 0, updatedAt = 1),
+                    ListingStateEntity(listingId = "gone", lastCheckedAt = at(1), consecutiveFailures = 0, updatedAt = 1),
+                    ListingStateEntity(listingId = "unchecked", lastCheckedAt = null, consecutiveFailures = 0, updatedAt = 1),
+                ),
+            )
+            val h = history.history("l1", DisplayUnit.L, HistoryFilter()).first()
+            assertEquals("listing", h.points.single { it.source == "web" }.listingId)
+            assertEquals(null, h.points.first { it.source == "purchase" }.listingId)
+            assertEquals(mapOf("listing" to at(1)), h.webConfirmedUntil)
+            // Without web prices, or for another store, nothing holds.
+            assertEquals(emptyMap<String, Long>(), history.history("l1", DisplayUnit.L, HistoryFilter(sources = setOf("purchase"))).first().webConfirmedUntil)
+            assertEquals(emptyMap<String, Long>(), history.history("l1", DisplayUnit.L, HistoryFilter(storeId = "walmart")).first().webConfirmedUntil)
         }
 }
