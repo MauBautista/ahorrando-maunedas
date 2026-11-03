@@ -98,6 +98,17 @@ def test_amazon_promotion_from_a_real_page() -> None:
     )
 
 
+def test_amazon_list_price_from_a_real_page() -> None:
+    # Kept by the agent on 2026-11-02 (T96) and cut to what the adapter reads: $759.06 with a $858.81 list
+    # price, as the Amazon app showed it. Its price-to-pay offscreen copy is empty, as on 2026-11-01.
+    r = read(AMAZON, html("amazon_mx/con_precio_de_lista.html"))
+    assert (r.status, r.price_cents, r.list_price_cents, r.in_stock) == ("ok", 75906, 85881, True)
+    assert r.extra == {"method": "http_selectors", "seller": "Amazon Estados Unidos"}
+    assert r.promo_text is not None and r.promo_text.startswith(
+        "Ahorra $50 en cualquier 2 productos elegibles"
+    )
+
+
 def test_amazon_texts_leave_out_inline_styles_and_scripts() -> None:
     page = html("amazon_mx/ok.html").replace(
         "</body>",
