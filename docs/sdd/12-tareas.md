@@ -314,8 +314,17 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
   - 11 pruebas nuevas, más el prellenado de la foto en la prueba de formularios (T65).
 - **Incluye (T62):** la foto del catálogo abierto al crear un producto desde el escáner (`image_url` ya llega en `CatalogGuess`).
 - **Incluye:** la miniatura de la tarjeta del catálogo (Coil 3 con el `AuthInterceptor`, archivo local primero, prioridad de 10 §1), pospuesta de T-112 (T55).
-### [ ] T-118 · Recorte en el teléfono (opcional)
+### [~] T-118 · Recorte en el teléfono (opcional)
 - **Docs:** 10 §5 · **Depende de:** T-117
+- **Avance (2026-11-03, T101):**
+  - **Interruptor:** "Sin fondo" en la sección "Foto" de S-09 para una foto tomada o elegida ahí, apagado por omisión.
+  - **Recorte:** ML Kit en el teléfono, buscando el sujeto a ≤ 1024 px, y el posproceso de 10 §5.
+  - **Guardado:** tres renditions `device` seleccionadas y subidas después del original.
+  - **Pruebas:** 17 nuevas: 4 del posproceso, 4 del recorte, 4 del interruptor, 4 de la pantalla y 1 del guardado.
+- **Falta (Mauricio):** probarlo en el teléfono.
+  - El modelo se descarga y el interruptor se habilita.
+  - El recorte tarda < 2 s (registro `PhotoCutout`).
+  - Las tres renditions llegan a R2 y la foto sin fondo se ve en el catálogo y la ficha.
 
 ### [x] T-120 · Lista de compras (S-03)
 - **Depende de:** T-104

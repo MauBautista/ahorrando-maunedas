@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.maubautista.maunedas.core.database.AppDatabase
 import com.maubautista.maunedas.core.database.entity.BarcodeEntity
 import com.maubautista.maunedas.core.database.entity.ImageEntity
+import com.maubautista.maunedas.core.database.entity.ImageRenditionEntity
 import com.maubautista.maunedas.core.database.entity.ProductEntity
 import com.maubautista.maunedas.core.database.entity.ProductTagEntity
 import com.maubautista.maunedas.core.database.entity.TagEntity
@@ -36,11 +37,26 @@ data class ProductDraft(
     val primaryImageId: String? = null,
 )
 
+/** One rendition of a [Cutout]: a file in the cache and its size. */
+data class RenditionFile(
+    val path: String,
+    val width: Int,
+    val height: Int,
+)
+
+/** "Sin fondo" (T-118, 10 §5): the three renditions of tier `device` cut on the phone. */
+data class Cutout(
+    val processed: RenditionFile,
+    val thumb: RenditionFile,
+    val mask: RenditionFile,
+)
+
 /** A change to a product's photo, saved with the product (S-18). */
 sealed interface PhotoChange {
-    /** Taken or picked on the phone, already reduced by [LocalPhotos.reduce]. */
+    /** Taken or picked on the phone, already reduced by [LocalPhotos.reduce]; [cutout] when "Sin fondo" is on. */
     data class Taken(
         val path: String,
+        val cutout: Cutout? = null,
     ) : PhotoChange
 
     /** The open catalog's photo (10 §2.3): the Worker imports it once the row is up. */
@@ -100,6 +116,7 @@ class CatalogEditor
     ) {
         private val products = SyncTables.of<ProductEntity>("products")
         private val images = SyncTables.of<ImageEntity>("images")
+        private val renditions = SyncTables.of<ImageRenditionEntity>("image_renditions")
         private val variants = SyncTables.of<VariantEntity>("variants")
         private val barcodes = SyncTables.of<BarcodeEntity>("barcodes")
         private val tags = SyncTables.of<TagEntity>("tags")
@@ -149,7 +166,8 @@ class CatalogEditor
          * product id. A new photo is an `images` row (`role='catalog'`, owner the product) that becomes
          * `primary_image_id`; the one it replaces is tombstoned. Its original then waits in the upload queue: a taken
          * photo as a blob (moved into place first, so no row points to a missing file), an open catalog one as an
-         * import.
+         * import. A photo cut on the phone brings its three renditions (`tier='device'`), selected as the image's
+         * processed and thumb, and uploaded after the original (10 §5).
          */
         suspend fun saveProduct(
             draft: ProductDraft,
@@ -158,6 +176,7 @@ class CatalogEditor
         ): String {
             val now = clock.nowMillis()
             val taken = (photo as? PhotoChange.Taken)?.let { Uuids.v7(now).let { id -> id to photos.keep(id, File(it.path)) } }
+            val cut = taken?.let { (id, _) -> (photo as PhotoChange.Taken).cutout?.let { keepCutout(id, it, now) } }.orEmpty()
             var image: ImageEntity? = null
             val productId =
                 db.withTransaction {
@@ -181,11 +200,15 @@ class CatalogEditor
                             createdAt = now,
                             updatedAt = now,
                         )
-                    image = photo?.let { imageRow(it, taken?.first, row.id, now) }
+                    image =
+                        photo?.let { imageRow(it, taken?.first, row.id, now) }?.let { img ->
+                            if (cut.isEmpty()) img else img.copy(selectedProcessedId = cut.first { it.first.kind == "processed" }.first.id, selectedThumbId = cut.first { it.first.kind == "thumb" }.first.id)
+                        }
                     val primary = if (photo == null) row.primaryImageId else image?.id
                     // The server derives it too; computing it here makes the product findable offline (03 §7).
                     writer.write(products, listOf(row.copy(searchKey = SearchKey.of("$name ${brand.orEmpty()}"), primaryImageId = primary)))
                     image?.let { writer.write(images, listOf(it)) }
+                    if (cut.isNotEmpty()) writer.write(renditions, cut.map { it.first })
                     // The photo replaced or removed goes too; its blobs stay in R2.
                     row.primaryImageId?.takeIf { photo != null && it != primary }?.let { db.images().byId(it) }?.takeIf { it.deletedAt == null }?.let { writer.delete(images, listOf(it)) }
                     saveTags(row.id, draft.tagIds + tagIdsFor(draft.newTags, now), now)
@@ -193,9 +216,34 @@ class CatalogEditor
                     row.id
                 }
             taken?.let { (id, file) -> uploads.enqueueBlob(id, LocalPhotos.ORIGINAL, file.path) }
+            cut.forEach { (rendition, file) -> uploads.enqueueBlob(rendition.imageId, file.name, file.path) }
             (photo as? PhotoChange.OpenCatalog)?.let { open -> image?.let { uploads.enqueueImport(it.id, LocalPhotos.ORIGINAL, open.imageUrl) } }
             return productId
         }
+
+        /** Moves the cut files next to the original, each named after its rendition (`images/{image_id}/{id}.ext`). */
+        private suspend fun keepCutout(
+            imageId: String,
+            cutout: Cutout,
+            now: Long,
+        ): List<Pair<ImageRenditionEntity, File>> =
+            listOf("processed" to cutout.processed, "thumb" to cutout.thumb, "mask" to cutout.mask).map { (kind, rendered) ->
+                val id = Uuids.v7(now)
+                val name = "$id.${File(rendered.path).extension}"
+                val kept = photos.keepAs(imageId, name, File(rendered.path))
+                ImageRenditionEntity(
+                    id = id,
+                    imageId = imageId,
+                    kind = kind,
+                    tier = "device",
+                    r2Key = "images/$imageId/$name",
+                    width = rendered.width.toLong(),
+                    height = rendered.height.toLong(),
+                    bytes = kept.length(),
+                    createdAt = now,
+                    updatedAt = now,
+                ) to kept
+            }
 
         private fun imageRow(
             photo: PhotoChange,

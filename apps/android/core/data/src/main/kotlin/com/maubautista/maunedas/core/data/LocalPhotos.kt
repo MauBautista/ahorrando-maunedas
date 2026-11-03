@@ -9,6 +9,7 @@ import dagger.hilt.android.qualifiers.ApplicationContext
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.withContext
 import java.io.File
+import java.util.UUID
 import javax.inject.Inject
 import javax.inject.Singleton
 import kotlin.math.max
@@ -60,18 +61,28 @@ class LocalPhotos
         suspend fun keep(
             imageId: String,
             reduced: File,
+        ): File = keepAs(imageId, ORIGINAL, reduced)
+
+        /** Moves [file] to the image's folder as [name], the blob it uploads (a cut rendition, T-118). */
+        suspend fun keepAs(
+            imageId: String,
+            name: String,
+            file: File,
         ): File =
             withContext(Dispatchers.IO) {
-                val target = original(imageId)
+                val target = File(context.filesDir, "images/$imageId/$name")
                 target.parentFile?.mkdirs()
-                if (!reduced.renameTo(target)) {
-                    reduced.copyTo(target, overwrite = true)
-                    reduced.delete()
+                if (!file.renameTo(target)) {
+                    file.copyTo(target, overwrite = true)
+                    file.delete()
                 }
                 target
             }
 
         fun original(imageId: String): File = File(context.filesDir, "images/$imageId/$ORIGINAL")
+
+        /** A new folder in the cache for what is made from a photo before it is saved (the cut renditions, T-118). */
+        fun scratch(): File = File(context.cacheDir, "cut/${UUID.randomUUID()}")
 
         companion object {
             /** The blob name of a photo taken on the phone (`original_key = images/{id}/original.jpg`). */

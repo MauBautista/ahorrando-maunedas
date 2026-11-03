@@ -203,6 +203,15 @@ Posproceso (`core:camera`, `ProductImageRenderer`):
 
 Si el modelo de segmentación aún no se descargó o falla, se guarda solo el original (el interruptor "Sin fondo" aparece deshabilitado con el texto "Disponible en unos minutos").
 
+**Implementación (T-118, decisión T101):**
+- **`SubjectCutter` (`core:camera`):** interfaz con `isReady`, `prepare` y `cut`. `MlKitSubjectCutter` usa la segmentación de ML Kit, un módulo de Google Play services (API beta).
+  - **Disponibilidad:** se consulta y se pide con `ModuleInstall`.
+  - **Descarga anticipada:** el manifiesto declara `com.google.mlkit.vision.DEPENDENCIES = subject_segment` para que Play services la descargue con la app.
+- **Tamaño de entrada (`PhotoCutout`):** el sujeto se busca a ≤ 1024 px, el tamaño del resultado, para quedar en < 2 s (RF-IMG-03). El registro `PhotoCutout` anota solo el tamaño y la duración.
+- **Margen:** el 8 % es del lado mayor del sujeto, a cada lado.
+- **Formato:** `processed` y `thumb` en WebP calidad 85 (`WEBP_LOSSY` desde API 30, `WEBP` antes); `mask` en PNG con el alfa como gris.
+- **Paso 6:** lo hace `CatalogEditor.saveProduct` con los archivos que le pasa el editor (05 §5 S-18).
+
 ## 6. E3 — Mejora en casa, editor e IA
 
 ### 6.1 Mejora en casa (T2)

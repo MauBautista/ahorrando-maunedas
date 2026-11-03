@@ -169,6 +169,43 @@ class CatalogEditorTest {
         }
 
     @Test
+    fun aPhotoCutOnThePhoneBringsItsThreeRenditionsSelectedAndQueued() =
+        runTest {
+            val cache = ApplicationProvider.getApplicationContext<Context>().cacheDir
+            fun rendered(
+                name: String,
+                side: Int,
+                bytes: Int,
+            ) = RenditionFile(File(cache, "cut/$name").apply { parentFile!!.mkdirs(); writeBytes(ByteArray(bytes)) }.path, side, side)
+            val cutout = Cutout(rendered("processed.webp", 594, 300), rendered("thumb.webp", 256, 120), rendered("mask.png", 594, 80))
+            val id = editor.saveProduct(ProductDraft(name = "Leche", displayUnit = DisplayUnit.L), sixLiters(), PhotoChange.Taken(taken("cut"), cutout))
+            val imageId = db.products().byId(id)!!.primaryImageId!!
+            val image = db.images().byId(imageId)!!
+            val renditions = db.imageRenditions().ofImage(imageId).associateBy { it.kind }
+            assertEquals(setOf("processed", "thumb", "mask"), renditions.keys)
+            val processed = renditions.getValue("processed")
+            val thumb = renditions.getValue("thumb")
+            val mask = renditions.getValue("mask")
+            assertEquals(listOf(processed.id, thumb.id), listOf(image.selectedProcessedId, image.selectedThumbId))
+            assertEquals(
+                listOf(
+                    listOf<Any?>("device", "images/$imageId/${processed.id}.webp", 594L, 594L, 300L),
+                    listOf<Any?>("device", "images/$imageId/${thumb.id}.webp", 256L, 256L, 120L),
+                    listOf<Any?>("device", "images/$imageId/${mask.id}.png", 594L, 594L, 80L),
+                ),
+                listOf(processed, thumb, mask).map { listOf(it.tier, it.r2Key, it.width, it.height, it.bytes) },
+            )
+            // The files moved next to the original; the original goes up first, then the three renditions.
+            val dir = File(ApplicationProvider.getApplicationContext<Context>().filesDir, "images/$imageId")
+            assertEquals(false, File(cutout.processed.path).exists())
+            assertEquals(
+                listOf("original.jpg", "${processed.id}.webp", "${thumb.id}.webp", "${mask.id}.png").map { listOf<Any?>("blob", imageId, it, File(dir, it).path, null) },
+                pending(),
+            )
+            assertTrue("image_renditions" in outbox())
+        }
+
+    @Test
     fun anOpenCatalogPhotoIsImportedWithItsLicense() =
         runTest {
             val photo = PhotoChange.OpenCatalog("https://images.openfoodfacts.org/images/products/750/front.jpg", "CC BY-SA 3.0", "Open Food Facts contributors", "https://world.openfoodfacts.org/product/7501020515350")

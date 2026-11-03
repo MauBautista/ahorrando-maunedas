@@ -113,6 +113,9 @@ interface ListingStateDao : SyncDao<ListingStateEntity> {
 interface ImageRenditionDao : SyncDao<ImageRenditionEntity> {
     @Query("SELECT * FROM image_renditions WHERE id = :id")
     suspend fun byId(id: String): ImageRenditionEntity?
+
+    @Query("SELECT * FROM image_renditions WHERE image_id = :imageId ORDER BY id")
+    suspend fun ofImage(imageId: String): List<ImageRenditionEntity>
 }
 
 @Dao
