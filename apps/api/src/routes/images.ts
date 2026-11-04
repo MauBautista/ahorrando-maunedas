@@ -1,4 +1,5 @@
 import {
+  type EditSourceResponse,
   type EnhanceResponse,
   ImportImageRequestSchema,
   MAX_UPLOAD_BYTES,
@@ -9,6 +10,7 @@ import { z } from 'zod';
 import { requireUser } from '../auth/middleware';
 import type { AppEnv } from '../env';
 import { ApiError } from '../errors';
+import { editSource } from '../images/edit';
 import { requestEnhance } from '../images/enhance';
 import { blobKey, mediaType, parseBlobName } from '../images/blobs';
 import { fetchCatalogImage } from '../images/import';
@@ -88,6 +90,12 @@ export const images = new Hono<AppEnv>()
   .post('/v1/images/:imageId/enhance', requireUser(), async (c) => {
     const imageId = parseParam(c.req.param('imageId'), z.uuid(), 'imageId');
     return c.json<EnhanceResponse>({ job_id: await requestEnhance(c.env, imageId, Date.now()) }, 202);
+  })
+
+  // The photo editor's starting point (10 §6.2, T-301).
+  .get('/v1/images/:imageId/edit', requireUser(), async (c) => {
+    const imageId = parseParam(c.req.param('imageId'), z.uuid(), 'imageId');
+    return c.json<EditSourceResponse>(await editSource(c.env, imageId, Date.now()));
   })
 
   .post('/v1/images/:imageId/import', requireUser(), async (c) => {

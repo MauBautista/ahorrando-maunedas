@@ -68,6 +68,13 @@ export const routes: RouteObject[] = [
             lazy: () => import('./features/catalog/ProductPage').then((m) => ({ Component: m.ProductPage })),
           },
           {
+            path: 'productos/:id/foto',
+            lazy: () =>
+              import('./features/catalog/photo/PhotoEditorPage').then((m) => ({
+                Component: m.PhotoEditorPage,
+              })),
+          },
+          {
             path: 'productos/:id/editar',
             lazy: () =>
               import('./features/catalog/editor/ProductEditorPage').then((m) => ({

@@ -231,8 +231,28 @@ Si el modelo de segmentación aún no se descargó o falla, se guarda solo el or
 }
 ```
 
-Canal de render: original → recorte y rotación → máscara (alfa) → fondo → ajustes → `processed` y `thumb`.
-- **Máscara (T106):** cubre la foto completa, con la geometría del original reducido a ≤ 1024 px. Por eso el editor carga original y máscara alineados, y el pincel de "restaurar" recupera los píxeles del original. El recorte inicial sale del contorno de la máscara con el margen de 8 % de §5. El pincel borra o restaura sobre la máscara (tamaño ajustable, deshacer múltiple). Guardar crea renditions `tier='manual'` (máscara, processed, thumb) y fija `manual: true`. "Restablecer" vuelve a la última rendition automática.
+Canal de render: original → rotación y recorte → máscara (alfa) → ajustes → `processed` y `thumb` sobre el fondo.
+- **Máscara (T106):** cubre la foto completa, con la geometría del original enderezado y reducido a ≤ 1024 px. Por eso el editor carga original y máscara alineados, y el pincel de "restaurar" recupera los píxeles del original. Una máscara con otra proporción (las del recorte cuadrado, de antes de T106) no se usa: el editor empieza con toda la foto.
+- **Geometría (T107):**
+  - `rotation` gira la foto en sentido horario (0, 90, 180 o 270).
+  - `crop` es un rectángulo en fracciones de la foto **ya girada**. Al girar, el recorte gira con ella.
+  - El recorte inicial de una foto que nunca se editó a mano sale del contorno de la máscara (alfa > 0) con el margen de 8 % de §5. Sin máscara, o si guarda todo, no hay recorte.
+- **Ajustes (hallazgo T107):** se aplican al producto, no al fondo, para que un fondo blanco siga blanco. El SDD los ponía después del fondo.
+  - Cada canal: `v′ = (v − 128)(1 + contraste) + 128 + 255 · brillo`, redondeado y limitado a 0–255.
+  - Brillo y contraste van de −1 a 1; la interfaz ofrece de −0.5 a 0.5.
+- **Archivos:**
+  - `processed` es lo recortado con su alfa, sin reescalar.
+  - `thumb` es de 256 px: lo recortado cabe completo y centrado sobre el fondo.
+  - `mask` es la máscara entera en PNG gris. El navegador lo escribe como RGB, y quien lo lee toma el canal rojo.
+  - WebP calidad 0.85; el navegador que no escribe WebP (Safari) da PNG, y la extensión de la rendition lo dice.
+- **Pincel:** borra (alfa 0) o restaura (alfa 255) un disco del tamaño elegido, en pasos de un cuarto del pincel para no dejar huecos. "Deshacer" quita trazos completos, hasta 20.
+- **Guardar:** primero se suben las filas de las tres renditions `tier='manual'` (mask, processed, thumb), luego sus archivos, y al final la foto las selecciona con `edit_params` y `manual: true`. Así la foto nunca apunta a un archivo que no está. Si alguien más cambió la foto (`STALE`), se avisa y no se sube nada más.
+- **"Restablecer":** selecciona la `processed` y la `thumb` automáticas más nuevas (`device` o `home`, por `(created_at, id)`), o ninguna, y deja `edit_params` en `null`. Las mejoras en casa vuelven a adoptarse solas.
+- **Fondo al mostrar:** `ImageRef.background` es el color de `edit_params.background` (`#FFFFFF` si falta o no es válido). La web muestra la foto sobre ese color.
+- **Reglas compartidas:** `packages/shared/src/images/edit.ts` (esquema de `edit_params`, geometría, ajustes, pincel y render). Android (T-301b) las replicará en Kotlin con un fixture común.
+- **Web (T-301a):**
+  - `GET /v1/images/:id/edit` (03 §9) da el original, `edit_params`, la máscara de partida y el resultado automático al que vuelve "Restablecer". La máscara de partida es la `manual` más nueva en una foto editada a mano; si no, la automática más nueva.
+  - La pantalla es `/productos/:id/foto` (06 §7.2): el canvas y las herramientas, con el canvas fuera de `pixels.ts`.
 
 ### 6.3 Edición generativa (T3, RF-IMG-06)
 

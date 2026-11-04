@@ -60,6 +60,14 @@ export function ProductPage() {
         <div className="flex flex-col gap-2 md:shrink-0">
           <ProductPhoto image={product.image} name={product.name} large className="h-56 w-full md:size-48" />
           <EnhancePhoto productId={product.id} image={product.image} />
+          {product.image?.original_url && (
+            <Link
+              to={`/productos/${product.id}/foto`}
+              className="btn-outline inline-flex items-center self-start"
+            >
+              Editar foto
+            </Link>
+          )}
         </div>
         <div className="flex flex-col gap-2">
           <h1 className="text-display">{product.name}</h1>

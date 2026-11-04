@@ -19,6 +19,8 @@ export interface ImageRef {
   enhance_pending: boolean;
   /** The newest `home` renditions to adopt (10 §6.1); null when none is newer or the photo was edited by hand. */
   adopt: { processed_id: string; thumb_id: string } | null;
+  /** The color a photo without background is shown on (10 §1): `edit_params.background`, `#FFFFFF` by default. */
+  background: string;
 }
 
 export interface BestPrice {

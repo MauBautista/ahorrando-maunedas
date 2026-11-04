@@ -646,7 +646,7 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
   - **Falta (T-300c-2):** el botón y la adopción en Android (prueba en el teléfono).
 
 ### [ ] T-301 · Editor de fotos (RF-IMG-05)
-- **Docs:** 10 §6.2 · **Depende de:** T-118
+- **Docs:** 10 §6.2 · **Depende de:** T-118 (solo la parte de Android)
 - **Hacer:**
   - **Funciones:** recorte, rotación, fondo, brillo y contraste, y pincel de máscara con deshacer.
   - **Guardar:** crea renditions `tier='manual'` y fija `edit_params.manual`.
@@ -654,6 +654,11 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
   - **Orden:** primero la web, después Android.
 - **Hecho cuando:** una foto editada y guardada se ve igual en la app y la web, el original sigue intacto y "Restablecer" deshace la edición.
 - **Necesita a Mauricio:** la prueba en el teléfono y en la web.
+- **Avance:**
+  - **Web (T-301a, decisión T107):** `GET /v1/images/:id/edit`, `ImageRef.background`, las reglas compartidas en `packages/shared/src/images/edit.ts` y la pantalla `/productos/:id/foto`; 32 pruebas nuevas y 20 mutaciones, todas detectadas.
+  - **Falta:**
+    - **Android (T-301b):** después de T-118 (PR #93). Replica las reglas con un fixture común, muestra la foto sobre `edit_params.background` y crea el editor.
+    - **Mauricio:** editar una foto en la web (el iPhone incluido) y ver el resultado en la ficha y el catálogo.
 
 ### [ ] T-302 · Edición generativa con IA (RF-IMG-06)
 - **Docs:** 10 §6.3, 09 §2 · **Depende de:** T-301

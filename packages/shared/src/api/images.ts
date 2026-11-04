@@ -24,3 +24,17 @@ export interface BlobResponse {
 export interface EnhanceResponse {
   job_id: string;
 }
+
+/** `GET /v1/images/:imageId/edit` (10 §6.2): what the photo editor starts from. URLs are signed (10 §3). */
+export interface EditSourceResponse {
+  image_id: string;
+  /** The image row's `updated_at`, for the edit by sync (`touchedAt`). */
+  updated_at: number;
+  original_url: string;
+  /** `images.edit_params` as stored. */
+  edit_params: string | null;
+  /** The newest `manual` mask of a photo edited by hand; otherwise the newest automatic one (device or home). */
+  mask: { url: string; width: number | null; height: number | null } | null;
+  /** The newest automatic `processed` and `thumb`, which "Restablecer" selects; null without them. */
+  automatic: { processed_id: string; thumb_id: string } | null;
+}
