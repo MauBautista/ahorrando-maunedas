@@ -33,6 +33,13 @@ export const routes: RouteObject[] = [
               import('./features/purchases/PurchasesPage').then((m) => ({ Component: m.PurchasesPage })),
           },
           {
+            path: 'compras/importar',
+            lazy: () =>
+              import('./features/purchases/import/ImportPurchasesPage').then((m) => ({
+                Component: m.ImportPurchasesPage,
+              })),
+          },
+          {
             path: 'compras/nueva',
             lazy: () =>
               import('./features/purchases/editor/PurchaseEditorPage').then((m) => ({

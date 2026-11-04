@@ -54,9 +54,9 @@ describe('migrations', () => {
     expect(migrated).toEqual(await schemaObjects(env.REFERENCE_DB));
   });
 
-  it('create 31 tables, the price view and the partial unique indexes', async () => {
+  it('create 32 tables, the price view and the partial unique indexes', async () => {
     const objects = await schemaObjects(env.DB);
-    expect(objects.filter((o) => o.type === 'table')).toHaveLength(31);
+    expect(objects.filter((o) => o.type === 'table')).toHaveLength(32);
     expect(objects.filter((o) => o.type === 'view').map((o) => o.name)).toEqual(['v_price_points']);
     expect(objects.find((o) => o.name === 'uq_barcodes_code_live')?.sql).toContain(
       'WHERE deleted_at IS NULL',

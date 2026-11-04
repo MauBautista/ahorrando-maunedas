@@ -70,6 +70,9 @@ export function PurchasesPage() {
           <button type="button" className="btn-outline" onClick={() => setImporting(true)}>
             Importar factura
           </button>
+          <Link to="/compras/importar" className="btn-outline inline-flex items-center">
+            Importar archivo
+          </Link>
           <Link to="/compras/nueva" className="btn-primary inline-flex items-center">
             Nueva compra
           </Link>

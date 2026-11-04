@@ -86,11 +86,15 @@ beforeEach(async () => {
        VALUES (?1, '[]', 'k', ?2, 'openrouter', 'm', 'failed', 9)`,
     ).bind(uuidv7(), MEMBER_ID),
     env.DB.prepare(`INSERT INTO token_cache (key, value, expires_at) VALUES ('google', 'secret', 1)`),
-    // An imported invoice is kept (T-307); a Home Assistant token is not (T-308).
+    // An imported invoice and an imported file are kept (T-307, T-306); a Home Assistant token is not (T-308).
     env.DB.prepare(
       `INSERT INTO cfdi_imports (id, fiscal_uuid, purchase_id, store_id, emisor_rfc, created_by, created_at)
        VALUES (?1, 'UUID-FISCAL', ?2, ?3, 'CME910715UB9', ?4, 11)`,
     ).bind(uuidv7(), bought.row.id, shop.row.id, MEMBER_ID),
+    env.DB.prepare(
+      `INSERT INTO purchase_imports (id, fingerprint, purchase_id, file_name, created_by, created_at)
+       VALUES (?1, 'huella', ?2, 'compras.csv', ?3, 12)`,
+    ).bind(uuidv7(), bought.row.id, MEMBER_ID),
     env.DB.prepare(
       `INSERT INTO ha_tokens (id, name, token_sha256, created_by, created_at) VALUES (?1, 'Casa', 'h', ?2, 1)`,
     ).bind(uuidv7(), ADMIN_ID),
@@ -130,7 +134,7 @@ describe('POST /agent/v1/backup/pull (07 §5.4)', () => {
       expect(body.cursors).not.toHaveProperty(t);
     }
     expect(Object.keys(body.cursors).sort()).toEqual(
-      [...tablesInOrder(), 'ai_usage', 'receipt_extractions', 'cfdi_imports'].sort(),
+      [...tablesInOrder(), 'ai_usage', 'receipt_extractions', 'cfdi_imports', 'purchase_imports'].sort(),
     );
     expect(body.has_more).toBe(false);
     expect(body.schema_version).toBeGreaterThan(0);
@@ -148,6 +152,7 @@ describe('POST /agent/v1/backup/pull (07 §5.4)', () => {
       'ai_usage',
       'receipt_extractions',
       'cfdi_imports',
+      'purchase_imports',
       'user_identities',
     ]) {
       const count = Number(await env.DB.prepare(`SELECT count(*) AS n FROM ${table}`).first('n'));

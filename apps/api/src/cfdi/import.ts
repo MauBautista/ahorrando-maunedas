@@ -1,8 +1,8 @@
 import type { CfdiImportResponse, CfdiLine, CfdiPreviewResponse } from '@maunedas/shared/api/cfdi';
-import { normalizeReceiptText } from '@maunedas/shared/receipts/normalize';
 import { matchStoreName } from '@maunedas/shared/receipts/stores';
 import { uuidv7 } from '@maunedas/shared/util/uuid';
 import { ApiError } from '../errors';
+import { aliasVariants } from '../imports/aliases';
 import { CfdiRejected, type ParsedCfdi, parseCfdi } from './parse';
 
 /** The invoice, or `422 E-UNSUPPORTED_CFDI` with why. */
@@ -29,19 +29,11 @@ async function importedPurchase(db: D1Database, fiscalUuid: string): Promise<str
 
 /** Each line's variant from the store's receipt aliases, by the normalized text (09 §5.1). */
 async function linked(db: D1Database, storeId: string | null, cfdi: ParsedCfdi): Promise<CfdiLine[]> {
-  const norms = cfdi.lines.map((l) => normalizeReceiptText(l.description));
-  const aliases = new Map<string, string>();
-  if (storeId) {
-    const { results } = await db
-      .prepare(
-        `SELECT a.raw_text_norm, a.variant_id FROM receipt_aliases a JOIN variants v ON v.id = a.variant_id
-         WHERE a.store_id = ?1 AND a.deleted_at IS NULL AND v.deleted_at IS NULL
-           AND a.raw_text_norm IN (SELECT value FROM json_each(?2))`,
-      )
-      .bind(storeId, JSON.stringify([...new Set(norms)]))
-      .all<{ raw_text_norm: string; variant_id: string }>();
-    for (const a of results) aliases.set(a.raw_text_norm, a.variant_id);
-  }
+  const variants = await aliasVariants(
+    db,
+    storeId,
+    cfdi.lines.map((l) => l.description),
+  );
   return cfdi.lines.map((l, i) => ({
     line_no: i + 1,
     description: l.description,
@@ -51,7 +43,7 @@ async function linked(db: D1Database, storeId: string | null, cfdi: ParsedCfdi):
     discount_cents: l.discountCents,
     final_cents: l.finalCents,
     sku: l.sku,
-    variant_id: aliases.get(norms[i]!) ?? null,
+    variant_id: variants[i]!,
   }));
 }
 
