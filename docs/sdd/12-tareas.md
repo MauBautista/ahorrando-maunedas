@@ -67,8 +67,14 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ## Etapa 0 · Spikes
 
-### [ ] T-010 · Spike A: rembg en el servidor
+### [~] T-010 · Spike A: rembg en el servidor
 - **Docs:** 11 §7 · **Decide:** D5
+- **Factibilidad (2026-11-04, `docs/spikes/spike-a-rembg.md`):**
+  - **Resultado:** `onnxruntime` corre en el A8-7410 sin AVX2, así que T2 es viable.
+  - **Fuera por memoria:** `isnet-general-use` (1.8 GB).
+  - **Candidatos:** `u2netp` (3 s, 1.0 GB), `u2net` (7.7 s, 1.2 GB) y `silueta` (9 s, 0.85 GB).
+  - **Muestra:** se midió con 5 fotos públicas.
+- **Falta (Mauricio):** las 10 fotos reales y calificar la calidad para cerrar D5.
 ### [x] T-011 · Spike B: scraping de tiendas prioritarias
 - **Docs:** 11 §7, 07 §9 · **Decide:** métodos por tienda, `mem_limit` · **Deja:** fixtures HTML en `agent/tests/fixtures/html/` · **Resultado:** `docs/spikes/spike-b-scraping.md`
 ### [ ] T-012 · Spike C: extracción de tickets
