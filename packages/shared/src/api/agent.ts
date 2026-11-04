@@ -129,3 +129,22 @@ export interface BackupPullResponse extends PullResponse {
   /** Tables in `changes` that come whole: the mirror replaces them instead of merging. */
   replace: string[];
 }
+
+/** A claimed image job lives this long; then another claim takes it (07 §5.3). */
+export const JOB_LEASE_MS = 600_000;
+
+/** A job claimed this many times without completing ends `failed`. */
+export const JOB_MAX_ATTEMPTS = 3;
+
+/** `POST /agent/v1/jobs/claim` (07 §5.3); `204` when there is none. */
+export interface AgentJobClaim {
+  job: { id: string; image_id: string; op: 'remove_bg'; original_url: string; attempts: number };
+}
+
+/** `PUT /agent/v1/jobs/:jobId/result/:kind`. */
+export interface AgentJobResult {
+  rendition_id: string;
+}
+
+/** `POST /agent/v1/jobs/:jobId/fail`. */
+export const AgentJobFailSchema = z.strictObject({ error: z.string().trim().min(1).max(500) });

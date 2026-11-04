@@ -1,9 +1,15 @@
-import { ImportImageRequestSchema, MAX_UPLOAD_BYTES, type BlobResponse } from '@maunedas/shared/api/images';
+import {
+  type EnhanceResponse,
+  ImportImageRequestSchema,
+  MAX_UPLOAD_BYTES,
+  type BlobResponse,
+} from '@maunedas/shared/api/images';
 import { Hono, type MiddlewareHandler } from 'hono';
 import { z } from 'zod';
 import { requireUser } from '../auth/middleware';
 import type { AppEnv } from '../env';
 import { ApiError } from '../errors';
+import { requestEnhance } from '../images/enhance';
 import { blobKey, mediaType, parseBlobName } from '../images/blobs';
 import { fetchCatalogImage } from '../images/import';
 import { verifySigned } from '../images/signing';
@@ -76,6 +82,12 @@ export const images = new Hono<AppEnv>()
     if (!('body' in object)) return new Response(null, { status: 304, headers });
     headers.set('Content-Length', String(object.size));
     return new Response(object.body, { headers });
+  })
+
+  // "Mejorar en casa" (10 §6.1, T-300): the home agent removes the background.
+  .post('/v1/images/:imageId/enhance', requireUser(), async (c) => {
+    const imageId = parseParam(c.req.param('imageId'), z.uuid(), 'imageId');
+    return c.json<EnhanceResponse>({ job_id: await requestEnhance(c.env, imageId, Date.now()) }, 202);
   })
 
   .post('/v1/images/:imageId/import', requireUser(), async (c) => {

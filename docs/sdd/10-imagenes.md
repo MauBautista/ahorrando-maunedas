@@ -208,6 +208,7 @@ Si el modelo de segmentación aún no se descargó o falla, se guarda solo el or
 ### 6.1 Mejora en casa (T2)
 
 - `POST /v1/images/:id/enhance` → crea `image_jobs` (`remove_bg`) si el original existe; `202 { job_id }`. El cliente pone `enhance_requested_at`.
+  - **Implementación (T-300, `images/enhance.ts`):** solo fotos `role='catalog'` vivas (otra, `404`) con el original ya en R2 (si no, `409 E-IMAGE_NOT_UPLOADED`). Un trabajo en cola o tomado de esa foto se responde de nuevo en lugar de encolar otro.
 - El agente procesa (`07-agente.md` §11) y el Worker crea renditions `tier='home'` (escritura de servidor con nueva `version`).
 - Adopción automática en el cliente al recibirlas por pull: si `edit_params.manual` no es verdadero, el cliente apunta `selected_*` a la rendition `home` más reciente (edición normal por sync; si dos dispositivos lo hacen, eligen lo mismo).
 

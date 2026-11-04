@@ -629,7 +629,7 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauricio; lo demás lo avanza el desarrollo sin esperarlo.
 
-### [ ] T-300 · Mejora de fotos en casa (rembg) y adopción automática
+### [~] T-300 · Mejora de fotos en casa (rembg) y adopción automática
 - **Docs:** 07 §11, 10 §6.1 · **Depende de:** T-010 (D5), T-118, T-201
 - **Hacer:**
   - **Worker:** `POST /v1/images/:id/enhance` crea el `image_jobs` (`remove_bg`).
@@ -639,6 +639,9 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
 - **Hecho cuando:** "Mejorar en casa" en una foto produce renditions `home` que la app y la web adoptan. Con el agente apagado, el pedido espera sin error.
 - **Sin Mauricio:** la parte de factibilidad del spike A (si `onnxruntime` arranca en el A8-7410 sin AVX2, segundos y memoria por modelo) con fotos públicas del catálogo abierto. Si no arranca, T2 se descarta (11 §7).
 - **Necesita a Mauricio:** las 10 fotos reales del spike A y calificar la calidad para cerrar D5.
+- **Avance (2026-11-04):**
+  - **Worker (T-300a):** `POST /v1/images/:id/enhance` y las rutas de 07 §5.3 (reclamo con plazo, original, resultados como renditions `home` con versión nueva, completar y fallar con tres intentos); 7 pruebas y 8 mutaciones, todas detectadas.
+  - **Falta:** el contenedor de imágenes del servidor casero (T105) y el botón con la adopción en los clientes.
 
 ### [ ] T-301 · Editor de fotos (RF-IMG-05)
 - **Docs:** 10 §6.2 · **Depende de:** T-118

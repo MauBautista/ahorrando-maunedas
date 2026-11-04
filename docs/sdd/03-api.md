@@ -404,7 +404,7 @@ Contratos y flujo completos en `10-imagenes.md`.
 | `PUT /v1/images/:imageId/blobs/:name` | Sube binario. `name` ∈ `original.(jpg\|png\|webp)` o `<renditionId>.(webp\|png)`. Requiere que la fila exista (sync previo). `201 { key, bytes }` |
 | `GET /v1/images/:imageId/blobs/:name` | Descarga con Bearer **o** con `?exp=&sig=` (URL firmada). `Cache-Control: private, max-age=31536000, immutable` |
 | `POST /v1/images/:imageId/import` | `{ source_url }` de un host permitido de Open Food Facts → guarda como original. `201` |
-| `POST /v1/images/:imageId/enhance` | (E3) Encola `remove_bg` para el agente. `202 { job_id }` |
+| `POST /v1/images/:imageId/enhance` | (E3) Encola `remove_bg` para el agente. `202 { job_id }`; el mismo si ya espera uno. Solo fotos de catálogo con el original en R2 (`404` · `409 E-IMAGE_NOT_UPLOADED`). 10 §6.1 |
 | `POST /v1/images/:imageId/ai-edit` | (E3) `{ prompt, confirm: true }`. Consume presupuesto |
 
 ## 10. Tickets

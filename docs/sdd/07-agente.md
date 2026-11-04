@@ -222,6 +222,12 @@ Idempotencia: si llega un resultado con `checked_at <= listing_state.last_checke
 | `POST /agent/v1/jobs/:jobId/complete` | `204` |
 | `POST /agent/v1/jobs/:jobId/fail` | `{ error }` → `204` |
 
+**Implementación (T-300, Worker; `agent/jobs.ts`):**
+- **Reclamo:** el más viejo, en cola o con el plazo vencido, en un solo `UPDATE … RETURNING`. Uno abandonado en su tercer intento queda `failed` ("el agente no terminó a tiempo") antes de reclamar. La respuesta trae `attempts`.
+- **Plazo:** solo un trabajo `claimed` dentro de su plazo acepta resultados, `complete` y `fail`. Fuera de él, `404`, y un agente tardío se detiene.
+- **Resultado:** `?width=&height=` opcionales. Cada `PUT` crea una rendition nueva con su clave inmutable y una versión nueva de sync; repetirla no estorba, porque se adopta la más nueva.
+- **Fallo:** `fail` regresa el trabajo a la cola con su error, salvo en el tercer intento, donde queda `failed`.
+
 ```sql
 -- claim atómico en D1
 UPDATE image_jobs
