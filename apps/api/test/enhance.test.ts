@@ -227,3 +227,51 @@ describe('image jobs for the home agent (07 §5.3, T-300)', () => {
     ).toBe(400);
   });
 });
+
+describe('the image reference tells what to adopt (10 §6.1, T-300)', () => {
+  it('says while an enhancement waits, then which home renditions to adopt, until they are or it was edited', async () => {
+    const p = product({ name: 'Toallas' });
+    const photo = image(p.row.id as string);
+    photo.row.original_key = `images/${photo.row.id}/original.jpg`;
+    p.row.primary_image_id = photo.row.id;
+    expect((await h.push([p, photo] as Mutation[], 'member')).status).toBe(200);
+    await env.IMAGES.put(photo.row.original_key as string, new Uint8Array([1]));
+    const ref = async () => {
+      const res = await call('GET', `/v1/products/${p.row.id}`, { as: 'member' });
+      return (await json(res)).product.image as {
+        updated_at: number;
+        enhance_pending: boolean;
+        adopt: { processed_id: string; thumb_id: string } | null;
+      };
+    };
+    expect(await ref()).toMatchObject({ enhance_pending: false, adopt: null });
+    const asked = Date.now();
+    const push = (row: Record<string, unknown>) =>
+      h.push([{ table: 'images', row: { id: photo.row.id, updated_at: Date.now() + 10, ...row } }], 'member');
+    expect((await push({ enhance_requested_at: asked })).status).toBe(200);
+    const before = await ref();
+    expect(before.enhance_pending).toBe(true);
+    expect(before.updated_at).toBeGreaterThan(photo.row.updated_at as number);
+
+    const { job_id } = (await json(await enhance(photo.row.id as string))) as EnhanceResponse;
+    await claim();
+    const webp = new Uint8Array([1, 2]);
+    const processed = ((await json(await upload(job_id, 'processed', webp, 'image/webp'))) as AgentJobResult)
+      .rendition_id;
+    // A processed one alone is not adopted yet: it waits for its thumb.
+    expect(await ref()).toMatchObject({ enhance_pending: false, adopt: null });
+    const thumb = ((await json(await upload(job_id, 'thumb', webp, 'image/webp'))) as AgentJobResult)
+      .rendition_id;
+    expect((await ref()).adopt).toEqual({ processed_id: processed, thumb_id: thumb });
+
+    // Once a client selects them, there is nothing to adopt.
+    expect((await push({ selected_processed_id: processed, selected_thumb_id: thumb })).status).toBe(200);
+    expect((await ref()).adopt).toBeNull();
+    // A newer result is offered again, unless the photo was edited by hand.
+    const newer = ((await json(await upload(job_id, 'thumb', webp, 'image/webp'))) as AgentJobResult)
+      .rendition_id;
+    expect((await ref()).adopt).toEqual({ processed_id: processed, thumb_id: newer });
+    expect((await push({ edit_params: JSON.stringify({ manual: true }) })).status).toBe(200);
+    expect((await ref()).adopt).toBeNull();
+  });
+});

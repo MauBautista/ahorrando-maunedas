@@ -8,6 +8,7 @@ import { useApi } from '../../lib/context';
 import { categoryPath, useLookups } from '../../lib/lookups';
 import { useMe } from '../auth/useSession';
 import { CompareTab } from './CompareTab';
+import { EnhancePhoto } from './EnhancePhoto';
 import { VariantsTab } from './VariantsTab';
 
 /** The chart library is big: it loads when the history is opened, not with the product. */
@@ -56,12 +57,10 @@ export function ProductPage() {
   return (
     <article className="flex flex-col gap-4">
       <header className="flex flex-col gap-3 md:flex-row md:items-start">
-        <ProductPhoto
-          image={product.image}
-          name={product.name}
-          large
-          className="h-56 w-full md:size-48 md:shrink-0"
-        />
+        <div className="flex flex-col gap-2 md:shrink-0">
+          <ProductPhoto image={product.image} name={product.name} large className="h-56 w-full md:size-48" />
+          <EnhancePhoto productId={product.id} image={product.image} />
+        </div>
         <div className="flex flex-col gap-2">
           <h1 className="text-display">{product.name}</h1>
           {(product.brand || path) && (

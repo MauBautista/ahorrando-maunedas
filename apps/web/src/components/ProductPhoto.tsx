@@ -38,7 +38,8 @@ export function ProductPhoto({
       alt=""
       loading="lazy"
       onError={() => setFailed(url)}
-      className={`rounded-lg bg-surface-variant object-cover ${className}`}
+      // Over white: a photo without background is shown on the background of 10 §1.
+      className={`rounded-lg bg-white object-cover ${className}`}
     />
   );
 }

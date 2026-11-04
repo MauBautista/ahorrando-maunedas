@@ -53,6 +53,7 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-300, web (2026-11-04):** en la ficha de un producto, "Mejorar en casa" pide al servidor casero quitarle el fondo a la foto. Cuando llega el resultado, la ficha lo adopta sola, salvo que la foto se haya editado a mano. Falta el mismo botón en Android.
 - **T-300, contenedor de imágenes (2026-11-04):** el servidor casero ya quita el fondo de las fotos que se le piden. Lo hace en su propio contenedor (`maunedas-images`), sin tocar el del agente ni Home Assistant. Probado con la foto de unas toallas: quedó limpia y en tres versiones. Falta el botón en la app y la web.
 - **T-300, parte del Worker (2026-11-04):** el servidor ya recibe pedidos de "Mejorar en casa" para una foto de producto y se los entrega al servidor casero uno a la vez, con tres intentos. Guarda lo que este devuelva como versiones nuevas de la foto. Faltan el contenedor que quita el fondo en casa y el botón en la app y la web.
 - **Spike A, factibilidad (2026-11-04):** quitar el fondo en el servidor casero sí es posible: el modelo corre en su procesador, y los más ligeros tardan de 3 a 9 segundos por foto. Falta que Mauricio califique la calidad con sus fotos para elegir el modelo.
@@ -571,3 +572,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-04** — Spike A (factibilidad): rembg corre en el A8-7410 sin AVX2; `isnet-general-use` fuera por memoria; rembg irá en un contenedor aparte (T105). D5 espera las fotos de Mauricio.
 - **2026-11-04** — T-300a: pedido de mejora y trabajos de imagen del agente en el Worker (07 §5.3).
 - **2026-11-04** — T-300b: contenedor de imágenes `maunedas-images` con `u2netp`; primera foto real procesada en dev.
+- **2026-11-04** — T-300c-1: "Mejorar en casa" y adopción del resultado en la web; `ImageRef` dice qué adoptar.

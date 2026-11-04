@@ -642,7 +642,8 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
 - **Avance (2026-11-04):**
   - **Worker (T-300a):** `POST /v1/images/:id/enhance` y las rutas de 07 §5.3 (reclamo con plazo, original, resultados como renditions `home` con versión nueva, completar y fallar con tres intentos); 7 pruebas y 8 mutaciones, todas detectadas.
   - **Contenedor de imágenes (T-300b):** `maunedas-images` con `u2netp`. Un trabajo real en dev quedó `done` con sus tres renditions `home`; 7 pruebas y 8 mutaciones, todas detectadas.
-  - **Falta (T-300c):** el botón "Mejorar en casa" y la adopción en la app y la web.
+  - **API y web (T-300c-1):** `ImageRef` con `updated_at`, `enhance_pending` y `adopt`, y en W-08 "Mejorar en casa" y la adopción; 5 pruebas y 7 mutaciones, todas detectadas.
+  - **Falta (T-300c-2):** el botón y la adopción en Android (prueba en el teléfono).
 
 ### [ ] T-301 · Editor de fotos (RF-IMG-05)
 - **Docs:** 10 §6.2 · **Depende de:** T-118

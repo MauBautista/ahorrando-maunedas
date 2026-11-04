@@ -13,6 +13,12 @@ export interface ImageRef {
   original_url: string | null;
   license: string | null;
   attribution: string | null;
+  /** The image row's `updated_at`, for a client that writes it by sync (`touchedAt`). */
+  updated_at: number;
+  /** "Mejorar en casa" (10 §6.1) asked, and no `home` result since. */
+  enhance_pending: boolean;
+  /** The newest `home` renditions to adopt (10 §6.1); null when none is newer or the photo was edited by hand. */
+  adopt: { processed_id: string; thumb_id: string } | null;
 }
 
 export interface BestPrice {

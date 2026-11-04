@@ -9,6 +9,9 @@ const image = {
   original_url: 'https://x/original.jpg',
   license: null,
   attribution: null,
+  updated_at: 1,
+  enhance_pending: false,
+  adopt: null,
 };
 
 describe('ProductPhoto (10 §1)', () => {
