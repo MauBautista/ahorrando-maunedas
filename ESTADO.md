@@ -53,6 +53,7 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-300, parte del Worker (2026-11-04):** el servidor ya recibe pedidos de "Mejorar en casa" para una foto de producto y se los entrega al servidor casero uno a la vez, con tres intentos. Guarda lo que este devuelva como versiones nuevas de la foto. Faltan el contenedor que quita el fondo en casa y el botón en la app y la web.
 - **Spike A, factibilidad (2026-11-04):** quitar el fondo en el servidor casero sí es posible: el modelo corre en su procesador, y los más ligeros tardan de 3 a 9 segundos por foto. Falta que Mauricio califique la calidad con sus fotos para elegir el modelo.
 - **T-307 (2026-11-04):** en la web, Compras → "Importar factura" convierte el XML de una factura electrónica (CFDI) en una compra en borrador. Las líneas quedan con lo pagado, impuestos incluidos. La tienda se sugiere sola cuando se conoce al emisor, las líneas conocidas se vinculan solas y una misma factura no se importa dos veces. Falta probarla con una factura real.
 - **T-308 (2026-11-04):** Home Assistant ya puede leer de Maunedas el precio actual, el mínimo histórico y la existencia de cualquier presentación, con un token de solo lectura. El admin crea y revoca los tokens en la web, en Administración → Home Assistant, donde también sale la configuración lista para copiar.
@@ -567,3 +568,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-04** — T-308: API de lectura para Home Assistant con tokens propios y su página en Administración (T103).
 - **2026-11-04** — T-307: importación de facturas CFDI a compras en borrador desde la web (T104); falta validarla con un CFDI real.
 - **2026-11-04** — Spike A (factibilidad): rembg corre en el A8-7410 sin AVX2; `isnet-general-use` fuera por memoria; rembg irá en un contenedor aparte (T105). D5 espera las fotos de Mauricio.
+- **2026-11-04** — T-300a: pedido de mejora y trabajos de imagen del agente en el Worker (07 §5.3).

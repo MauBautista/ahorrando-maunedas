@@ -19,3 +19,8 @@ export interface BlobResponse {
   key: string;
   bytes: number;
 }
+
+/** `POST /v1/images/:imageId/enhance` (10 §6.1): the queued `remove_bg` job, new or the one already waiting. */
+export interface EnhanceResponse {
+  job_id: string;
+}
