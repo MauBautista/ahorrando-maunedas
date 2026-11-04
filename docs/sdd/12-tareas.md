@@ -641,7 +641,8 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
 - **Necesita a Mauricio:** las 10 fotos reales del spike A y calificar la calidad para cerrar D5.
 - **Avance (2026-11-04):**
   - **Worker (T-300a):** `POST /v1/images/:id/enhance` y las rutas de 07 §5.3 (reclamo con plazo, original, resultados como renditions `home` con versión nueva, completar y fallar con tres intentos); 7 pruebas y 8 mutaciones, todas detectadas.
-  - **Falta:** el contenedor de imágenes del servidor casero (T105) y el botón con la adopción en los clientes.
+  - **Contenedor de imágenes (T-300b):** `maunedas-images` con `u2netp`. Un trabajo real en dev quedó `done` con sus tres renditions `home`; 7 pruebas y 8 mutaciones, todas detectadas.
+  - **Falta (T-300c):** el botón "Mejorar en casa" y la adopción en la app y la web.
 
 ### [ ] T-301 · Editor de fotos (RF-IMG-05)
 - **Docs:** 10 §6.2 · **Depende de:** T-118

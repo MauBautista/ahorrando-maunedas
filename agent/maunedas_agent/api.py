@@ -45,21 +45,25 @@ class AgentApi:
     async def aclose(self) -> None:
         await self._client.aclose()
 
-    async def post(self, path: str, body: dict[str, Any]) -> dict[str, Any]:
+    async def _request(self, method: str, path: str, **kwargs: Any) -> httpx.Response:
         for attempt in range(ATTEMPTS):
             last = attempt == ATTEMPTS - 1
             try:
-                res = await self._client.post(path, json=body)
+                res = await self._client.request(method, path, **kwargs)
             except httpx.TransportError:
                 if last:
                     raise
             else:
                 if res.is_success:
-                    return res.json() if res.content else {}
+                    return res
                 if last or not _retryable(res.status_code):
                     raise ApiError(res.status_code, _error_code(res))
             await self._sleep(RETRY_DELAYS_S[attempt])
         raise AssertionError("unreachable")
+
+    async def post(self, path: str, body: dict[str, Any]) -> dict[str, Any]:
+        res = await self._request("POST", path, json=body)
+        return res.json() if res.content else {}
 
     async def work(self, body: dict[str, Any]) -> dict[str, Any]:
         return await self.post("/agent/v1/work", body)
@@ -69,6 +73,32 @@ class AgentApi:
 
     async def backup_pull(self, body: dict[str, Any]) -> dict[str, Any]:
         return await self.post("/agent/v1/backup/pull", body)
+
+    # Image jobs (07 §5.3)
+
+    async def claim_job(self) -> dict[str, Any] | None:
+        """The job to do, or None (`204`)."""
+        return (await self.post("/agent/v1/jobs/claim", {})).get("job")
+
+    async def get_bytes(self, path: str) -> bytes:
+        return (await self._request("GET", path)).content
+
+    async def put_result(self, job_id: str, kind: str, rendition: Any) -> str:
+        """Uploads one result (`mask` as PNG, the rest as WebP) with its size; returns the rendition id."""
+        res = await self._request(
+            "PUT",
+            f"/agent/v1/jobs/{job_id}/result/{kind}",
+            params={"width": rendition.width, "height": rendition.height},
+            content=rendition.data,
+            headers={"Content-Type": "image/png" if kind == "mask" else "image/webp"},
+        )
+        return str(res.json()["rendition_id"])
+
+    async def complete_job(self, job_id: str) -> None:
+        await self.post(f"/agent/v1/jobs/{job_id}/complete", {})
+
+    async def fail_job(self, job_id: str, error: str) -> None:
+        await self.post(f"/agent/v1/jobs/{job_id}/fail", {"error": error})
 
 
 def _error_code(res: httpx.Response) -> str | None:

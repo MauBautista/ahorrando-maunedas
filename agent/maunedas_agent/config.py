@@ -44,7 +44,9 @@ class Settings(BaseSettings):
     r2_secret_access_key: SecretStr = SecretStr("")
 
     images_enabled: bool = False
-    rembg_model: str = "isnet-general-use"
+    # Provisional until D5 closes (spike A: isnet-general-use went past 1.8 GB on the A8-7410).
+    rembg_model: str = "u2netp"
+    images_idle_s: int = 60
 
     @property
     def db_path(self) -> Path:

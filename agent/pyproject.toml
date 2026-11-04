@@ -14,9 +14,12 @@ dependencies = [
 [project.optional-dependencies]
 # Same version as the Docker image (playwright/python:v1.63.0-noble), the one spike B validated (07 §12).
 browser = ["playwright==1.63.0"]
+# The home enhancement's own container (T-300, decisión T105): the versions spike A measured on the A8-7410.
+images = ["onnxruntime==1.31.0", "pillow==13.0.0", "rembg==2.0.86"]
 
 [dependency-groups]
 dev = [
+    "pillow==13.0.0",
     "pytest==9.1.1",
     "pytest-asyncio==1.4.0",
     "respx==0.23.1",

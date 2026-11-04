@@ -599,6 +599,22 @@ def process(original: bytes, model: str) -> tuple[bytes, bytes, bytes]:
 
 Se procesa un trabajo a la vez; el modelo se carga una sola vez.
 
+**Implementación (T-300, contenedor de imágenes; decisión T105):**
+- **Código (`maunedas_agent/images/`):**
+  - `remove_bg.render` sigue los pasos de 10 §5, iguales a los del teléfono (`ProductImageRenderer`), así que una rendition `home` y una `device` se ven igual:
+    - la foto se endereza por EXIF y se reduce a ≤ 2048 px;
+    - se recorta al sujeto, con un margen de 8 % de su lado mayor;
+    - `processed` es WebP ≤ 1024, `thumb` es de 256 px sobre blanco y `mask` es PNG en gris.
+  - **Ciclo (`worker.ImageWorker`):** reclama y baja el original; recorta en un hilo aparte; sube los tres resultados con su tamaño y completa. Si no queda producto, falla con "no se encontró el producto en la foto". Un `404` (plazo perdido) se suelta sin marcar el fallo. Sin trabajo, espera `IMAGES_IDLE_S` (60).
+  - **Modelo:** se carga en el primer trabajo y se guarda en `U2NET_HOME=/data/u2net`, así sobrevive a las reconstrucciones.
+- **Contenedor:** `agent/Dockerfile.images` (Python slim con el extra `images`, sin navegador). En el proyecto `maunedas` es el servicio `maunedas-images`, con `mem_limit: 1536m` y 1.5 CPU.
+  - El `environment` del servicio fija `IMAGES_ENABLED=true` y `REMBG_MODEL=u2netp`, que mandan sobre `agent/.env`.
+  - Su salud es el archivo `/data/images.alive`, que el ciclo toca en cada vuelta; sin tocarlo 5 minutos, queda `unhealthy`.
+- **Prueba en el servidor (2026-11-04):** un trabajo encolado en dev para la foto de unas toallas desinfectantes quedó `done` al primer intento.
+  - Tardó 154 s, con la primera descarga y carga del modelo; según el spike A, los siguientes van en unos 3 s.
+  - Quedaron máscara, `processed` (1024 px, 48 KB) y `thumb` (256 px, 5 KB) como renditions `home`.
+  - El contenedor quedó en 696 MB.
+
 ## 12. Docker
 
 ```dockerfile
@@ -651,7 +667,7 @@ services:
       options: { max-size: "10m", max-file: "3" }
 ```
 
-En el servidor, Home Assistant corre como contenedor suelto y no hay un compose donde pegar un fragmento, así que el agente tiene su propio proyecto (`docker compose -f agent/compose.yaml up -d --build` desde la raíz del repo), que no toca a los demás contenedores. Corre desde el 2026-11-01 contra `maunedas-dev`, con los datos en `~/proyectos/maunedas/datos-agente`.
+En el servidor, Home Assistant corre como contenedor suelto y no hay un compose donde pegar un fragmento, así que el agente tiene su propio proyecto (`docker compose -f agent/compose.yaml up -d --build` desde la raíz del repo), que no toca a los demás contenedores. Desde T-300 el proyecto tiene un segundo servicio, `maunedas-images` (`agent/Dockerfile.images`, §11). Corre desde el 2026-11-01 contra `maunedas-dev`, con los datos en `~/proyectos/maunedas/datos-agente`.
 
 ## 13. Registro y salud
 
