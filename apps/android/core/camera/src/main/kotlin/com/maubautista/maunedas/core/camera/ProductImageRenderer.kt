@@ -16,7 +16,8 @@ import kotlin.math.roundToInt
  * 2. Center on a square canvas with a margin of 8 % of the subject's longer side on each side.
  * 3. `processed`: WebP with alpha, side ≤ 1024.
  * 4. `thumb`: 256 px over the background (white by default), WebP.
- * 5. `mask`: the alpha channel as a grayscale PNG.
+ * 5. `mask`: the cut's alpha over the whole photo it got (≤ 1024 px), as a grayscale PNG, so the editor lays it on the
+ *    original to erase and restore (10 §6.2, decisión T106).
  */
 object ProductImageRenderer {
     const val PROCESSED_MAX = 1024
@@ -52,7 +53,7 @@ object ProductImageRenderer {
             drawColor(background)
             drawBitmap(processed, null, Rect(0, 0, THUMB_SIDE, THUMB_SIDE), paint)
         }
-        return Rendered(processed, thumb, maskOf(processed))
+        return Rendered(processed, thumb, maskOf(foreground))
     }
 
     /** The smallest rectangle holding every pixel with alpha > 0. */
@@ -77,11 +78,11 @@ object ProductImageRenderer {
         return if (right < 0) null else Rect(left, top, right + 1, bottom + 1)
     }
 
-    private fun maskOf(processed: Bitmap): Bitmap {
-        val w = processed.width
-        val h = processed.height
+    private fun maskOf(cut: Bitmap): Bitmap {
+        val w = cut.width
+        val h = cut.height
         val pixels = IntArray(w * h)
-        processed.getPixels(pixels, 0, w, 0, 0, w, h)
+        cut.getPixels(pixels, 0, w, 0, 0, w, h)
         for (i in pixels.indices) {
             val a = pixels[i] ushr 24
             pixels[i] = Color.rgb(a, a, a)

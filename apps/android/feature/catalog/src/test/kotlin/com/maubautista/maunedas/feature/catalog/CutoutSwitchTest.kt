@@ -95,7 +95,7 @@ class CutoutSwitchTest {
             val on = switch.state.first { it?.files != null }!!
             assertEquals(listOf(true, false, false), listOf(on.on, on.working, on.notFound))
             val files = switch.toSave()!!
-            assertEquals(listOf(232, 256, 232), listOf(files.processed.width, files.thumb.width, files.mask.width))
+            assertEquals(listOf(232, 256, 400), listOf(files.processed.width, files.thumb.width, files.mask.width))
             assertTrue(listOf(files.processed, files.thumb, files.mask).all { File(it.path).isFile })
             // Turning it on again does nothing; off deletes the cut and saves the photo whole.
             switch.toggle(true)

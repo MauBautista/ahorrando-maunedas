@@ -48,9 +48,11 @@ class ProductImageRendererTest {
         assertEquals(listOf(256, 256), listOf(r.thumb.width, r.thumb.height))
         assertEquals(Color.WHITE, r.thumb.getPixel(2, 2))
         assertEquals(Color.RED, r.thumb.getPixel(128, 128))
-        assertEquals(listOf(232, 232), listOf(r.mask.width, r.mask.height))
+        // The mask covers the whole photo it got (T106): 400 × 300, white where the subject was.
+        assertEquals(listOf(400, 300), listOf(r.mask.width, r.mask.height))
         assertEquals(Color.BLACK, r.mask.getPixel(0, 0))
-        assertEquals(Color.WHITE, r.mask.getPixel(116, 116))
+        assertEquals(Color.WHITE, r.mask.getPixel(200, 100))
+        assertEquals(Color.BLACK, r.mask.getPixel(350, 100))
         // Another background for the thumb.
         assertEquals(Color.BLUE, ProductImageRenderer.render(cut(100, 100, Rect(40, 40, 60, 60)), Color.BLUE)!!.thumb.getPixel(1, 1))
     }

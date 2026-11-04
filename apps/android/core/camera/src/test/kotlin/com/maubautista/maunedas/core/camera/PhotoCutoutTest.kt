@@ -67,7 +67,8 @@ class PhotoCutoutTest {
             // The middle half, 512 × 342, with its margin: 594 px square.
             assertEquals(CutFile(File(out, "processed.webp").path, 594, 594), files.processed)
             assertEquals(CutFile(File(out, "thumb.webp").path, 256, 256), files.thumb)
-            assertEquals(CutFile(File(out, "mask.png").path, 594, 594), files.mask)
+            // The mask covers the photo the subject was looked for in (T106).
+            assertEquals(CutFile(File(out, "mask.png").path, 1024, 683), files.mask)
             assertEquals(594, BitmapFactory.decodeFile(files.processed.path).width)
         }
 
