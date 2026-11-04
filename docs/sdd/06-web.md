@@ -238,6 +238,11 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
   - Cada compra: tienda y sucursal, hora, productos, total (el del ticket, o Σ líneas − descuentos del ticket, nunca menos de cero, como S-02) y "Borrador".
   - Filtros en la URL: tienda, fechas ("Este mes", "Mes pasado", "Últimos 3 meses" o "Elegir fechas…", en días completos de la Ciudad de México, T59) y estado.
   - `GET /v1/purchases` trae `discount_cents` para calcular ese total.
+  - **"Importar factura" (T-307, 03 §14):**
+    - Se elige el XML y el Worker lo lee sin escribir.
+    - Muestra emisor, fecha, total, líneas y cuántas ya se vinculan.
+    - La tienda viene sugerida (o se elige). "Importar" abre la compra en borrador en W-05 para revisarla, vincular y confirmar.
+    - Un XML que no se puede importar dice por qué. Una factura ya importada lleva a su compra.
 - **W-04 Compra:**
   - Productos con cantidad × precio, promoción, total y lo pagado por unidad con el descuento del ticket prorrateado (como el historial).
   - Descuentos del ticket, totales con "No cuadra por $X" y las páginas del ticket.

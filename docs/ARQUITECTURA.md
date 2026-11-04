@@ -577,6 +577,6 @@ Si el límite de 10 ms de CPU provoca errores 1102 (sobre todo al decodificar im
 ## 15. Etapa 3 (diseño previsto, sin detalle)
 
 - **Correos**: sin dominio propio no hay Email Routing (decisión T18). Dos vías: (a) compartir el correo o su captura desde el teléfono a la app, que usa el mismo flujo de tickets; (b) el agente lee con la API de Gmail (OAuth de solo lectura) una etiqueta "Maunedas" y manda el contenido a extraer.
-- **CFDI/XML**: importador en el Worker → `purchases.source='cfdi'`, mismo flujo de vinculación por alias.
+- **CFDI/XML**: importador en el Worker → `purchases.source='cfdi'`, mismo flujo de vinculación por alias. Hecho en T-307 (`03-api.md` §14).
 - **CSV/Excel**: importador en la web con mapeo de columnas.
 - **Home Assistant**: endpoints de solo lectura con token propio (precio actual, mínimo histórico, disponibilidad). Hecho en T-308 (`03-api.md` §13).

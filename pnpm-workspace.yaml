@@ -36,6 +36,7 @@ catalog:
   eslint-config-prettier: 10.1.8
   eslint-plugin-react-hooks: 7.1.1
   eslint-plugin-react-refresh: 0.5.7
+  fast-xml-parser: 5.11.2
   firebase: 13.0.0
   globals: 17.13.0
   hono: 4.13.13

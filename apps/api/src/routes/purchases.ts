@@ -1,4 +1,11 @@
 import {
+  CfdiImportRequestSchema,
+  type CfdiImportResponse,
+  CfdiPreviewRequestSchema,
+  type CfdiPreviewResponse,
+} from '@maunedas/shared/api/cfdi';
+import { importCfdi, previewCfdi } from '../cfdi/import';
+import {
   PurchasesQuerySchema,
   type PurchaseDetailItem,
   type PurchaseLineFields,
@@ -18,7 +25,7 @@ import type { AppEnv } from '../env';
 import { ApiError } from '../errors';
 import { imageRefs } from '../images/refs';
 import { decodeCursor, encodeCursor } from '../util/cursor';
-import { parseParam, parseQuery } from '../util/validate';
+import { parseJsonBody, parseParam, parseQuery } from '../util/validate';
 
 type Row = Record<string, unknown>;
 
@@ -36,6 +43,18 @@ interface ItemRow extends Row {
 
 /** Purchases for the web (Android reads Room) — 03 §7. Shared by the household, like the rest of the data. */
 export const purchases = new Hono<AppEnv>()
+  // CFDI invoices (E3, T-307, 03 §14): read without writing, then imported as a draft purchase.
+  .post('/v1/purchases/cfdi/preview', requireUser(), async (c) => {
+    const { xml } = await parseJsonBody(c, CfdiPreviewRequestSchema);
+    return c.json<CfdiPreviewResponse>(await previewCfdi(c.env.DB, xml));
+  })
+  .post('/v1/purchases/cfdi', requireUser(), async (c) => {
+    const { xml, store_id } = await parseJsonBody(c, CfdiImportRequestSchema);
+    return c.json<CfdiImportResponse>(
+      await importCfdi(c.env.DB, xml, store_id, c.get('user').id, Date.now()),
+      201,
+    );
+  })
   .get('/v1/purchases', requireUser(), async (c) => {
     const query = parseQuery(c, PurchasesQuerySchema);
     if (query.from !== undefined && query.to !== undefined && query.from > query.to) {

@@ -34,6 +34,7 @@ export async function syncHarness(options: Omit<AppOptions, 'firebaseKeys'> = {}
       'ai_usage',
       'token_cache',
       'ha_tokens',
+      'cfdi_imports',
     ];
     await db.batch([
       ...serverChildren.map((t) => db.prepare(`DELETE FROM ${t}`)),

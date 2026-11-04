@@ -361,6 +361,24 @@ export const tokenCache = sqliteTable('token_cache', {
   expires_at: integer().notNull(),
 });
 
+/** CFDI invoices imported as draft purchases (T-307): append-only, by fiscal UUID and issuer RFC. */
+export const cfdiImports = sqliteTable('cfdi_imports', {
+  id: text().primaryKey(),
+  fiscal_uuid: text().notNull(),
+  purchase_id: text()
+    .notNull()
+    .references(() => purchases.id),
+  store_id: text()
+    .notNull()
+    .references(() => stores.id),
+  emisor_rfc: text().notNull(),
+  emisor_name: text(),
+  created_by: text()
+    .notNull()
+    .references(() => users.id),
+  created_at: integer().notNull(),
+});
+
 /** Home Assistant's read-only tokens (T-308): only their SHA-256. */
 export const haTokens = sqliteTable('ha_tokens', {
   id: text().primaryKey(),
@@ -421,4 +439,5 @@ export const TABLES = {
   off_cache: offCache,
   token_cache: tokenCache,
   ha_tokens: haTokens,
+  cfdi_imports: cfdiImports,
 } as const;

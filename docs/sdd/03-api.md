@@ -48,10 +48,12 @@ Requisitos: todos los `RF-*` con interfaz remota. Sync en detalle: [`04-sincroni
 | 409 | `USERNAME_TAKEN` · `GOOGLE_EMAIL_TAKEN` · `LAST_ADMIN` | Administración de usuarios |
 | 409 | `IMAGE_NOT_FOUND` · `IMAGE_NOT_UPLOADED` | Subida o uso de imagen antes de sincronizar la fila o el binario |
 | 409 | `MERGE_INVALID` · `BATCH_REJECTED` | Fusión imposible · el lote de sync violó una restricción |
+| 409 | `CFDI_ALREADY_IMPORTED` | La factura ya es una compra viva (§14); `details.purchase_id` |
 | 410 | `ALREADY_BOOTSTRAPPED` | Bootstrap repetido |
 | 413 | `PAYLOAD_TOO_LARGE` | > 15 MB en imágenes, > 512 KB en sync |
 | 415 | `UNSUPPORTED_MEDIA_TYPE` | Tipo de imagen no permitido |
 | 422 | `UNSUPPORTED_URL` · `EXTRACTION_FAILED` | Tienda sin adapter · el modelo no devolvió un ticket válido |
+| 422 | `UNSUPPORTED_CFDI` | El XML no es una factura de compra importable (§14); `details.reason` |
 | 426 | `UPGRADE_REQUIRED` | Cliente con esquema viejo |
 | 429 | `RATE_LIMITED` | Más de 40 extracciones de ticket por usuario al día |
 | 500 | `INTERNAL` | Error no previsto |
@@ -545,4 +547,53 @@ API de solo lectura bajo `/ha/v1/*`, con `Authorization: Bearer <token de Home A
 { price_cents: Cents /* effective_unit_cents */; display_cents: Cents; store: string; source: PriceSource; observed_at: Millis }
 ```
 Id que no es UUID → `400`; presentación inexistente o borrada (o de un producto borrado) → `404 E-NOT_FOUND`. Implementación: `routes/ha.ts` y `ha/variant.ts`, con `POINTS_SQL`, `pickBest` y `unitFor` de `db/queries/prices.ts`.
+
+## 14. Importación de CFDI (E3, T-307, decisión T104)
+
+El Worker lee el XML de una factura electrónica (CFDI 3.3 o 4.0, timbrada, de ingreso y en pesos) y la vuelve una compra en borrador (`source='cfdi'`) que se revisa y confirma como cualquier otra. El XML no se guarda.
+
+### `POST /v1/purchases/cfdi/preview`
+`{ xml: string /* ≤ 2 MB */ }` → `200 CfdiPreviewResponse` (`packages/shared/src/api/cfdi.ts`), sin escribir nada:
+```ts
+{ fiscal_uuid: string /* mayúsculas */; issued_at: Millis; emisor: { rfc: string; name: string | null };
+  total_cents: Cents; lines: CfdiLine[]; linked: number;
+  store_id: Id | null;              // tienda sugerida
+  imported_purchase_id: Id | null } // la compra viva que ya es esta factura
+// CfdiLine
+{ line_no; description; quantity: number; unit_price_cents; gross_cents; discount_cents; final_cents;
+  sku: string | null /* NoIdentificacion */; variant_id: Id | null /* por alias de la tienda sugerida */ }
+```
+- **Líneas, como se pagaron:**
+  - `final = Importe − Descuento + traslados − retenciones` del concepto.
+  - El descuento lleva la misma tasa: `Descuento × (1 + impuestos / base)`, así `gross − discount = final` al centavo.
+  - `unit_price_cents = gross / cantidad`.
+  - El dinero se cuenta en millonésimas con `BigInt`, nunca en flotantes (regla 1).
+- **Fecha:** `Fecha` no trae zona; se toma como hora de la Ciudad de México.
+- **Tienda sugerida:**
+  - si el RFC del emisor ya se importó, y siempre a la misma tienda viva, esa;
+  - si se importó a varias tiendas, ninguna. Nueva Wal-Mart de México factura Walmart, Bodega Aurrera y Sam's con un RFC.
+  - un RFC nuevo se busca por el nombre del emisor (`matchStoreName`, que ignora esa razón social).
+- **Rechazos (`422 E-UNSUPPORTED_CFDI`, `details.reason`):**
+  - `NOT_XML`: no es XML, o trae `<!DOCTYPE`/`<!ENTITY`, que una factura nunca trae;
+  - `NOT_CFDI`: no es un Comprobante 3.3/4.0, o le falta el emisor, la fecha, el total o una cantidad válida;
+  - `NOT_INCOME`: tipo distinto de `I`, como notas de crédito o pagos;
+  - `NOT_MXN`;
+  - `NO_UUID`: sin timbre fiscal;
+  - `NO_LINES`;
+  - `TOO_MANY_LINES`: más de 300.
+
+### `POST /v1/purchases/cfdi`
+`{ xml: string; store_id: Id }` → `201 { purchase_id: Id; lines: number; linked: number }`.
+- **Escritura:** en un batch y con una sola versión nueva, como la fusión de §12. Crea:
+  - la compra (`status='draft'`, `purchased_at`, `total_cents = Total`, `subtotal_cents = Σ gross`, `discount_cents = 0`, `notes = "Factura {UUID} de {emisor}"`);
+  - sus líneas, con `raw_text` = descripción y el `variant_id` de los alias de esa tienda (09 §5.1);
+  - la fila `cfdi_imports`.
+  
+  Los clientes la reciben por pull.
+- **Errores:**
+  - tienda inexistente o borrada → `404`;
+  - factura que ya es una compra viva → `409 E-CFDI_ALREADY_IMPORTED` con `details.purchase_id`.
+- **Reimportar:** una compra borrada deja importarla de nuevo.
+- **`cfdi_imports`:** tabla de servidor, solo se agrega y no se sincroniza. Guarda el UUID fiscal, la compra, la tienda, el RFC y el nombre del emisor, quién y cuándo. Va en el respaldo (07 §5.4).
+- **Implementación:** `cfdi/parse.ts` (con `fast-xml-parser`), `cfdi/import.ts` y `routes/purchases.ts`.
 
