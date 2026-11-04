@@ -14,6 +14,7 @@ import {
   updatePassword,
 } from 'firebase/auth';
 import type { AuthPort } from './auth';
+import { DATA_CACHE_NAMES } from './online';
 
 /**
  * Firebase Auth for the web (02 §7). In a build the Worker is the `authDomain` (the `/__/auth` proxy, decision
@@ -46,7 +47,11 @@ export function firebaseAuth(): AuthPort {
       await ready;
       await signInWithPopup(auth, new GoogleAuthProvider());
     },
-    signOut: () => signOut(auth),
+    signOut: async () => {
+      await signOut(auth);
+      // What the service worker kept of this session is not for the next one (T-310).
+      if ('caches' in window) await Promise.all(DATA_CACHE_NAMES.map((name) => caches.delete(name)));
+    },
     signInMethod: () => {
       const providers = auth.currentUser?.providerData.map((p) => p.providerId) ?? [];
       if (providers.includes('password')) return 'password';

@@ -8,9 +8,12 @@ import { useNavigate } from 'react-router';
 import { ProductPhoto } from '../../components/ProductPhoto';
 import { ScanDialog } from '../../components/ScanDialog';
 import { UnknownCode } from '../../components/UnknownCode';
+import { ApiError } from '../../lib/api';
+import { saveCapture, type Capture } from '../../lib/captures';
 import { useApi } from '../../lib/context';
 import { formatMoney, formatUnitPrice } from '../../lib/format';
 import { downscaleToJpeg, PHOTO } from '../../lib/images';
+import { useLookups } from '../../lib/lookups';
 import { push } from '../../lib/sync';
 import { useVariantByCode } from '../../lib/variantByCode';
 import { conflictMessage } from '../catalog/editor/conflicts';
@@ -43,6 +46,7 @@ export function ShelfPage() {
   const navigate = useNavigate();
   const variantByCode = useVariantByCode();
   const [variant, setVariant] = useState<LineVariant | null>(null);
+  const { data: lookups } = useLookups();
   const [query, setQuery] = useState('');
   const [unknown, setUnknown] = useState<string | null>(null);
   const [scanning, setScanning] = useState(false);
@@ -121,29 +125,57 @@ export function ShelfPage() {
       photo: !!photo,
     });
     setBusy(true);
+    const upload =
+      imageId && photo ? [{ path: `/v1/images/${imageId}/blobs/original.jpg`, blob: photo.blob }] : [];
+    const store = lookups?.stores.find((s) => s.id === place.storeId)?.name ?? 'la tienda';
+    const label = `${variant!.productName} ${variant!.label} en ${store}`;
+    const clear = (message: string) => {
+      setSaved(message);
+      setVariant(null);
+      setPrice('');
+      setPromoType(null);
+      setParams({});
+      setPhoto(null);
+    };
+    // Without network the capture waits on this device and goes up when it is back (T-310).
+    const keep = async (capture: Pick<Capture, 'mutations' | 'uploads'>, message: string) => {
+      await saveCapture({ id: crypto.randomUUID(), created_at: Date.now(), label, ...capture });
+      rememberPlace(place.storeId!, place.branchId);
+      clear(message);
+    };
     try {
-      const res = await push(api, mutations);
+      let res;
+      try {
+        res = await push(api, mutations);
+      } catch (e) {
+        if (!(e instanceof ApiError && e.status === 0)) throw e;
+        return await keep(
+          { mutations, uploads: upload },
+          'Sin conexión: el precio se guardó en este dispositivo y se subirá cuando vuelva la red.',
+        );
+      }
       const message = conflictMessage(res.conflicts);
       if (message) return setProblem(message);
       rememberPlace(place.storeId!, place.branchId);
       // The rows exist now, so the photo has an owner to upload to (06 §5).
       let photoFailed = false;
-      if (imageId && photo) {
+      for (const u of upload) {
         try {
-          await api.put(`/v1/images/${imageId}/blobs/original.jpg`, photo.blob);
-        } catch {
+          await api.put(u.path, u.blob);
+        } catch (e) {
+          if (e instanceof ApiError && e.status === 0) {
+            return await keep(
+              { mutations: [], uploads: upload },
+              'Precio guardado. Sin conexión, la foto se subirá cuando vuelva la red.',
+            );
+          }
           photoFailed = true;
         }
       }
       await queryClient.invalidateQueries();
       const done = photoFailed ? 'El precio se guardó, pero la foto no se pudo subir.' : 'Precio guardado';
       if (!another && !photoFailed) return navigate(`/productos/${variant!.productId}`);
-      setSaved(done);
-      setVariant(null);
-      setPrice('');
-      setPromoType(null);
-      setParams({});
-      setPhoto(null);
+      clear(done);
     } catch (e) {
       setProblem(e instanceof Error ? e.message : 'No se pudo guardar.');
     } finally {

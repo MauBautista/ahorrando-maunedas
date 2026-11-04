@@ -270,7 +270,7 @@ class PurchaseRepository @Inject constructor(
 
 ### 4.5 Web
 
-Online en el MVP. **Escribe con el mismo `/v1/sync/push`** (una sola ruta de escritura y la misma semántica LWW) y lee con endpoints de consulta (§5). PWA offline queda para la etapa 3.
+Online en el MVP. **Escribe con el mismo `/v1/sync/push`** (una sola ruta de escritura y la misma semántica LWW) y lee con endpoints de consulta (§5). PWA offline queda para la etapa 3: hecha en T-310 (`06-web.md` §7.8).
 
 ## 5. API pública (`/v1`)
 

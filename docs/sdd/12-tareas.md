@@ -754,6 +754,12 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
 - **Docs:** 06 · **Depende de:** T-160
 - **Hacer:** la web instalable y con lectura sin red (catálogo, fichas, historial), y una captura en cola que sube al volver la red.
 - **Necesita a Mauricio:** la prueba en el iPhone (Safari).
+- **Avance (2026-11-04, T110):**
+  - **Hecho:** service worker propio, sin bibliotecas (06 §7.8), con el aviso sin conexión y el precio de anaquel en cola en IndexedDB; 16 pruebas nuevas y 17 mutaciones, todas detectadas.
+  - **Falta (Mauricio):** probarlo en el iPhone:
+    1. Agregarla a la pantalla de inicio y abrir catálogo, una ficha y su historial.
+    2. Con modo avión, volver a abrirlos y capturar un precio de anaquel con foto.
+    3. Al quitar el modo avión, ver que se suba.
 
 ### [ ] T-390 · Cierre de la Etapa 3
 - **Docs:** `PLAN.md`

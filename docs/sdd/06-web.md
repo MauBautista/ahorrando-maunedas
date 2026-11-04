@@ -22,7 +22,7 @@ Requisitos: los mismos que Android salvo offline (RNF-01 no aplica en E1); RF-AD
 apps/web/
 ├── index.html
 ├── vite.config.ts
-├── public/manifest.webmanifest       # "Agregar a inicio" en iPhone (sin service worker en E1)
+├── public/manifest.webmanifest       # "Agregar a inicio" en iPhone; el service worker llega en E3 (§7.8)
 └── src/
     ├── main.tsx
     ├── router.tsx
@@ -347,6 +347,43 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
   - Al terminar vacía los campos.
 - **Sesión con Google:** cada método de entrada es su propia cuenta de Firebase del mismo usuario (02 §2). Si se entró con Google, no se ofrece el cambio y se explica que hay que entrar con usuario y contraseña.
 - **"Cerrar sesión"** olvida las consultas (la web no guarda datos propios, 04 §7). Al pie, la versión y el esquema del cliente.
+
+## 7.8 PWA sin red (T-310, decisión T110)
+
+La web se instala ("Agregar a pantalla de inicio") y sin red muestra lo último que leyó en ese dispositivo. La captura de un precio de anaquel espera en el dispositivo y se sube al volver la red.
+
+- **Service worker:**
+  - **Archivos:** `src/sw/sw.ts` es una entrada más del build y sale como `/sw.js`, sin imports. Las decisiones están en `src/sw/strategies.ts`, probadas sin navegador.
+  - **Registro:** solo en el build (`import.meta.env.PROD`), al cargar la página.
+  - **Lista del build:** el plugin `precacheManifest` de `vite.config.ts` le pone la lista de archivos del build y de `public/`, y una versión que cambia con ellos.
+    - La página se guarda como `/`: Cloudflare responde `/index.html` con una redirección, y Vite emite `index.html` después del plugin.
+    - **Sin imports:** `sw.js` no puede importar nada, porque un service worker clásico no lo admite. Si el build lo intenta, falla. Por eso la página tiene su propia copia de los nombres del worker (`lib/online.ts`), y una prueba los mantiene iguales.
+  - **Probado en Chromium contra dev:** instala 56 archivos, controla la página, y sin red una ruta como `/catalogo` abre la app.
+- **Qué responde cada petición:**
+
+  | Petición | Estrategia | Caché |
+  |---|---|---|
+  | Navegación (cualquier ruta de la app) | Red primero; sin red, la página del build | `maunedas-shell-{versión}` |
+  | `/assets/*`, `/icons/*`, `/manifest.webmanifest` | Caché primero (se guardan al instalar, así abre aun una pantalla nunca visitada) | `maunedas-shell-{versión}` |
+  | Fotos `/v1/images/:id/blobs/:name` | Caché primero, por su ruta sin la firma (las claves son inmutables, 10 §1) | `maunedas-images` |
+  | Demás `GET /v1/*` | Red primero; lo que respondió bien se guarda con `X-Maunedas-Stored-At` y sin red se responde eso | `maunedas-api` |
+  | Escrituras, `PUT` de fotos, `/v1/ai/*`, el editor (`/v1/images/:id/edit`), otros orígenes (Firebase) | No pasan por el worker | — |
+
+  Al activarse una versión nueva se borran los cachés de las anteriores. Al cerrar sesión se borran `maunedas-api` y `maunedas-images`.
+- **Cliente HTTP:**
+  - Sin red, un token vencido no se puede renovar. La petición sale sin token y el worker responde lo que guardó.
+  - Una respuesta con `X-Maunedas-Stored-At` marca que lo que se ve es la copia del dispositivo; la siguiente de la red lo desmarca (`lib/online.ts`). Así se detecta también un Wi-Fi sin internet.
+- **Aviso (`app/OfflineBanner.tsx`, bajo el encabezado):**
+  - "Sin conexión: ves lo guardado en este dispositivo (fecha, hora)."
+  - Cuántas capturas esperan.
+  - Lo que se subió o no se pudo subir al volver la red.
+- **Capturas en cola (`lib/captures.ts`):**
+  - Viven en IndexedDB, que guarda las fotos como `Blob`, también en Safari.
+  - **Precio de anaquel (W-10) sin red:** el push se guarda con su foto; el formulario queda listo para otro y dice "Sin conexión: el precio se guardó en este dispositivo y se subirá cuando vuelva la red". Si el precio subió y la foto no, espera solo la foto.
+  - **Envío:** al abrir la app y al volver la red. Va de la más vieja a la más nueva, primero las filas y luego la foto, una a la vez, como el outbox de Android (04 §3).
+  - **Errores:** sin red se detiene y conserva el resto. Lo que la API rechaza, o un conflicto, se descarta y se avisa.
+  - **Al cerrar sesión:** las capturas no se borran, para no perder precios; las sube la siguiente sesión del dispositivo.
+- **Lectura sin red:** catálogo, fichas, historial y compras ya abiertos en ese dispositivo. Lo nunca abierto no está.
 
 ## 8. Pruebas
 

@@ -1,4 +1,5 @@
 import type { AuthPort } from './auth';
+import { servedFromDevice, servedFromNetwork, STORED_AT_HEADER } from './online';
 
 /** The client schema the web speaks (03 §1), like Android's `CLIENT_SCHEMA`. */
 export const CLIENT_SCHEMA = 1;
@@ -37,7 +38,14 @@ export function createApi(
   fetchImpl: typeof fetch = (input, init) => fetch(input, init),
 ): Api {
   async function request<T>(method: string, path: string, body?: unknown, retry = true): Promise<T> {
-    const token = await auth.idToken(!retry);
+    let token: string | null;
+    try {
+      token = await auth.idToken(!retry);
+    } catch (e) {
+      // Without network an expired token cannot be renewed; the service worker can still answer what it keeps.
+      if (navigator.onLine) throw e;
+      token = null;
+    }
     let res: Response;
     try {
       res = await fetchImpl(path, {
@@ -53,6 +61,9 @@ export function createApi(
     } catch {
       throw new ApiError(0, 'NETWORK', 'Sin conexión. Revisa tu internet e intenta de nuevo.');
     }
+    const stored = res.headers.get(STORED_AT_HEADER);
+    if (stored) servedFromDevice(Number(stored));
+    else if (res.ok) servedFromNetwork();
     if (res.status === 401 && retry && auth.currentUser()) return request<T>(method, path, body, false);
     if (res.status === 204) return undefined as T;
     const json = (await res.json().catch(() => ({}))) as {
