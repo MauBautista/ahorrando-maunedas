@@ -19,6 +19,7 @@ import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilterChip
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
@@ -94,6 +95,7 @@ fun ProductEditorRoute(
                 onTakePhoto = takePhoto,
                 onPickPhoto = pickPhoto,
                 onRemovePhoto = viewModel::removePhoto,
+                onCutout = viewModel::onCutout,
                 onOpenVariant = { variantId -> state.product.id?.let { onOpenVariant(it, variantId) } },
                 onSave = viewModel::save,
                 onAskDelete = viewModel::askDelete,
@@ -112,6 +114,7 @@ data class ProductEditorActions(
     val onTakePhoto: () -> Unit = {},
     val onPickPhoto: () -> Unit = {},
     val onRemovePhoto: () -> Unit = {},
+    val onCutout: (Boolean) -> Unit = {},
     val onOpenVariant: (variantId: String?) -> Unit = {},
     val onSave: () -> Unit = {},
     val onAskDelete: () -> Unit = {},
@@ -487,7 +490,8 @@ private fun PhotoSection(
     val change = state.photoChange
     val model =
         when (change) {
-            is PhotoChange.Taken -> File(change.path)
+            // With "Sin fondo" on, the cut one, over white like the product page shows it (10 §1).
+            is PhotoChange.Taken -> File(state.cutout?.files?.processed?.path ?: change.path)
             is PhotoChange.OpenCatalog, PhotoChange.Removed -> null
             null -> state.savedPhoto
         }
@@ -511,5 +515,35 @@ private fun PhotoSection(
             TextButton(onClick = actions.onRemovePhoto, modifier = Modifier.heightIn(min = Spacing.touchTarget)) { Text(stringResource(R.string.editor_photo_remove)) }
         }
     }
+    state.cutout?.let { CutoutRow(it, actions.onCutout) }
     state.photoError?.let { Text(stringResource(it), color = MaterialTheme.colorScheme.error, style = MaterialTheme.typography.bodyLarge) }
+}
+
+/** "Sin fondo" (T-118): waits for the model, works, or says the product was not found. */
+@Composable
+private fun CutoutRow(
+    cutout: CutoutUi,
+    onCutout: (Boolean) -> Unit,
+) {
+    val enabled = cutout.ready && !cutout.working
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .heightIn(min = Spacing.touchTarget)
+            .toggleable(value = cutout.on, enabled = enabled, role = Role.Switch, onValueChange = onCutout),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(Spacing.md),
+    ) {
+        Column(Modifier.weight(1f)) {
+            Text(stringResource(R.string.editor_photo_cutout), style = MaterialTheme.typography.bodyLarge)
+            when {
+                !cutout.ready -> R.string.editor_photo_cutout_waiting
+                cutout.working -> R.string.editor_photo_cutout_working
+                cutout.notFound -> R.string.editor_photo_cutout_not_found
+                else -> null
+            }?.let { Text(stringResource(it), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant) }
+        }
+        if (cutout.working) CircularProgressIndicator(Modifier.size(24.dp))
+        Switch(checked = cutout.on, onCheckedChange = null, enabled = enabled)
+    }
 }

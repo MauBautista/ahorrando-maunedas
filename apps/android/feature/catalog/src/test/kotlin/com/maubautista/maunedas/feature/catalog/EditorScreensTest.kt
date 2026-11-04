@@ -13,6 +13,12 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.assertIsEnabled
+import androidx.compose.ui.test.assertIsNotEnabled
+import androidx.compose.ui.test.assertIsOff
+import androidx.compose.ui.test.assertIsOn
+import androidx.compose.ui.test.hasText
+import androidx.compose.ui.test.isToggleable
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
@@ -81,6 +87,7 @@ class EditorScreensTest {
                                 onTakePhoto = { calls += "take" },
                                 onPickPhoto = { calls += "pick" },
                                 onRemovePhoto = { calls += "remove" },
+                                onCutout = { calls += "cutout:$it" },
                             ),
                     )
                 }
@@ -155,8 +162,44 @@ class EditorScreensTest {
         val calls = mutableListOf<String>()
         showProduct(newProduct.copy(photoChange = PhotoChange.OpenCatalog("https://images.openfoodfacts.org/f.jpg", "CC BY-SA 3.0", "Open Food Facts contributors", null)), calls = calls)
         compose.onNodeWithText("Al guardar se importará la foto de Open Food Facts contributors.").assertExists()
+        // Only a photo taken here can be cut (T-118).
+        compose.onNodeWithText("Sin fondo").assertDoesNotExist()
         compose.onNodeWithText("Quitar foto").performScrollTo().performClick()
         assertEquals(listOf("remove"), calls)
+    }
+
+    private val taken = existing.copy(photoChange = PhotoChange.Taken("/nowhere/original.jpg"))
+
+    @Test
+    fun sinFondoWaitsForTheModel() {
+        val calls = mutableListOf<String>()
+        showProduct(taken.copy(cutout = CutoutUi(ready = false)), calls = calls)
+        compose.onNodeWithText("Disponible en unos minutos").performScrollTo().assertExists()
+        compose.onNode(hasText("Sin fondo") and isToggleable()).assertIsNotEnabled().assertIsOff().performClick()
+        assertEquals(emptyList<String>(), calls)
+    }
+
+    @Test
+    fun sinFondoTurnsOn() {
+        val calls = mutableListOf<String>()
+        showProduct(taken.copy(cutout = CutoutUi(ready = true)), calls = calls)
+        compose.onNodeWithText("Disponible en unos minutos").assertDoesNotExist()
+        compose.onNode(hasText("Sin fondo") and isToggleable()).performScrollTo().assertIsEnabled().assertIsOff().performClick()
+        assertEquals(listOf("cutout:true"), calls)
+    }
+
+    @Test
+    fun sinFondoWhileCutting() {
+        showProduct(taken.copy(cutout = CutoutUi(ready = true, on = true, working = true)))
+        compose.onNodeWithText("Quitando el fondo…").performScrollTo().assertExists()
+        compose.onNode(hasText("Sin fondo") and isToggleable()).assertIsNotEnabled().assertIsOn()
+    }
+
+    @Test
+    fun sinFondoSaysWhenNoProductWasFound() {
+        showProduct(taken.copy(cutout = CutoutUi(ready = true, notFound = true)))
+        compose.onNodeWithText("No encontramos el producto en la foto; se guardará completa.").performScrollTo().assertExists()
+        compose.onNode(hasText("Sin fondo") and isToggleable()).assertIsEnabled().assertIsOff()
     }
 
     @Test

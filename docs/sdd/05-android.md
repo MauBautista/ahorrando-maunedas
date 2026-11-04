@@ -329,6 +329,21 @@ Cámara o galería → reducir a ≤ 2048 px (JPEG 85) → (opcional E1) quitar 
   - La caché de Coil guarda solo respuestas 2xx (`PhotoCacheStrategy`) e ignora un error guardado antes. En un Galaxy A53, la foto de un producto importado se pidió antes de que terminara la importación, Coil guardó el 404 y la tarjeta se quedó con la inicial.
 - **Fotos de presentación** (`variants.primary_image_id`): no se editan en E1.
 
+**"Sin fondo" (T-118, RF-IMG-03, decisión T101):**
+- **Cuándo:** aparece solo para una foto tomada o elegida en S-09. La foto ya guardada y la del catálogo abierto no se recortan en E1.
+- **Estado inicial:** apagado, así que la foto se guarda completa salvo que se encienda y se encuentre el producto.
+- **Lógica (`CutoutSwitch`, `feature:catalog`):** el recorte corre en `feature:catalog`, porque `core:data` no puede depender de `core:camera`. Usa `PhotoCutout` y `ProductImageRenderer` (`core:camera`) y deja los tres archivos en `cacheDir/cut/`.
+- **Estados:**
+  - **Sin modelo:** deshabilitado, con "Disponible en unos minutos", y se pide el modelo.
+  - **Encendido:** "Quitando el fondo…" mientras recorta; luego la vista previa muestra el resultado sobre blanco.
+  - **Sin producto:** se apaga y dice "No encontramos el producto en la foto; se guardará completa.".
+  - **Otra foto, quitar la foto o salir sin guardar:** se borran los archivos del recorte. Un resultado que llega para una foto que ya no está se descarta.
+- **Guardado:** `PhotoChange.Taken(path, cutout)` lleva el recorte a `CatalogEditor.saveProduct`.
+  - Mueve los archivos junto al original como `{rendition_id}.webp` / `.png`.
+  - Escribe tres `image_renditions` (`tier='device'`, con tamaño y bytes) y las selecciona en `selected_processed_id` y `selected_thumb_id`.
+  - Encola su subida después del original.
+- **Mostrar:** `ProductPhoto` pone blanco detrás de cualquier foto. Así una sin fondo se ve como pide 10 §1, y en las demás solo cambia el color del margen.
+
 ### E2 · S-20 a S-23
 - **S-20 Seguimiento**: listings de la variante con tienda, último precio, última revisión, estado, intervalo; "Revisar ahora".
   - **"Cada cuánto" (T-224, RF-TRK-02, decisión T100):** abre un diálogo de elección simple con "De la tienda (8 h)" (el `default_check_interval_min` de su tienda), 2 h, 4 h, 12 h y 24 h. Tocar una opción la guarda en `check_interval_min` por sync (`null` para la de la tienda) y cierra; elegir la actual no escribe nada.

@@ -62,6 +62,11 @@
     <string name="editor_photo">Foto</string>
     <string name="editor_photo_take">Tomar foto</string>
     <string name="editor_photo_pick">Elegir de la galería</string>
+    <!-- T-118 (10 §5) -->
+    <string name="editor_photo_cutout">Sin fondo</string>
+    <string name="editor_photo_cutout_waiting">Disponible en unos minutos</string>
+    <string name="editor_photo_cutout_working">Quitando el fondo…</string>
+    <string name="editor_photo_cutout_not_found">No encontramos el producto en la foto; se guardará completa.</string>
     <string name="editor_photo_remove">Quitar foto</string>
     <string name="editor_photo_none">Sin foto</string>
     <string name="editor_photo_open_catalog">catálogo abierto</string>

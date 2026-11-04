@@ -5,6 +5,7 @@ import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.maubautista.maunedas.core.auth.SessionStore
+import com.maubautista.maunedas.core.camera.PhotoCutout
 import com.maubautista.maunedas.core.data.BarcodeTakenException
 import com.maubautista.maunedas.core.data.CatalogEditor
 import com.maubautista.maunedas.core.data.CatalogMerger
@@ -18,8 +19,6 @@ import com.maubautista.maunedas.core.data.TagItem
 import com.maubautista.maunedas.core.data.VariantSummary
 import com.maubautista.maunedas.core.model.Measure
 import dagger.hilt.android.lifecycle.HiltViewModel
-import java.io.File
-import javax.inject.Inject
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -31,6 +30,8 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
+import java.io.File
+import javax.inject.Inject
 
 /**
  * What the scanner hands an editor (S-12): route arguments `code`, `name`, `brand`, `measure`, `unitAmount` (base
@@ -77,6 +78,8 @@ data class ProductEditorState(
     val savedPhoto: Any? = null,
     val photoChange: PhotoChange? = null,
     @StringRes val photoError: Int? = null,
+    /** "Sin fondo" for a photo taken here (T-118); null while there is none. */
+    val cutout: CutoutUi? = null,
 ) {
     val isNew: Boolean get() = product.id == null
 }
@@ -92,8 +95,10 @@ class ProductEditorViewModel
         session: SessionStore,
         private val photos: ProductPhotos,
         private val localPhotos: LocalPhotos,
+        photoCutout: PhotoCutout,
     ) : ViewModel() {
         private val productId: String? = savedState["productId"]
+        private val cutoutSwitch = CutoutSwitch(photoCutout, localPhotos::scratch, viewModelScope)
 
         /** S-12 opens a new product with the scanned code and what an open catalog knew (all optional). */
         private val prefill = Prefill.from(savedState)
@@ -110,6 +115,7 @@ class ProductEditorViewModel
         val done = results.receiveAsFlow()
 
         init {
+            viewModelScope.launch { cutoutSwitch.state.collect { c -> ui.update { it.copy(cutout = c) } } }
             viewModelScope.launch {
                 val loaded = productId?.let { editor.loadProduct(it) }
                 ui.value =
@@ -143,15 +149,21 @@ class ProductEditorViewModel
                     s.discardTaken()
                     s.copy(photoChange = PhotoChange.Taken(reduced.path), photoError = null)
                 }
+                reduced?.let { cutoutSwitch.offer(it.path) }
             }
         }
 
+        /** "Sin fondo" (T-118): cut on the phone, saved with the photo. */
+        fun onCutout(on: Boolean) = cutoutSwitch.toggle(on)
+
         /** "Quitar foto": the saved one goes when the product is saved; a new one is just dropped. */
-        fun removePhoto() =
+        fun removePhoto() {
+            cutoutSwitch.clear()
             ui.update { s ->
                 s.discardTaken()
                 s.copy(photoChange = if (s.savedPhoto != null) PhotoChange.Removed else null, photoError = null)
             }
+        }
 
         private fun ProductEditorState.discardTaken() {
             (photoChange as? PhotoChange.Taken)?.let { File(it.path).delete() }
@@ -172,7 +184,8 @@ class ProductEditorViewModel
             ui.update { it.copy(busy = true) }
             viewModelScope.launch {
                 try {
-                    editor.saveProduct(product, variant, s.photoChange)
+                    val photo = (s.photoChange as? PhotoChange.Taken)?.copy(cutout = cutoutSwitch.toSave()) ?: s.photoChange
+                    editor.saveProduct(product, variant, photo)
                     results.send(EditorResult.SAVED)
                 } catch (e: BarcodeTakenException) {
                     ui.update { it.copy(firstVariant = it.firstVariant?.withCodeProblem(R.string.editor_code_taken, "${e.owner.productName} · ${e.owner.variantLabel}", e.owner.variantId)) }
@@ -185,6 +198,9 @@ class ProductEditorViewModel
         fun askDelete() = ui.update { it.copy(confirmDelete = true) }
 
         fun dismissDelete() = ui.update { it.copy(confirmDelete = false) }
+
+        /** Leaving without saving drops the cut files; after a save they were already moved. */
+        override fun onCleared() = cutoutSwitch.clear()
 
         fun delete() {
             val id = productId ?: return

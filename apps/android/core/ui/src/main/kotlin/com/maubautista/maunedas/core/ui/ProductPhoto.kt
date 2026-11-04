@@ -1,5 +1,6 @@
 package com.maubautista.maunedas.core.ui
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.material3.MaterialTheme
@@ -12,6 +13,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.layout.ContentScale
 import coil3.compose.AsyncImage
 
@@ -33,7 +35,8 @@ fun ProductPhoto(
             if (model == null || failed) {
                 Text(name.take(1).uppercase(), style = MaterialTheme.typography.titleLarge)
             } else {
-                AsyncImage(model = model, contentDescription = null, contentScale = contentScale, onError = { failed = true }, modifier = Modifier.fillMaxSize())
+                // Over white: a photo without background (10 §5) is shown on the background of 10 §1.
+                AsyncImage(model = model, contentDescription = null, contentScale = contentScale, onError = { failed = true }, modifier = Modifier.fillMaxSize().background(Color.White))
             }
         }
     }
