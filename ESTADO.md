@@ -53,6 +53,7 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-308 (2026-11-04):** Home Assistant ya puede leer de Maunedas el precio actual, el mínimo histórico y la existencia de cualquier presentación, con un token de solo lectura. El admin crea y revoca los tokens en la web, en Administración → Home Assistant, donde también sale la configuración lista para copiar.
 - **T-205 (2026-11-02):** el adaptador de Amazon ya se prueba con una página real con precio de lista: la de microdacyn ($759.06 con lista de $858.81) que el agente guardó solo. Faltan las de Sam's y Costco, que llegarán solas cuando se siga algún enlace de esas tiendas con oferta.
 - **T-224 (2026-11-02):** ya se puede elegir cada cuánto se revisa un enlace, en Android ("Cada cuánto") y en la web ("Revisar cada"): de la tienda, 2 h, 4 h, 12 h o 24 h. Al cambiarlo, el servidor casero reprograma la siguiente revisión desde la última. Probado desde el teléfono: el agente tomó las 4 h en 63 s.
 - **Cierre de la Etapa 2 (2026-11-02, avance):** seis de las ocho comprobaciones de 11 §6 pasaron.
@@ -196,7 +197,7 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 
 | Orden | Meta | Tarea | Queda para Mauricio |
 |---|---|---|---|
-| 1 | API de lectura para Home Assistant con token propio | T-308 | Configurarla en Home Assistant, si la quiere |
+| 1 | ~~API de lectura para Home Assistant con token propio~~ (hecha) | T-308 | Configurarla en Home Assistant, si la quiere |
 | 2 | Importación de CFDI/XML a compras en borrador | T-307 | Un CFDI real para validar |
 | 3 | Factibilidad de rembg en el A8-7410 con fotos públicas | T-010 (parte) | Las 10 fotos reales y la calificación (D5) |
 | 4 | Mejora en casa: pedido, proceso en el agente, renditions `home` y adopción | T-300 | Cerrar D5; si rembg no arranca, T2 se descarta |
@@ -336,6 +337,7 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 | T99 | **Restauración desde el respaldo del servidor casero.**<br>• La herramienta del agente toma solo las filas de la copia; el esquema sale de las migraciones de D1.<br>• `sync_meta.version` queda en el máximo de las filas (07 §5.4).<br>• Tras restaurar, los teléfonos cierran sesión y entran de nuevo, y el espejo se rehace desde cero. | El volcado de SQLite no entra en D1 tal cual (`BEGIN`/`COMMIT`, filas en orden alfabético de tabla). Un teléfono o el espejo que sincronizaron después de la copia tienen cursores por delante de la base restaurada y se saltarían los cambios nuevos; cerrar sesión borra Room y baja todo de nuevo. |
 | T100 | **Intervalo por listing (RF-TRK-02, T-224).**<br>• Selector en S-20 y W-20: "De la tienda (8 h)", 2 h, 4 h, 12 h y 24 h.<br>• El mínimo en la app es 2 h, aunque el servidor acepte desde 60 min.<br>• Al cambiar el intervalo, el agente reprograma la siguiente revisión desde la última; un listing en espera por errores la conserva. | Opciones elegidas por Mauricio (2026-11-02). Con 2 h como mínimo no se carga a las tiendas (regla 10). Sin reprogramar, bajar de 8 h a 4 h esperaría a la siguiente revisión, hasta 8 h, y no se cumpliría "≤ 2 min". |
 | T102 | **Etapa 3 detallada y agenda del loop.**<br>• T-300 a T-310 con lo que cada una necesita de Mauricio.<br>• Primero lo que no lo necesita: T-308, T-307, la factibilidad de rembg, T-300, T-301, T-306, T-302 con proveedor simulado y T-310.<br>• Las pruebas en el teléfono quedan en PR sin fusionar. | Mauricio pidió avanzar todas las fases futuras que no dependan de él y dejar las pruebas como pendientes. El orden pone primero lo pequeño y autónomo y deja al final lo que cuesta dinero o necesita el iPhone. (T101 está en el PR #93.) |
+| T103 | **API para Home Assistant (T-308).**<br>• Tokens propios `mha_…`, guardados solo como SHA-256 en `ha_tokens` (tabla de servidor, sin sync ni respaldo), revocables y con último uso anotado a lo más cada hora.<br>• `/ha/v1/*` solo lee; el token no abre `/v1`.<br>• Precio actual con la regla de mejor precio sobre los últimos 90 días; mínimo de todo el historial.<br>• La configuración usa el bloque `rest` y el token va en `secrets.yaml`. | Como el token del agente, un token filtrado no da acceso a nada más que leer precios, y se revoca sin tocar sesiones. Anotar el uso cada hora evita una escritura por lectura (Home Assistant pregunta cada hora). Si el respaldo no guarda los tokens, una restauración no revive accesos viejos. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -546,3 +548,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-02** — T-224 terminada: probada desde el teléfono, el agente tomó las 4 h en 63 s; 6 de 8 comprobaciones del cierre de la Etapa 2.
 - **2026-11-02** — T-205 terminada: fixture real de Amazon con precio de lista, recortado de la muestra que guardó el agente.
 - **2026-11-04** — Etapa 3 detallada en `12-tareas` y agenda del loop en ESTADO (T102); T-118 queda en el PR #93 esperando la prueba en el teléfono.
+- **2026-11-04** — T-308: API de lectura para Home Assistant con tokens propios y su página en Administración (T103).

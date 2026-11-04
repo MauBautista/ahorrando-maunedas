@@ -13,7 +13,7 @@
     "directory": "../web/dist",
     "binding": "ASSETS",
     "not_found_handling": "single-page-application",
-    "run_worker_first": ["/v1/*", "/agent/*", "/__/auth/*", "/__/firebase/*"],
+    "run_worker_first": ["/v1/*", "/agent/*", "/ha/*", "/__/auth/*", "/__/firebase/*"],
   },
   "triggers": { "crons": ["7 * * * *"] },
   "d1_databases": [

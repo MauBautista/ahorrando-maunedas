@@ -361,6 +361,19 @@ export const tokenCache = sqliteTable('token_cache', {
   expires_at: integer().notNull(),
 });
 
+/** Home Assistant's read-only tokens (T-308): only their SHA-256. */
+export const haTokens = sqliteTable('ha_tokens', {
+  id: text().primaryKey(),
+  name: text().notNull(),
+  token_sha256: text().notNull().unique(),
+  created_by: text()
+    .notNull()
+    .references(() => users.id),
+  created_at: integer().notNull(),
+  last_used_at: integer(),
+  revoked_at: integer(),
+});
+
 // ---------- Unified price points (VIEW, defined in the migration)
 export const vPricePoints = sqliteView('v_price_points', {
   source: text({ enum: ['purchase', 'shelf', 'web'] }).notNull(),
@@ -407,4 +420,5 @@ export const TABLES = {
   ai_usage: aiUsage,
   off_cache: offCache,
   token_cache: tokenCache,
+  ha_tokens: haTokens,
 } as const;

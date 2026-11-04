@@ -517,6 +517,17 @@ CREATE TABLE token_cache (
   expires_at  INTEGER NOT NULL
 );
 
+-- SERVER. Tokens de solo lectura para Home Assistant (T-308): solo su SHA-256; revocar pone revoked_at.
+CREATE TABLE ha_tokens (
+  id            TEXT PRIMARY KEY,
+  name          TEXT NOT NULL,
+  token_sha256  TEXT NOT NULL UNIQUE,
+  created_by    TEXT NOT NULL REFERENCES users(id),
+  created_at    INTEGER NOT NULL,
+  last_used_at  INTEGER,
+  revoked_at    INTEGER
+);
+
 -- ---------------------------------------------------------------------
 -- Vista unificada de puntos de precio (compras + anaquel + web)
 -- cents_per_base: centavos por g / ml / pz (REAL, sin redondear).

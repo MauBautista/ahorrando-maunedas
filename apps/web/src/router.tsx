@@ -119,6 +119,13 @@ export const routes: RouteObject[] = [
                     lazy: () =>
                       import('./features/admin/AgentPage').then((m) => ({ Component: m.AgentPage })),
                   },
+                  {
+                    path: 'home-assistant',
+                    lazy: () =>
+                      import('./features/admin/HomeAssistantPage').then((m) => ({
+                        Component: m.HomeAssistantPage,
+                      })),
+                  },
                 ],
               },
             ],

@@ -694,13 +694,18 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
   - un XML que no es CFDI se rechaza con su motivo.
 - **Necesita a Mauricio (después):** un CFDI real de una compra para validar.
 
-### [ ] T-308 · API de lectura para Home Assistant
+### [x] T-308 · API de lectura para Home Assistant
 - **Docs:** `ARQUITECTURA.md` §15 · **Depende de:** T-023
 - **Hacer:**
   - **Endpoints de solo lectura** con un token propio, revocable y guardado como hash: precio actual, mínimo histórico y disponibilidad por variante.
   - **Tokens:** el admin los crea y los revoca en la web.
 - **Hecho cuando:** con el token se leen los tres datos de una variante, sin él o revocado es `401`, y el token no permite escribir.
 - **Necesita a Mauricio (después):** configurarlo en Home Assistant si lo quiere usar.
+- **Hecho (2026-11-04, T103):**
+  - **Lectura:** `GET /ha/v1/variants` y `GET /ha/v1/variants/:id` (03 §13), con tokens `ha_tokens` (migración 0003, solo el SHA-256).
+  - **Tokens:** se crean y revocan en `/v1/admin/ha-tokens`.
+  - **Web:** W-23 en la web con la configuración de Home Assistant.
+  - **Pruebas:** 8 de la API y 3 de la web; 12 mutaciones, todas detectadas.
 
 ### [ ] T-309 · Métricas del agente en InfluxDB/Grafana
 - **Docs:** 07 §5.1 · **Depende de:** T-200

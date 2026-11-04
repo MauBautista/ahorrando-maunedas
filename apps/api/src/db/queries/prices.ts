@@ -48,7 +48,7 @@ export function unitFor(productUnit: DisplayUnit, measure: Measure): DisplayUnit
 }
 
 /** Newer point first; ties on observed_at go to the greatest point id, so results are deterministic. */
-const isNewer = (a: PricePoint, b: PricePoint) =>
+export const isNewer = (a: PricePoint, b: PricePoint) =>
   a.observed_at > b.observed_at || (a.observed_at === b.observed_at && a.point_id > b.point_id);
 
 function groupBy(points: PricePoint[], key: (p: PricePoint) => string): Map<string, PricePoint[]> {

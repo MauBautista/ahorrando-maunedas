@@ -248,6 +248,7 @@ Igual que `/v1/sync/pull` (`04-sincronizacion.md` §4) pero:
 - **Fuera del respaldo:**
   - `devices`, por sus tokens FCM, que se renuevan solos;
   - `token_cache`, `off_cache` e `image_jobs`, por ser caché y cola;
+  - `ha_tokens` (T-308): tras una restauración, el admin crea tokens nuevos;
   - `sync_meta`: una restauración pone `version` en el máximo de las filas y `schema_version` según las migraciones.
 - **Validación:** `limit`, `tables` y la validación son los de `/v1/sync/pull`. Un cursor para una tabla que viaja completa, o para una tabla fuera del respaldo, es `400`.
 
