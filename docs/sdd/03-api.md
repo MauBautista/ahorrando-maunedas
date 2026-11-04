@@ -602,3 +602,48 @@ El Worker lee el XML de una factura electrónica (CFDI 3.3 o 4.0, timbrada, de i
 - **`cfdi_imports`:** tabla de servidor, solo se agrega y no se sincroniza. Guarda el UUID fiscal, la compra, la tienda, el RFC y el nombre del emisor, quién y cuándo. Va en el respaldo (07 §5.4).
 - **Implementación:** `cfdi/parse.ts` (con `fast-xml-parser`), `cfdi/import.ts` y `routes/purchases.ts`.
 
+## 15. Importación de archivos (E3, T-306, decisión T108)
+
+La web lee una hoja de cálculo (CSV o la primera hoja de un `.xlsx`), el usuario dice qué columna es cada dato y sus filas se vuelven compras en borrador (`source='import'`) que se revisan y confirman como cualquier otra. El archivo no sale del navegador; al Worker llegan las compras ya armadas.
+
+### Lectura (web, `packages/shared/src/imports/table.ts`)
+- **CSV:** RFC 4180 (comillas, comillas dobles y saltos de línea dentro de comillas). El separador es el que más aparece en la primera línea: coma, punto y coma o tabulador. Si no es UTF-8, se lee como Windows-1252, como lo guarda Excel en español.
+- **Excel:** la primera hoja del `.xlsx`, leída con `DecompressionStream` y `DOMParser`, sin bibliotecas. Un `.xls` antiguo se rechaza con su explicación. Máximo 5 MB.
+- **Campos:** fecha, descripción y precio unitario o importe (obligatorios), y cantidad, tienda y folio. Se adivinan por el nombre de la columna si la primera fila los trae.
+- **Fecha:** día primero (`04/11/2026`, `4-11-26`, `04.11.2026`, `04/nov/2026`) o ISO, con hora opcional (también `a. m.`/`p. m.`). En Excel es el número de serie. Es hora de la Ciudad de México, y una fecha sin hora es a mediodía.
+- **Dinero:** del texto, nunca por flotantes (regla 1): `$1,234.50`, `1.234,50`, `12,5`. Con los dos separadores, el último es el decimal. Una coma sola es decimal si le siguen 1 o 2 dígitos. Un punto solo es de miles únicamente entre grupos de tres repetidos (`1.234.567`). Un número de Excel se redondea a centavos en el sexto decimal.
+- **Línea:**
+  - Cantidad 1 si no hay columna o la celda está vacía.
+  - Con importe, eso costó la línea y el precio unitario es importe ÷ cantidad.
+  - Con precio unitario solo, la línea cuesta precio × cantidad (`grossCents`).
+- **Compra:**
+  - Las líneas de una tienda y un folio o, sin folio, de una tienda y un día de la Ciudad de México.
+  - La compra toma la hora más temprana.
+  - Una de más de 300 líneas se omite.
+- **Filas omitidas:** sin fecha, sin descripción, sin precio ni importe, o con una cantidad no válida. La vista previa dice cuáles y por qué.
+- **Tiendas:** cada nombre del archivo se busca con `matchStoreName`; el que no aparece se elige. Sin columna de tienda, se elige una para todas.
+
+### `POST /v1/purchases/import`
+`{ file_name: string; purchases: ImportPurchase[] /* 1–20 */ }` → `200 { results: ImportResult[] }` (`packages/shared/src/api/imports.ts`), un resultado por compra y en orden:
+```ts
+// ImportPurchase
+{ store_id: Id; purchased_at: Millis; ticket: string | null;
+  lines: Array<{ description: string; quantity: number; unit_price_cents: Cents; final_cents: Cents }> /* 1–300 */ }
+// ImportResult
+{ purchase_id: Id; status: 'created' | 'duplicate'; lines: number; linked: number }
+```
+- **Escritura:** como la de §14, en un batch y con una sola versión nueva. Por cada compra nueva crea:
+  - la compra (`status='draft'`, `total_cents = subtotal_cents = Σ final`, `discount_cents = 0`, `notes = "Importado de {archivo}[ · folio {folio}]"`);
+  - sus líneas (`gross = final`, sin descuento), vinculadas por los alias de la tienda (09 §5.1);
+  - la fila `purchase_imports`.
+- **Huella:** SHA-256 de tienda, fecha, folio y cada línea con su texto normalizado (`normalizeReceiptText`), cantidad, precio e importe.
+- **Duplicados:**
+  - una compra cuya huella ya es una compra viva no se crea: su resultado es `duplicate` con esa compra;
+  - una huella repetida en la misma solicitud, igual;
+  - una compra borrada deja importarla de nuevo.
+- **Errores:** tienda inexistente o borrada → `404`; cuerpo fuera del esquema → `400`.
+- **Varias solicitudes:** la web manda de 20 en 20. Si una falla, lo anterior ya quedó, y repetir no duplica.
+- **`purchase_imports`:** tabla de servidor (migración 0005), solo se agrega y no se sincroniza. Guarda la huella, la compra, el nombre del archivo, quién y cuándo. Va en el respaldo (07 §5.4).
+- **Implementación:**
+  - Worker: `imports/purchases.ts`, y `imports/aliases.ts`, compartido con el CFDI.
+  - Web: `features/purchases/import/` (`xlsx.ts`, `readFile.ts`, `ImportPurchasesPage.tsx`).

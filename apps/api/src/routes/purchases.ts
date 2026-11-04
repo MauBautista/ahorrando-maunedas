@@ -4,7 +4,9 @@ import {
   CfdiPreviewRequestSchema,
   type CfdiPreviewResponse,
 } from '@maunedas/shared/api/cfdi';
+import { ImportRequestSchema, type ImportResponse } from '@maunedas/shared/api/imports';
 import { importCfdi, previewCfdi } from '../cfdi/import';
+import { importPurchases } from '../imports/purchases';
 import {
   PurchasesQuerySchema,
   type PurchaseDetailItem,
@@ -54,6 +56,11 @@ export const purchases = new Hono<AppEnv>()
       await importCfdi(c.env.DB, xml, store_id, c.get('user').id, Date.now()),
       201,
     );
+  })
+  // Spreadsheets (E3, T-306, 03 §15): the web reads the file and sends its purchases.
+  .post('/v1/purchases/import', requireUser(), async (c) => {
+    const request = await parseJsonBody(c, ImportRequestSchema);
+    return c.json<ImportResponse>(await importPurchases(c.env.DB, request, c.get('user').id, Date.now()));
   })
   .get('/v1/purchases', requireUser(), async (c) => {
     const query = parseQuery(c, PurchasesQuerySchema);

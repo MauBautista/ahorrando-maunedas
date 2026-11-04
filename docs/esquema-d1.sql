@@ -543,6 +543,18 @@ CREATE TABLE cfdi_imports (
 CREATE INDEX idx_cfdi_imports_uuid ON cfdi_imports(fiscal_uuid);
 CREATE INDEX idx_cfdi_imports_rfc ON cfdi_imports(emisor_rfc, created_at);
 
+-- SERVER, append-only. Compras importadas de una hoja de cálculo (T-306): la huella de cada compra evita repetirla al
+-- importar el mismo archivo otra vez mientras siga viva. Va en el respaldo (07 §5.4).
+CREATE TABLE purchase_imports (
+  id            TEXT PRIMARY KEY,
+  fingerprint   TEXT NOT NULL,
+  purchase_id   TEXT NOT NULL REFERENCES purchases(id),
+  file_name     TEXT NOT NULL,
+  created_by    TEXT NOT NULL REFERENCES users(id),
+  created_at    INTEGER NOT NULL
+);
+CREATE INDEX idx_purchase_imports_fingerprint ON purchase_imports(fingerprint);
+
 -- ---------------------------------------------------------------------
 -- Vista unificada de puntos de precio (compras + anaquel + web)
 -- cents_per_base: centavos por g / ml / pz (REAL, sin redondear).

@@ -249,7 +249,7 @@ Igual que `/v1/sync/pull` (`04-sincronizacion.md` §4) pero:
 
 **Implementación (T-230, ruta del Worker; decisión T88):**
 - **Contenido:** `SELECT *` de todas las tablas del registro, de todos los usuarios y con lápidas, en orden de restauración (padres primero), con cursor `(version, pk)`.
-- **Tablas del servidor:** `receipt_extractions`, `ai_usage` y `cfdi_imports` (T-307) solo se agregan, así que van por `(created_at, pk)`.
+- **Tablas del servidor:** `receipt_extractions`, `ai_usage`, `cfdi_imports` (T-307) y `purchase_imports` (T-306) solo se agregan, así que van por `(created_at, pk)`.
 - **`user_identities`:** viaja **completa** en cada respuesta (vacía también) y aparece en `replace`, que indica qué tablas sustituye el espejo en lugar de mezclar. El Worker borra filas de ella al quitar el acceso con Google, y un espejo por `created_at` conservaría ese acceso para una restauración.
 - **Fuera del respaldo:**
   - `devices`, por sus tokens FCM, que se renuevan solos;

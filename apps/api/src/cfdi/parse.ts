@@ -1,3 +1,4 @@
+import { mexicoCityMs } from '@maunedas/shared/util/time';
 import { CFDI_MAX_LINES, type CfdiRejection } from '@maunedas/shared/api/cfdi';
 import { XMLParser, XMLValidator } from 'fast-xml-parser';
 
@@ -56,37 +57,10 @@ export const cents = (m: bigint): number => Number((m + 5_000n) / 10_000n);
 const sum = (nodes: Node[] | undefined) =>
   (nodes ?? []).reduce((acc, n) => acc + (micros(n.Importe) ?? 0n), 0n);
 
-const localTime = new Intl.DateTimeFormat('en-US', {
-  timeZone: 'America/Mexico_City',
-  hourCycle: 'h23',
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-  hour: '2-digit',
-  minute: '2-digit',
-  second: '2-digit',
-});
-
-function offsetAt(utcMs: number): number {
-  const parts = Object.fromEntries(localTime.formatToParts(new Date(utcMs)).map((p) => [p.type, p.value]));
-  const local = Date.UTC(
-    +parts.year!,
-    +parts.month! - 1,
-    +parts.day!,
-    +parts.hour!,
-    +parts.minute!,
-    +parts.second!,
-  );
-  return local - utcMs;
-}
-
 /** `Fecha` is the issuer's local time without a zone; the household's is Mexico City (rule 2). */
-export function mexicoCityMs(fecha: unknown): number | null {
+export function fechaMs(fecha: unknown): number | null {
   const m = typeof fecha === 'string' ? /^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2}):(\d{2})/.exec(fecha) : null;
-  if (!m) return null;
-  const asUtc = Date.UTC(+m[1]!, +m[2]! - 1, +m[3]!, +m[4]!, +m[5]!, +m[6]!);
-  const first = asUtc - offsetAt(asUtc);
-  return asUtc - offsetAt(first);
+  return m ? mexicoCityMs(+m[1]!, +m[2]!, +m[3]!, +m[4]!, +m[5]!, +m[6]!) : null;
 }
 
 /**
@@ -136,7 +110,7 @@ export function parseCfdi(xml: string): ParsedCfdi {
   const root = doc.Comprobante as Node | undefined;
   if (!root || !['3.3', '4.0'].includes(String(root.Version))) throw new CfdiRejected('NOT_CFDI');
   const emisor = root.Emisor as Node | undefined;
-  const issuedAt = mexicoCityMs(root.Fecha);
+  const issuedAt = fechaMs(root.Fecha);
   const total = micros(root.Total);
   if (!emisor || typeof emisor.Rfc !== 'string' || issuedAt === null || total === null) {
     throw new CfdiRejected('NOT_CFDI');

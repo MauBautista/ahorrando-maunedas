@@ -3,7 +3,7 @@ import type { CfdiImportResponse, CfdiPreviewResponse } from '@maunedas/shared/a
 import { normalizeReceiptText } from '@maunedas/shared/receipts/normalize';
 import { uuidv7 } from '@maunedas/shared/util/uuid';
 import { beforeAll, beforeEach, describe, expect, it } from 'vitest';
-import { cents, mexicoCityMs, micros, parseCfdi } from '../src/cfdi/parse';
+import { cents, fechaMs, micros, parseCfdi } from '../src/cfdi/parse';
 import { CFDI, FISCAL_UUID } from './support/cfdi';
 import { alias, product, store, syncHarness, variant, type Mutation } from './support/sync';
 
@@ -131,8 +131,8 @@ describe('CFDI reading (T-307, 03 §14)', () => {
     expect(micros('7')).toBe(7_000_000n);
     expect([micros('-1'), micros('1e3'), micros(''), micros(undefined)]).toEqual([null, null, null, null]);
     expect([cents(24_994_999n), cents(24_995_000n)]).toEqual([2499, 2500]);
-    expect(mexicoCityMs('2026-12-31T23:59:59')).toBe(Date.UTC(2027, 0, 1, 5, 59, 59));
-    expect(mexicoCityMs('31/10/2026')).toBeNull();
+    expect(fechaMs('2026-12-31T23:59:59')).toBe(Date.UTC(2027, 0, 1, 5, 59, 59));
+    expect(fechaMs('31/10/2026')).toBeNull();
   });
 
   it('says why an XML is not an importable invoice', async () => {

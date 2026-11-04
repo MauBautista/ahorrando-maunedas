@@ -47,6 +47,7 @@ apps/web/
 | `/login` | W-01 Login | S-01 | — |
 | `/` | W-02 Inicio | S-02 | todos |
 | `/compras` | W-03 Compras | S-03 | todos |
+| `/compras/importar` | Importar compras de un archivo (T-306) | — | todos |
 | `/compras/nueva` · `/compras/:id/editar` | W-05 Editor de compra | S-04, S-05 | todos |
 | `/compras/:id` | W-04 Detalle de compra (líneas, promociones, fotos del ticket) | — | todos |
 | `/compras/:id/ticket` | W-06 Revisión de ticket | S-06 | todos |
@@ -251,6 +252,12 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
     - Muestra emisor, fecha, total, líneas y cuántas ya se vinculan.
     - La tienda viene sugerida (o se elige). "Importar" abre la compra en borrador en W-05 para revisarla, vincular y confirmar.
     - Un XML que no se puede importar dice por qué. Una factura ya importada lleva a su compra.
+  - **"Importar archivo" (T-306, 03 §15):** abre `/compras/importar`:
+    - Se elige un CSV o un `.xlsx`; la primera fila, si trae nombres, sugiere las columnas.
+    - **Columnas:** se elige qué columna es cada dato.
+    - **Tiendas:** se elige la tienda de cada nombre que no se reconoce, o una para todas.
+    - **Vista previa:** las compras (fecha, tienda, folio, líneas, total) y las filas que se omiten con su motivo.
+    - **"Importar N compras":** al terminar dice cuántas se crearon, cuántas líneas quedaron vinculadas y cuántas ya estaban importadas, y lleva a los borradores.
 - **W-04 Compra:**
   - Productos con cantidad × precio, promoción, total y lo pagado por unidad con el descuento del ticket prorrateado (como el historial).
   - Descuentos del ticket, totales con "No cuadra por $X" y las páginas del ticket.

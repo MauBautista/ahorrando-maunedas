@@ -108,6 +108,7 @@ export const BACKUP_APPEND_TABLES = {
   receipt_extractions: 'id',
   ai_usage: 'id',
   cfdi_imports: 'id',
+  purchase_imports: 'id',
 } as const;
 
 /**

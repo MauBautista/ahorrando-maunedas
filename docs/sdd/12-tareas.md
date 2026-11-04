@@ -692,11 +692,16 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
   - las credenciales de una app de Mercado Libre, si su API las exige (se confirma con una sola petición);
   - qué otras tiendas seguir.
 
-### [ ] T-306 · Importación CSV/Excel
+### [x] T-306 · Importación CSV/Excel
 - **Docs:** `ARQUITECTURA.md` §15 · **Depende de:** T-161
 - **Hacer:** importador en la web con mapeo de columnas (fecha, tienda, descripción, cantidad, precio o importe). Crea compras en borrador con `source='import'`, que se revisan y vinculan como cualquier otra.
 - **Hecho cuando:** un archivo de ejemplo con varias compras queda en borradores vinculables, y volver a importarlo no duplica.
 - **Necesita a Mauricio (después):** un archivo real para validar el mapeo; el importador es genérico.
+- **Hecho (2026-11-04, T108):**
+  - **Lectura en la web:** CSV y `.xlsx` sin bibliotecas, con las reglas en `packages/shared/src/imports/table.ts`.
+  - **Endpoint:** `POST /v1/purchases/import` (03 §15), con `purchase_imports` (migración 0005, en el respaldo) para no duplicar.
+  - **Web:** "Importar archivo" en W-03, en `/compras/importar`.
+  - **Pruebas:** 28 nuevas (12 de reglas, 4 de la API, 12 de la web) y las del respaldo y el esquema; 25 mutaciones, todas detectadas.
 
 ### [x] T-307 · Importación CFDI/XML
 - **Docs:** `ARQUITECTURA.md` §15 · **Depende de:** T-037, T-161
