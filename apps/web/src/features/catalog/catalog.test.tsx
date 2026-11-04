@@ -1,10 +1,12 @@
-import type { ProductsResponse } from '@maunedas/shared/api/catalog';
+import type { ImageRef, ProductsResponse } from '@maunedas/shared/api/catalog';
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { describe, expect, it } from 'vitest';
 import { fakeWorker, renderAt } from '../../test/render';
 import { detail, lookups, NOW } from '../../test/catalog';
 import { describeHistory } from './describeHistory';
+
+const LAZY = { timeout: 5000 };
 
 const product = (id: string, name: string, best: boolean) => ({
   id,
@@ -266,5 +268,106 @@ describe('describeHistory', () => {
     expect(
       describeHistory([p(Date.UTC(2026, 9, 1, 18), 2_850), p(Date.UTC(2026, 9, 3, 18), 2_500)], 'kg'),
     ).toBe('2 precios del 1 oct 2026 al 3 oct 2026; el más bajo $25.00/kg y el más alto $28.50/kg.');
+  });
+});
+
+describe('W-08 "Mejorar en casa" (T-300)', () => {
+  const photo = (o: Partial<ImageRef> = {}): ImageRef => ({
+    image_id: 'img-1',
+    thumb_url: 'https://x/thumb.webp',
+    processed_url: null,
+    original_url: 'https://x/original.jpg',
+    license: null,
+    attribution: null,
+    updated_at: 5_000,
+    enhance_pending: false,
+    adopt: null,
+    ...o,
+  });
+  const withPhoto = (image: ImageRef) => ({ ...detail, product: { ...detail.product, image } });
+  const pushes = (w: ReturnType<typeof fakeWorker>) =>
+    w.posts
+      .filter((p) => p.path === '/v1/sync/push')
+      .map(
+        (p) =>
+          (p.body as { mutations: Array<{ table: string; row: Record<string, unknown> }> }).mutations[0]!,
+      );
+
+  function worker(
+    image: ImageRef,
+    enhance: () => unknown = () => Response.json({ job_id: 'j1' }, { status: 202 }),
+  ) {
+    return fakeWorker({
+      '/v1/lookups': () => lookups,
+      '/v1/products/p1': () => withPhoto(image),
+      '/v1/images/img-1/enhance': enhance,
+      '/v1/sync/push': () => ({ applied: 1, skipped: 0, conflicts: [] }),
+    });
+  }
+
+  it('asks the home server and says so', async () => {
+    const w = worker(photo());
+    renderAt('/productos/p1', w.fetchImpl);
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Mejorar en casa' }, LAZY));
+    expect((await screen.findByRole('status')).textContent).toBe(
+      'Mejora pedida: el servidor casero quitará el fondo en unos minutos.',
+    );
+    expect(w.posts[0]).toEqual({ path: '/v1/images/img-1/enhance', body: undefined, method: 'POST' });
+    const row = pushes(w)[0]!;
+    expect(row.table).toBe('images');
+    expect(row.row).toEqual({
+      id: 'img-1',
+      updated_at: expect.any(Number),
+      enhance_requested_at: expect.any(Number),
+    });
+    expect(row.row.updated_at as number).toBeGreaterThan(5_000);
+    expect(screen.queryByRole('button', { name: 'Mejorar en casa' })).toBeNull();
+  });
+
+  it('says when it is still waiting', async () => {
+    renderAt('/productos/p1', worker(photo({ enhance_pending: true })).fetchImpl);
+    expect(await screen.findByText(/^Mejora pedida/, undefined, LAZY)).toBeTruthy();
+    expect(screen.queryByRole('button', { name: 'Mejorar en casa' })).toBeNull();
+  });
+
+  it('says that the photo is still uploading', async () => {
+    const w = worker(photo(), () =>
+      Response.json({ error: { code: 'IMAGE_NOT_UPLOADED', message: 'x' } }, { status: 409 }),
+    );
+    renderAt('/productos/p1', w.fetchImpl);
+    const ui = userEvent.setup();
+    await ui.click(await screen.findByRole('button', { name: 'Mejorar en casa' }, LAZY));
+    expect((await screen.findByRole('alert')).textContent).toBe(
+      'La foto todavía se está subiendo; intenta en un momento.',
+    );
+    expect(pushes(w)).toEqual([]);
+  });
+
+  it('adopts the home result once', async () => {
+    // Each load brings a newer updated_at with the same result to adopt, so the page renders it again.
+    let loads = 0;
+    const w = fakeWorker({
+      '/v1/lookups': () => lookups,
+      '/v1/products/p1': () =>
+        withPhoto(
+          photo({ updated_at: 5_000 + loads++, adopt: { processed_id: 'r-proc', thumb_id: 'r-thumb' } }),
+        ),
+      '/v1/sync/push': () => ({ applied: 1, skipped: 0, conflicts: [] }),
+    });
+    renderAt('/productos/p1', w.fetchImpl);
+    await waitFor(() => expect(pushes(w)).toHaveLength(1), LAZY);
+    expect(pushes(w)[0]).toEqual({
+      table: 'images',
+      row: {
+        id: 'img-1',
+        updated_at: expect.any(Number),
+        selected_processed_id: 'r-proc',
+        selected_thumb_id: 'r-thumb',
+      },
+    });
+    await waitFor(() => expect(loads).toBeGreaterThanOrEqual(2));
+    await new Promise((r) => setTimeout(r, 50));
+    expect(pushes(w)).toHaveLength(1);
   });
 });

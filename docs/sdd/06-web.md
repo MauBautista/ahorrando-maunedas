@@ -203,6 +203,7 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
   - Encabezado con foto grande, marca, ruta de categoría y etiquetas, y acciones "Editar", "Precio de anaquel" y, para admins, "Fusionar con otro producto". Esas pantallas llegan con W-09, T-164 y T-165.
   - Pestañas en la URL (`?vista=presentaciones|comparar|historial`).
   - **Comparar** es una tabla con desplazamiento horizontal, porque en la web cabe. Marca "Más barato" y deja aparte "Otras medidas (no se comparan)".
+  - **"Mejorar en casa" (T-300, 10 §6.1):** bajo la foto. Pide al servidor casero quitarle el fondo; mientras espera dice "Mejora pedida…", y una foto que aún no termina de subir lo explica. El resultado se adopta solo al abrir la ficha.
   - **Historial** usa los filtros de Android (T58), y Recharts con una serie de puntos por fuente, sin líneas. La gráfica lleva una descripción para lectores de pantalla y debajo va la lista de precios, del más nuevo al más viejo. Recharts se carga solo al abrir esa pestaña (440 KB).
 - **Antigüedad** ("hoy", "ayer", "hace N días…"): días de calendario en la Ciudad de México, como `Dates.ago`, contados desde que llegaron los datos (`dataUpdatedAt`).
 - **Fotos** en el orden de 10 §1, con URLs firmadas; sin foto o si falla, la inicial.

@@ -211,6 +211,11 @@ Si el modelo de segmentación aún no se descargó o falla, se guarda solo el or
   - **Implementación (T-300, `images/enhance.ts`):** solo fotos `role='catalog'` vivas (otra, `404`) con el original ya en R2 (si no, `409 E-IMAGE_NOT_UPLOADED`). Un trabajo en cola o tomado de esa foto se responde de nuevo en lugar de encolar otro.
 - El agente procesa (`07-agente.md` §11) y el Worker crea renditions `tier='home'` (escritura de servidor con nueva `version`).
 - Adopción automática en el cliente al recibirlas por pull: si `edit_params.manual` no es verdadero, el cliente apunta `selected_*` a la rendition `home` más reciente (edición normal por sync; si dos dispositivos lo hacen, eligen lo mismo).
+  - **Web (T-300):** no tiene copia local, así que el Worker calcula en `ImageRef.adopt` las renditions `home` más nuevas (la última `processed` y la última `thumb`).
+    - **Cuándo trae algo:** solo cuando ya están las dos, alguna difiere de la seleccionada y la foto no tiene `edit_params.manual`.
+    - **Escritura:** la ficha la adopta una vez por resultado, con un push parcial de `images`. Así también la adopta si nadie abre la app.
+    - **Pedido:** "Mejorar en casa" llama al Worker y pone `enhance_requested_at` por sync. `ImageRef.enhance_pending` dice si sigue esperando.
+    - **Fondo:** la foto se muestra sobre blanco (10 §1).
 
 ### 6.2 Editor (RF-IMG-05)
 

@@ -133,6 +133,9 @@ export const purchase: PurchaseDetailResponse = {
       original_url: 'https://img.test/t1.jpg',
       license: null,
       attribution: null,
+      updated_at: 1,
+      enhance_pending: false,
+      adopt: null,
     },
   ],
 };

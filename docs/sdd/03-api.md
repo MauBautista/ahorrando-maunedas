@@ -199,6 +199,9 @@ interface ImageRef {
   original_url: string | null;
   license: string | null;
   attribution: string | null;
+  updated_at: Millis;              // de la fila images, para escribirla por sync (T-300)
+  enhance_pending: boolean;        // se pidió "Mejorar en casa" y no ha llegado un resultado home desde entonces
+  adopt: { processed_id: Id; thumb_id: Id } | null;   // las renditions home más nuevas por adoptar (10 §6.1)
 }
 
 interface BestPrice {
