@@ -9,6 +9,11 @@ import { createQueryClient } from './lib/queryClient';
 import { routes } from './router';
 import './styles/app.css';
 
+// Installable and readable without network (T-310): only the built app has a service worker.
+if (import.meta.env.PROD && 'serviceWorker' in navigator) {
+  window.addEventListener('load', () => void navigator.serviceWorker.register('/sw.js'));
+}
+
 const auth = firebaseAuth();
 const root = document.getElementById('root');
 if (root) {

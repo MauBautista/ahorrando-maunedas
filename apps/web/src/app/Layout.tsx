@@ -1,6 +1,7 @@
 import { NavLink, Outlet } from 'react-router';
 import { APP_NAME } from '../app-info';
 import { useMe } from '../features/auth/useSession';
+import { OfflineBanner } from './OfflineBanner';
 
 interface Tab {
   to: string;
@@ -40,6 +41,7 @@ export function Layout() {
           </nav>
         </div>
       </header>
+      <OfflineBanner />
       <main className="mx-auto w-full max-w-5xl flex-1 px-4 py-4 pb-24 md:pb-8">
         <Outlet />
       </main>

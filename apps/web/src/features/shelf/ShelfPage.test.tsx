@@ -1,6 +1,7 @@
 import { screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+import { memoryStore, setCaptureStore } from '../../lib/captures';
 import { found, purchaseLookups } from '../../test/purchases';
 import { fakeWorker, renderAt } from '../../test/render';
 
@@ -26,6 +27,7 @@ beforeEach(() => {
 afterEach(() => {
   localStorage.clear();
   vi.restoreAllMocks();
+  setCaptureStore(memoryStore());
 });
 
 function worker(extra: Record<string, (url: URL, body: unknown) => unknown> = {}) {
@@ -156,5 +158,94 @@ describe('W-10 shelf price', () => {
       'El precio se guardó, pero la foto no se pudo subir.',
     );
     expect(router.state.location.pathname).toBe('/anaquel/nuevo');
+  });
+
+  describe('without network (T-310)', () => {
+    /** The browser's flag, as it changes when the connection comes and goes. */
+    function network(online: boolean) {
+      vi.spyOn(navigator, 'onLine', 'get').mockReturnValue(online);
+      window.dispatchEvent(new Event(online ? 'online' : 'offline'));
+    }
+
+    async function fill(user: ReturnType<typeof userEvent.setup>) {
+      await user.type(await screen.findByLabelText('Buscar producto o código', {}, LAZY), 'leche');
+      await user.click(await screen.findByRole('button', { name: 'Leche Lala · 1 L' }, LAZY));
+      await user.type(screen.getByLabelText('Precio en el anaquel'), '30');
+      await user.upload(
+        screen.getByLabelText('Tomar foto del anaquel'),
+        new File(['raw'], 'a.jpg', { type: 'image/jpeg' }),
+      );
+      await screen.findByRole('img', { name: 'Foto del anaquel' });
+    }
+
+    it('keeps the capture on the device and sends it, rows then photo, when the network is back', async () => {
+      localStorage.setItem('maunedas.shelf_place', JSON.stringify({ storeId: 's-costco', branchId: null }));
+      let up = false;
+      const w = worker({
+        '/v1/sync/push': (u, body) => {
+          if (!up) throw new TypeError('Failed to fetch');
+          return applied(u, body);
+        },
+      });
+      const router = renderAt('/anaquel/nuevo', w.fetchImpl);
+      const user = userEvent.setup();
+      await fill(user);
+      network(false);
+      await user.click(screen.getByRole('button', { name: 'Guardar' }));
+      expect(
+        await screen.findByText(
+          'Sin conexión: el precio se guardó en este dispositivo y se subirá cuando vuelva la red.',
+        ),
+      ).toBeTruthy();
+      expect(router.state.location.pathname).toBe('/anaquel/nuevo');
+      expect(await screen.findByText('1 captura espera la conexión para subirse.')).toBeTruthy();
+      expect(screen.getByText(/^Sin conexión: ves lo guardado en este dispositivo/)).toBeTruthy();
+      // The form is ready for the next one.
+      expect((screen.getByLabelText('Precio en el anaquel') as HTMLInputElement).value).toBe('');
+
+      up = true;
+      const before = w.posts.length;
+      network(true);
+      expect(await screen.findByText('Se subió 1 captura guardada sin conexión.')).toBeTruthy();
+      const sent = w.posts.slice(before);
+      expect(sent.map((p) => p.method)).toEqual(['POST', 'PUT']);
+      expect((sent[0]!.body as Push).mutations.map((m) => m.table)).toEqual(['price_observations', 'images']);
+      expect(sent[1]!.path).toBe(
+        `/v1/images/${(sent[0]!.body as Push).mutations[1]!.row.id}/blobs/original.jpg`,
+      );
+      expect(screen.queryByText(/captura espera/)).toBeNull();
+    });
+
+    it('a photo that meets no network waits alone, the price already saved', async () => {
+      localStorage.setItem('maunedas.shelf_place', JSON.stringify({ storeId: 's-costco', branchId: null }));
+      const w = worker({
+        '/v1/images/*': () => {
+          throw new TypeError('Failed to fetch');
+        },
+      });
+      renderAt('/anaquel/nuevo', w.fetchImpl);
+      const user = userEvent.setup();
+      await fill(user);
+      await user.click(screen.getByRole('button', { name: 'Guardar' }));
+      expect(
+        await screen.findByText('Precio guardado. Sin conexión, la foto se subirá cuando vuelva la red.'),
+      ).toBeTruthy();
+      expect(await screen.findByText('1 captura espera la conexión para subirse.')).toBeTruthy();
+      expect(w.posts.filter((p) => p.path === '/v1/sync/push')).toHaveLength(1);
+    });
+
+    it('an error that is not the network is still an error', async () => {
+      localStorage.setItem('maunedas.shelf_place', JSON.stringify({ storeId: 's-costco', branchId: null }));
+      const w = worker({
+        '/v1/sync/push': () =>
+          Response.json({ error: { code: 'INTERNAL', message: 'Falló.' } }, { status: 500 }),
+      });
+      renderAt('/anaquel/nuevo', w.fetchImpl);
+      const user = userEvent.setup();
+      await fill(user);
+      await user.click(screen.getByRole('button', { name: 'Guardar' }));
+      expect((await screen.findByRole('alert')).textContent).toBe('Falló.');
+      expect(screen.queryByText(/captura espera/)).toBeNull();
+    });
   });
 });
