@@ -1,9 +1,11 @@
 import type { AdminUser } from '@maunedas/shared/api/admin';
+import type { HaTokenItem } from '@maunedas/shared/api/ha';
 import { screen, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { found } from '../../test/purchases';
 import { fakeWorker, renderAt } from '../../test/render';
+import { haConfig } from './haConfig';
 import { movedText } from './merge';
 
 const LAZY = { timeout: 5000 };
@@ -343,5 +345,94 @@ describe('W-13 AI spending', () => {
     expect(document.querySelector('dl')!.textContent!.replace(/\u00A0/g, ' ')).toBe(
       'TicketsUSD 4.9876Edición de fotosUSD 0.1124OtrosUSD 0.00',
     );
+  });
+});
+
+describe('W-23 Home Assistant', () => {
+  const at = Date.parse('2026-11-01T18:00:00Z');
+  const token = (o: Partial<HaTokenItem>): HaTokenItem => ({
+    id: 't1',
+    name: 'Casa',
+    created_by_name: 'Mau',
+    created_at: at,
+    last_used_at: null,
+    revoked_at: null,
+    ...o,
+  });
+
+  function ha(list: HaTokenItem[]) {
+    return fakeWorker(
+      {
+        '/v1/admin/ha-tokens': (_u, body) =>
+          body
+            ? Response.json(
+                { ...token({ id: 't-new', ...(body as object) }), token: 'mha_secreto' },
+                { status: 201 },
+              )
+            : { items: list },
+        '/v1/admin/ha-tokens/*': () => new Response(null, { status: 204 }),
+        '/v1/search/variants': () => ({
+          items: [found({ variant_id: 'v-leche', product_name: 'Leche Lala', variant_label: '1 L' })],
+        }),
+      },
+      'admin',
+    );
+  }
+
+  it('creates a token after asking for its name, shows it once and revokes after asking', async () => {
+    const w = ha([
+      token({ id: 't1', name: 'Casa', last_used_at: at }),
+      token({ id: 't0', name: 'Vieja', revoked_at: at }),
+    ]);
+    renderAt('/admin/home-assistant', w.fetchImpl);
+    const ui = userEvent.setup();
+    await screen.findByRole('heading', { name: 'Home Assistant' }, LAZY);
+    expect(await screen.findByText(/Creado por Mau el .* · último uso el /)).toBeTruthy();
+    expect(screen.getByText(/· revocado el /)).toBeTruthy();
+    // Only the live one can be revoked.
+    expect(screen.getAllByRole('button', { name: 'Revocar' })).toHaveLength(1);
+
+    await ui.click(screen.getByRole('button', { name: 'Crear token' }));
+    expect(screen.getByRole('alert').textContent).toBe(
+      'Escribe un nombre, por ejemplo «Home Assistant de la casa».',
+    );
+    await ui.type(screen.getByLabelText('Nombre del token'), '  Sala  ');
+    await ui.click(screen.getByRole('button', { name: 'Crear token' }));
+    const shown = await screen.findByRole('status');
+    expect(within(shown).getByText('mha_secreto')).toBeTruthy();
+    expect(shown.textContent).toContain('no se volverá a mostrar');
+    expect(w.posts[0]).toEqual({ path: '/v1/admin/ha-tokens', body: { name: 'Sala' }, method: 'POST' });
+
+    const confirm = vi.spyOn(window, 'confirm').mockReturnValueOnce(false).mockReturnValueOnce(true);
+    await ui.click(screen.getByRole('button', { name: 'Revocar' }));
+    expect(w.posts.filter((p) => p.method === 'DELETE')).toEqual([]);
+    await ui.click(screen.getByRole('button', { name: 'Revocar' }));
+    expect(confirm).toHaveBeenCalledWith(
+      '¿Revocar «Casa»? Home Assistant dejará de leer los precios con él.',
+    );
+    expect(w.posts.filter((p) => p.method === 'DELETE')).toEqual([
+      { path: '/v1/admin/ha-tokens/t1', body: undefined, method: 'DELETE' },
+    ]);
+  });
+
+  it('builds the sensor for the chosen variant', async () => {
+    renderAt('/admin/home-assistant', ha([]).fetchImpl);
+    const ui = userEvent.setup();
+    await screen.findByText('Aún no hay tokens.', undefined, LAZY);
+    const config = () => screen.getByLabelText('Configuración de Home Assistant').textContent ?? '';
+    expect(config()).toContain('/ha/v1/variants/<id de la presentación>');
+    await ui.type(screen.getByLabelText('Buscar presentación'), 'leche');
+    await ui.click(await screen.findByRole('button', { name: /Leche Lala · 1 L/ }));
+    expect(config()).toContain(`${window.location.origin}/ha/v1/variants/v-leche`);
+    expect(config()).toContain('- name: "Leche Lala · 1 L"');
+  });
+
+  it('writes the configuration with the token kept as a secret', () => {
+    const text = haConfig('https://maunedas.test', { variant_id: 'v1', name: 'Café "Oro" · 200 g' });
+    expect(text).toContain('  - resource: https://maunedas.test/ha/v1/variants/v1');
+    expect(text).toContain('      - name: "Café \'Oro\' · 200 g"');
+    expect(text).toContain('Authorization: !secret maunedas_token');
+    expect(text).toContain('value_json.current.price_cents / 100');
+    expect(haConfig('https://maunedas.test', null)).toContain('- name: "Precio"');
   });
 });

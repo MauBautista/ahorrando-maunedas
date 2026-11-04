@@ -1,14 +1,10 @@
 import type { MiddlewareHandler } from 'hono';
 import type { AppEnv } from '../env';
 import { ApiError } from '../errors';
+import { sha256Hex } from '../util/sha256';
 
 const enc = new TextEncoder();
 const HEX = /^[0-9a-f]{64}$/;
-
-async function sha256Hex(value: string): Promise<string> {
-  const digest = new Uint8Array(await crypto.subtle.digest('SHA-256', enc.encode(value)));
-  return [...digest].map((b) => b.toString(16).padStart(2, '0')).join('');
-}
 
 /**
  * The home agent's bearer token (07 §5, CLAUDE.md rule 9): the Worker keeps only its SHA-256 (`AGENT_TOKEN_SHA256`)

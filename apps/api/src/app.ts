@@ -10,6 +10,7 @@ import { clientSchema } from './middleware/client-schema';
 import { requestId } from './middleware/request-id';
 import { admin } from './routes/admin';
 import { alerts } from './routes/alerts';
+import { ha } from './routes/ha';
 import { barcodes } from './routes/barcodes';
 import { bootstrap } from './routes/bootstrap';
 import { devices } from './routes/devices';
@@ -71,6 +72,7 @@ export function createApp(options: AppOptions = {}): Hono<AppEnv> {
   app.route('/', admin);
   app.route('/', alerts);
   app.route('/', agent);
+  app.route('/', ha);
   options.extraRoutes?.(app);
   return app;
 }

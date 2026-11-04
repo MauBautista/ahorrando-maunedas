@@ -507,3 +507,42 @@ Común a `/v1/admin/users*`: solo admin (`403 E-FORBIDDEN`); usuario inexistente
 ```
 - Solo admin. `status` es la fila con el latido más reciente, con `info` ya como objeto.
 - `blocked_listings` cuenta los listings vivos con `last_status = 'blocked'`, y `failing_listings` los vivos con `consecutive_failures > 0`. Implementación (T-214): `routes/admin.ts`.
+
+### Tokens de Home Assistant (T-308)
+
+- **`GET /v1/admin/ha-tokens`:** `200 { items: Array<{ id; name; created_by_name; created_at; last_used_at: Millis | null; revoked_at: Millis | null }> }`. Primero los vivos, luego los revocados; dentro, del más nuevo al más viejo.
+- **`POST /v1/admin/ha-tokens`:** `{ name: string /* 1–60, se recorta */ }` → `201`, la misma fila más `token`.
+  - El token es `mha_` más 32 bytes aleatorios en base64url.
+  - Solo se muestra aquí: el Worker guarda su SHA-256 en `ha_tokens`, nunca el token.
+- **`DELETE /v1/admin/ha-tokens/:id`:** `204`. Pone `revoked_at` una sola vez (repetirlo no cambia la fecha). La fila queda para saber quién la creó y cuándo se usó. Id inexistente → `404`.
+- Solo admin (`403 E-FORBIDDEN`). Implementación: `routes/admin.ts`.
+
+## 13. Home Assistant (E3, T-308, decisión T103)
+
+API de solo lectura bajo `/ha/v1/*`, con `Authorization: Bearer <token de Home Assistant>`.
+- **Autenticación (`ha/auth.ts`):** el token se busca por su SHA-256 entre los no revocados. Sin token, desconocido o revocado → `401 E-UNAUTHENTICATED`.
+- **Alcance:** el token no abre `/v1` (que pide una sesión de usuario) y una sesión no abre `/ha/v1`. Solo hay `GET`.
+- **Último uso:** `last_used_at` se anota a lo más una vez por hora y por token, en `waitUntil`.
+- **Enrutamiento:** `/ha/*` está en `run_worker_first`, junto a `/v1/*` y `/agent/*`.
+
+### `GET /ha/v1/variants`
+`200 { items: Array<{ variant_id: Id; name: string /* "Producto · Presentación" */ }> }`. Todas las presentaciones vivas, por producto y presentación, para encontrar su id.
+
+### `GET /ha/v1/variants/:id`
+```ts
+// 200
+{
+  variant_id: Id;
+  name: string;                       // "Leche Lala Entera · 1 L"
+  display_unit: DisplayUnit;          // la del producto, o la de la medida de la variante (§3)
+  current: HaPrice | null;            // regla de mejor precio (§3) sobre el último punto de cada tienda en 90 días
+  lowest: HaPrice | null;             // el menor precio por unidad de todos los puntos (en empate, el más reciente)
+  in_stock: boolean | null;           // algún listing activo con existencia; null si ninguno se ha revisado
+  listings: Array<{ store: string; price_cents: Cents | null; in_stock: boolean | null;
+                    status: ListingStatus | null; checked_at: Millis | null }>;   // solo los activos y vivos
+}
+// HaPrice
+{ price_cents: Cents /* effective_unit_cents */; display_cents: Cents; store: string; source: PriceSource; observed_at: Millis }
+```
+Id que no es UUID → `400`; presentación inexistente o borrada (o de un producto borrado) → `404 E-NOT_FOUND`. Implementación: `routes/ha.ts` y `ha/variant.ts`, con `POINTS_SQL`, `pickBest` y `unitFor` de `db/queries/prices.ts`.
+

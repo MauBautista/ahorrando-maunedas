@@ -60,6 +60,7 @@ apps/web/
 | `/admin/ia` | W-13 Gasto de IA | — | admin |
 | `/seguimiento` · `/alertas` | W-20, W-21 (E2) | S-20 a S-23 | todos |
 | `/admin/agente` | W-22 Estado del agente (E2) | — | admin |
+| `/admin/home-assistant` | W-23 Home Assistant (E3, T-308) | — | admin |
 
 Las pantallas replican el contenido y las reglas de Android (`05-android.md` §5). Diferencias:
 
@@ -90,6 +91,10 @@ Las pantallas replican el contenido y las reglas de Android (`05-android.md` §5
   - el estado de los tres respaldos de 07 §10.
   
   Se refresca cada minuto.
+- **W-23 Home Assistant** (pestaña de Administración, T-308):
+  - **Crear un token:** con un nombre. Se muestra una sola vez, con el aviso de que no se volverá a ver.
+  - **Lista:** cada token con quién lo creó, cuándo y su último uso. Los vivos tienen "Revocar", que primero pregunta.
+  - **Configuración:** el bloque `rest` de Home Assistant para la presentación elegida (con el buscador de Seguimiento). Da el precio actual en pesos, con el mínimo, la existencia y los listings como atributos, y el token va en `secrets.yaml`.
 
 ## 4. Cliente HTTP
 

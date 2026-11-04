@@ -1,3 +1,13 @@
+import { ApiError } from '../errors';
+import { sha256Hex } from '../util/sha256';
+import { newHaToken } from '../ha/auth';
+import { uuidv7 } from '@maunedas/shared/util/uuid';
+import {
+  HaTokenCreateSchema,
+  type HaTokenCreated,
+  type HaTokenItem,
+  type HaTokensResponse,
+} from '@maunedas/shared/api/ha';
 import {
   CreateUserRequestSchema,
   MergeRequestSchema,
@@ -90,4 +100,51 @@ export const admin = new Hono<AppEnv>()
   })
 
   // The month's AI spend and its soft limit (09 §2): the banner of W-13.
-  .get('/v1/admin/ai-budget', adminOnly, async (c) => c.json<AiBudget>(await budgetSummary(c.env)));
+  .get('/v1/admin/ai-budget', adminOnly, async (c) => c.json<AiBudget>(await budgetSummary(c.env)))
+
+  // Home Assistant's read-only tokens (T-308, 03 §13): only their hash is kept, so a token is shown once.
+  .get('/v1/admin/ha-tokens', adminOnly, async (c) => {
+    const { results } = await c.env.DB.prepare(
+      `SELECT t.id, t.name, u.display_name AS created_by_name, t.created_at, t.last_used_at, t.revoked_at
+       FROM ha_tokens t JOIN users u ON u.id = t.created_by
+       ORDER BY t.revoked_at IS NOT NULL, t.created_at DESC, t.id`,
+    ).all<HaTokenItem>();
+    return c.json<HaTokensResponse>({ items: results });
+  })
+
+  .post('/v1/admin/ha-tokens', adminOnly, async (c) => {
+    const { name } = await parseJsonBody(c, HaTokenCreateSchema);
+    const now = Date.now();
+    const user = c.get('user');
+    const token = newHaToken();
+    const id = uuidv7(now);
+    await c.env.DB.prepare(
+      'INSERT INTO ha_tokens (id, name, token_sha256, created_by, created_at) VALUES (?1, ?2, ?3, ?4, ?5)',
+    )
+      .bind(id, name, await sha256Hex(token), user.id, now)
+      .run();
+    return c.json<HaTokenCreated>(
+      {
+        id,
+        name,
+        created_by_name: user.display_name,
+        created_at: now,
+        last_used_at: null,
+        revoked_at: null,
+        token,
+      },
+      201,
+    );
+  })
+
+  // Revoking keeps the row, so the list still says who made it and when it was last used.
+  .delete('/v1/admin/ha-tokens/:id', adminOnly, async (c) => {
+    const id = parseParam(c.req.param('id'), z.uuid(), 'id');
+    const { meta } = await c.env.DB.prepare(
+      'UPDATE ha_tokens SET revoked_at = COALESCE(revoked_at, ?1) WHERE id = ?2',
+    )
+      .bind(Date.now(), id)
+      .run();
+    if ((meta.changes ?? 0) === 0) throw new ApiError(404, 'NOT_FOUND');
+    return c.body(null, 204);
+  });
