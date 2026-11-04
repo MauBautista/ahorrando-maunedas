@@ -38,3 +38,33 @@ export interface EditSourceResponse {
   /** The newest automatic `processed` and `thumb`, which "Restablecer" selects; null without them. */
   automatic: { processed_id: string; thumb_id: string } | null;
 }
+
+/** What the model is asked when the household writes nothing (10 §6.3). */
+export const DEFAULT_AI_EDIT_PROMPT =
+  'Foto de producto sobre fondo blanco, iluminación de estudio; no cambies el empaque, el texto ni los colores del producto.';
+
+/** `POST /v1/images/:imageId/ai-edit` (10 §6.3): spends money, so it carries an explicit confirmation. */
+export const AiEditRequestSchema = z.strictObject({
+  prompt: z.string().trim().min(1).max(1000).optional(),
+  confirm: z.literal(true),
+});
+export type AiEditRequest = z.infer<typeof AiEditRequestSchema>;
+
+/** The new `processed` rendition (`tier='ai'`), its signed URL to show it and what the call cost. */
+export interface AiEditResponse {
+  rendition_id: string;
+  url: string;
+  cost_usd: number;
+}
+
+/**
+ * `GET /v1/ai/image-edit` (10 §6.3): what one edit would cost and this month's spending, shown before confirming.
+ * `reason` says why it is not available: no model chosen yet, or the month's budget would be passed.
+ */
+export interface AiEditQuote {
+  available: boolean;
+  reason: 'NOT_CONFIGURED' | 'BUDGET' | null;
+  estimate_usd: number;
+  spent_usd: number;
+  budget_usd: number;
+}

@@ -105,3 +105,50 @@ export async function resetEdit(
     },
   ]);
 }
+
+/**
+ * "Usar esta foto" after an AI edit (10 §6.3): the client makes the thumb (`tier='manual'`), uploads it, and the photo
+ * selects the AI's `processed` with it. `manual: true` keeps home results from replacing it; the background stays.
+ */
+export async function adoptAiEdit(
+  api: Api,
+  source: Pick<EditSourceResponse, 'image_id' | 'updated_at'>,
+  renditionId: string,
+  thumb: Blob,
+  background: EditParams['background'],
+  now = Date.now(),
+) {
+  const id = uuidv7(now);
+  const name = `${id}.${thumb.type === 'image/webp' ? 'webp' : 'png'}`;
+  await pushOrFail(api, [
+    {
+      table: 'image_renditions',
+      row: {
+        id,
+        image_id: source.image_id,
+        kind: 'thumb',
+        tier: 'manual',
+        r2_key: `images/${source.image_id}/${name}`,
+        width: THUMB_SIDE,
+        height: THUMB_SIDE,
+        bytes: thumb.size,
+        created_at: now,
+        updated_at: now,
+        deleted_at: null,
+      },
+    },
+  ]);
+  await api.put(`/v1/images/${source.image_id}/blobs/${name}`, thumb);
+  await pushOrFail(api, [
+    {
+      table: 'images',
+      row: {
+        id: source.image_id,
+        updated_at: touchedAt(source.updated_at, now),
+        selected_processed_id: renditionId,
+        selected_thumb_id: id,
+        edit_params: JSON.stringify({ ...(background ? { background } : {}), manual: true }),
+      },
+    },
+  ]);
+}

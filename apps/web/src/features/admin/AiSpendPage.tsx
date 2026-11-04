@@ -1,13 +1,8 @@
 import type { AiBudget } from '@maunedas/shared/api/admin';
 import { useQuery } from '@tanstack/react-query';
 import { useApi } from '../../lib/context';
+import { formatDollars as dollars } from '../../lib/format';
 
-const usd = new Intl.NumberFormat('es-MX', {
-  style: 'currency',
-  currency: 'USD',
-  minimumFractionDigits: 2,
-  maximumFractionDigits: 4,
-});
 const MONTHS = [
   'enero',
   'febrero',
@@ -27,11 +22,6 @@ const PURPOSE: Record<keyof AiBudget['by_purpose'], string> = {
   image_edit: 'Edición de fotos',
   other: 'Otros',
 };
-
-/** "USD 1.2345" as es-MX writes dollars. */
-function dollars(v: number): string {
-  return usd.format(v);
-}
 
 /**
  * W-13 (06 §3, 09 §2): this month's AI spending (Mexico City) against its cap, by purpose and calls, and the

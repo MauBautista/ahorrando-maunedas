@@ -210,6 +210,10 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
     - **Herramientas:** "Recortar" (se arrastra sobre la foto; "Ajustar al producto" y "Foto completa"), "Borrar fondo" y "Restaurar" con tamaño de pincel y "Deshacer".
     - **Ajustes:** girar a la izquierda o a la derecha, fondo (blanco, gris claro, negro u otro color), brillo y contraste.
     - **Acciones:** "Guardar", "Restablecer" (solo si la foto se editó a mano) y "Cancelar".
+    - **"Mejorar con IA" (T-302, 10 §6.3):**
+      - Muestra el costo estimado y el gasto del mes, con una instrucción opcional, antes de "Confirmar y gastar".
+      - Enseña el resultado con lo que costó, para "Usar esta foto" o "Descartar".
+      - Pasado el tope del mes queda deshabilitado; sin modelo elegido no aparece.
     - **Al guardar o restablecer:** vuelve a la ficha.
   - **Fondo:** la foto se muestra sobre el color de `ImageRef.background`.
   - **Historial** usa los filtros de Android (T58), y Recharts con una serie de puntos por fuente, sin líneas. La gráfica lleva una descripción para lectores de pantalla y debajo va la lista de precios, del más nuevo al más viejo. Recharts se carga solo al abrir esa pestaña (440 KB).

@@ -11,6 +11,18 @@ export function formatMoney(cents: number): string {
   return money.format(cents / 100);
 }
 
+const usd = new Intl.NumberFormat('es-MX', {
+  style: 'currency',
+  currency: 'USD',
+  minimumFractionDigits: 2,
+  maximumFractionDigits: 4,
+});
+
+/** AI spending, in dollars as the providers bill: "USD 1.2345", as es-MX writes them. */
+export function formatDollars(v: number): string {
+  return usd.format(v);
+}
+
 const UNIT_LABEL: Record<DisplayUnit, string> = {
   kg: 'kg',
   '100g': '100 g',

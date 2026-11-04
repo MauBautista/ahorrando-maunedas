@@ -1,4 +1,7 @@
 import {
+  AiEditRequestSchema,
+  type AiEditQuote,
+  type AiEditResponse,
   type EditSourceResponse,
   type EnhanceResponse,
   ImportImageRequestSchema,
@@ -10,6 +13,7 @@ import { z } from 'zod';
 import { requireUser } from '../auth/middleware';
 import type { AppEnv } from '../env';
 import { ApiError } from '../errors';
+import { aiEditImage, aiEditQuote } from '../images/aiEdit';
 import { editSource } from '../images/edit';
 import { requestEnhance } from '../images/enhance';
 import { blobKey, mediaType, parseBlobName } from '../images/blobs';
@@ -90,6 +94,17 @@ export const images = new Hono<AppEnv>()
   .post('/v1/images/:imageId/enhance', requireUser(), async (c) => {
     const imageId = parseParam(c.req.param('imageId'), z.uuid(), 'imageId');
     return c.json<EnhanceResponse>({ job_id: await requestEnhance(c.env, imageId, Date.now()) }, 202);
+  })
+
+  // The generative edit (10 §6.3, T-302): what it would cost, then the edit itself, which spends.
+  .get('/v1/ai/image-edit', requireUser(), async (c) => c.json<AiEditQuote>(await aiEditQuote(c.env)))
+  .post('/v1/images/:imageId/ai-edit', requireUser(), async (c) => {
+    const imageId = parseParam(c.req.param('imageId'), z.uuid(), 'imageId');
+    const { prompt } = await parseJsonBody(c, AiEditRequestSchema);
+    return c.json<AiEditResponse>(
+      await aiEditImage(c.env, c.get('outboundFetch'), imageId, prompt, c.get('user').id),
+      201,
+    );
   })
 
   // The photo editor's starting point (10 §6.2, T-301).

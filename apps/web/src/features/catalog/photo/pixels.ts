@@ -101,6 +101,22 @@ export function encodeMask(alpha: Uint8Array, width: number, height: number): Pr
   return toBlob(draw({ data: rgba, width, height }), 'image/png');
 }
 
+/** `thumb` of an image already made (the AI's): fitted in 256 px over the background. */
+export async function thumbFromUrl(url: string, background: string): Promise<Blob> {
+  const bitmap = await createImageBitmap(await download(url));
+  const c = canvas(THUMB_SIDE, THUMB_SIDE);
+  const ctx = context(c);
+  ctx.fillStyle = background;
+  ctx.fillRect(0, 0, THUMB_SIDE, THUMB_SIDE);
+  const scale = THUMB_SIDE / Math.max(bitmap.width, bitmap.height);
+  const w = Math.round(bitmap.width * scale);
+  const h = Math.round(bitmap.height * scale);
+  ctx.imageSmoothingQuality = 'high';
+  ctx.drawImage(bitmap, Math.floor((THUMB_SIDE - w) / 2), Math.floor((THUMB_SIDE - h) / 2), w, h);
+  bitmap.close();
+  return encodeWebp(c);
+}
+
 async function download(url: string): Promise<Blob> {
   const res = await fetch(url).catch(() => null);
   if (!res?.ok) throw new Error('No se pudo abrir la foto. Revisa tu conexión e intenta de nuevo.');

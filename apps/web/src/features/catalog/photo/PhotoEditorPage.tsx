@@ -18,8 +18,16 @@ import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { useEffect, useRef, useState, type PointerEvent } from 'react';
 import { Link, useNavigate, useParams } from 'react-router';
 import { useApi } from '../../../lib/context';
-import { encodeMask, encodeProcessed, encodeThumb, loadPhoto, type EditablePhoto } from './pixels';
-import { resetEdit, saveEdit } from './save';
+import { AiEdit } from './AiEdit';
+import {
+  encodeMask,
+  encodeProcessed,
+  encodeThumb,
+  loadPhoto,
+  thumbFromUrl,
+  type EditablePhoto,
+} from './pixels';
+import { adoptAiEdit, resetEdit, saveEdit } from './save';
 
 const BACKGROUNDS = [
   { value: '#FFFFFF', label: 'Blanco' },
@@ -406,6 +414,15 @@ function PhotoEditor({
           </label>
         </div>
       </div>
+      <AiEdit
+        imageId={source.image_id}
+        busy={busy}
+        onUse={(renditionId, url) =>
+          finish(async () =>
+            adoptAiEdit(api, source, renditionId, await thumbFromUrl(url, background), params.background),
+          )
+        }
+      />
       {problem && (
         <p role="alert" className="text-error">
           {problem}

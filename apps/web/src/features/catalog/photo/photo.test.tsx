@@ -1,12 +1,16 @@
 import type { ImageRef } from '@maunedas/shared/api/catalog';
-import type { EditSourceResponse } from '@maunedas/shared/api/images';
+import {
+  DEFAULT_AI_EDIT_PROMPT,
+  type AiEditQuote,
+  type EditSourceResponse,
+} from '@maunedas/shared/api/images';
 import type { Pixels } from '@maunedas/shared/images/edit';
 import { cleanup, fireEvent, screen, waitFor } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { detail, lookups } from '../../../test/catalog';
 import { fakeWorker, renderAt } from '../../../test/render';
-import { encodeMask, encodeProcessed, encodeThumb, loadPhoto } from './pixels';
+import { encodeMask, encodeProcessed, encodeThumb, loadPhoto, thumbFromUrl } from './pixels';
 import { STALE_PHOTO } from './save';
 
 // jsdom cannot decode, draw nor encode: the canvas half is replaced, the editing itself runs as is.
@@ -16,6 +20,7 @@ vi.mock('./pixels', () => ({
   // A browser without WebP (Safari) gives PNG.
   encodeThumb: vi.fn(async () => new Blob([new Uint8Array(20)], { type: 'image/png' })),
   encodeMask: vi.fn(async () => new Blob([new Uint8Array(10)], { type: 'image/png' })),
+  thumbFromUrl: vi.fn(async () => new Blob([new Uint8Array(15)], { type: 'image/webp' })),
 }));
 
 const LAZY = { timeout: 5000 };
@@ -54,15 +59,30 @@ const source = (o: Partial<EditSourceResponse> = {}): EditSourceResponse => ({
   ...o,
 });
 
+const quote = (o: Partial<AiEditQuote> = {}): AiEditQuote => ({
+  available: true,
+  reason: null,
+  estimate_usd: 0.04,
+  spent_usd: 1.2,
+  budget_usd: 5,
+  ...o,
+});
+
 function worker(
   edit: () => unknown = () => source(),
   push: () => unknown = () => ({ applied: 1, skipped: 0, conflicts: [] }),
   photo: ImageRef | null = image(),
+  ai: { quote?: () => unknown; edit?: () => unknown } = {},
 ) {
   return fakeWorker({
     '/v1/lookups': () => lookups,
     '/v1/products/p1': () => ({ ...detail, product: { ...detail.product, image: photo } }),
     '/v1/images/img-1/edit': edit,
+    '/v1/ai/image-edit': ai.quote ?? (() => quote({ available: false, reason: 'NOT_CONFIGURED' })),
+    '/v1/images/img-1/ai-edit':
+      ai.edit ??
+      (() =>
+        Response.json({ rendition_id: 'ai-1', url: 'https://x/ai.png', cost_usd: 0.039 }, { status: 201 })),
     '/v1/images/img-1/blobs/*': (u) => ({ key: `images/img-1/${u.pathname.split('/').pop()}`, bytes: 1 }),
     '/v1/sync/push': push,
   });
@@ -341,5 +361,102 @@ describe('W-08 editor de fotos (10 §6.2, T-301)', () => {
     expect((await screen.findByRole('alert', undefined, LAZY)).textContent).toBe(
       'Este producto no tiene foto que editar.',
     );
+  });
+
+  describe('"Mejorar con IA" (10 §6.3, T-302)', () => {
+    it('does not show while no model is chosen', async () => {
+      const w = worker();
+      await open(w);
+      // Once the quote is in, there is still nothing.
+      await waitFor(() => expect(w.requests.some((u) => u.pathname === '/v1/ai/image-edit')).toBe(true));
+      await new Promise((resolve) => setTimeout(resolve, 50));
+      expect(screen.queryByRole('region', { name: 'Mejorar con IA' })).toBeNull();
+      expect(screen.queryByRole('button', { name: 'Mejorar con IA' })).toBeNull();
+    });
+
+    it('says the cost and the month, asks, and uses the result with a thumb made here', async () => {
+      const w = worker(undefined, undefined, undefined, { quote: () => quote() });
+      const ui = await open(w);
+      await ui.click(await screen.findByRole('button', { name: 'Mejorar con IA' }));
+      expect(
+        screen.getByText('Costo estimado: USD 0.04. Gastado este mes: USD 1.20 de USD 5.00.'),
+      ).toBeTruthy();
+      await ui.type(screen.getByLabelText('Qué pedirle (opcional)'), '  Quita el reflejo ');
+      await ui.click(screen.getByRole('button', { name: 'Negro' }));
+      await ui.click(screen.getByRole('button', { name: 'Confirmar y gastar' }));
+      expect((await screen.findByRole('img', { name: 'Foto editada por la IA' })).getAttribute('src')).toBe(
+        'https://x/ai.png',
+      );
+      expect(w.posts.find((p) => p.path === '/v1/images/img-1/ai-edit')!.body).toEqual({
+        prompt: 'Quita el reflejo',
+        confirm: true,
+      });
+      expect(screen.getByText('Costó USD 0.039.')).toBeTruthy();
+      await ui.click(screen.getByRole('button', { name: 'Usar esta foto' }));
+      await screen.findByRole('heading', { name: detail.product.name }, LAZY);
+
+      expect(vi.mocked(thumbFromUrl)).toHaveBeenCalledWith('https://x/ai.png', '#000000');
+      const [thumb, selection] = pushes(w).map((mutations) => mutations[0]);
+      expect(thumb!.row).toMatchObject({ kind: 'thumb', tier: 'manual', width: 256, height: 256, bytes: 15 });
+      expect(thumb!.row.r2_key).toBe(`images/img-1/${thumb!.row.id}.webp`);
+      expect(w.posts.filter((p) => p.method === 'PUT').map((p) => p.path)).toEqual([
+        `/v1/images/img-1/blobs/${thumb!.row.id}.webp`,
+      ]);
+      expect(selection!.row).toEqual({
+        id: 'img-1',
+        updated_at: expect.any(Number),
+        selected_processed_id: 'ai-1',
+        selected_thumb_id: thumb!.row.id,
+        edit_params: JSON.stringify({ background: { type: 'color', value: '#000000' }, manual: true }),
+      });
+    });
+
+    it('without a prompt the model gets the default one, and the result can be discarded', async () => {
+      const w = worker(undefined, undefined, undefined, { quote: () => quote() });
+      const ui = await open(w);
+      await ui.click(await screen.findByRole('button', { name: 'Mejorar con IA' }));
+      expect(screen.getByLabelText('Qué pedirle (opcional)').getAttribute('placeholder')).toBe(
+        DEFAULT_AI_EDIT_PROMPT,
+      );
+      await ui.click(screen.getByRole('button', { name: 'Confirmar y gastar' }));
+      await ui.click(await screen.findByRole('button', { name: 'Descartar' }));
+      expect(w.posts.find((p) => p.path === '/v1/images/img-1/ai-edit')!.body).toEqual({ confirm: true });
+      expect(screen.getByRole('button', { name: 'Mejorar con IA' })).toBeTruthy();
+      expect(pushes(w)).toEqual([]);
+      await ui.click(screen.getByRole('button', { name: 'Mejorar con IA' }));
+      await ui.click(screen.getByRole('button', { name: 'Cancelar' }));
+      expect(screen.queryByRole('button', { name: 'Confirmar y gastar' })).toBeNull();
+    });
+
+    it('past the budget it cannot be asked, and a failed edit says why', async () => {
+      await open(
+        worker(undefined, undefined, undefined, {
+          quote: () => quote({ available: false, reason: 'BUDGET' }),
+        }),
+      );
+      expect(await screen.findByRole('button', { name: 'Mejorar con IA' })).toHaveProperty('disabled', true);
+      expect(screen.getByText('Se alcanzó el tope de gasto en IA de este mes.')).toBeTruthy();
+      cleanup();
+
+      const answers = [
+        () => Response.json({ error: { code: 'AI_BUDGET_EXCEEDED', message: 'x' } }, { status: 402 }),
+        () => Response.json({ error: { code: 'UPSTREAM_ERROR', message: 'x' } }, { status: 502 }),
+        () => Response.json({ error: { code: 'AI_UNAVAILABLE', message: 'x' } }, { status: 503 }),
+        () => Response.json({ error: { code: 'OTHER', message: 'Otra cosa.' } }, { status: 409 }),
+      ];
+      const ui = await open(
+        worker(undefined, undefined, undefined, { quote: () => quote(), edit: () => answers.shift()!() }),
+      );
+      await ui.click(await screen.findByRole('button', { name: 'Mejorar con IA' }));
+      for (const text of [
+        'Se alcanzó el tope de gasto en IA de este mes.',
+        'La IA no devolvió una foto que se pueda usar. Intenta de nuevo.',
+        'La IA no respondió. Intenta más tarde.',
+        'Otra cosa.',
+      ]) {
+        await ui.click(screen.getByRole('button', { name: 'Confirmar y gastar' }));
+        await waitFor(() => expect(screen.getByRole('alert').textContent).toBe(text));
+      }
+    });
   });
 });
