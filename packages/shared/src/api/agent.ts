@@ -104,7 +104,11 @@ export interface AdminAgentResponse {
  * Server tables outside the sync registry that a restore needs (07 §5.4): append-only rows, read by
  * `(created_at, pk)`.
  */
-export const BACKUP_APPEND_TABLES = { receipt_extractions: 'id', ai_usage: 'id' } as const;
+export const BACKUP_APPEND_TABLES = {
+  receipt_extractions: 'id',
+  ai_usage: 'id',
+  cfdi_imports: 'id',
+} as const;
 
 /**
  * Sent whole on every backup pull and replaced in the mirror: their rows can be deleted (removing a user's Google

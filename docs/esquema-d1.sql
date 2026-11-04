@@ -528,6 +528,21 @@ CREATE TABLE ha_tokens (
   revoked_at    INTEGER
 );
 
+-- SERVER, append-only. Facturas CFDI importadas como compras en borrador (T-307): el UUID fiscal evita importar dos
+-- veces, y el RFC del emisor recuerda su tienda. Va en el respaldo (07 §5.4).
+CREATE TABLE cfdi_imports (
+  id            TEXT PRIMARY KEY,
+  fiscal_uuid   TEXT NOT NULL,
+  purchase_id   TEXT NOT NULL REFERENCES purchases(id),
+  store_id      TEXT NOT NULL REFERENCES stores(id),
+  emisor_rfc    TEXT NOT NULL,
+  emisor_name   TEXT,
+  created_by    TEXT NOT NULL REFERENCES users(id),
+  created_at    INTEGER NOT NULL
+);
+CREATE INDEX idx_cfdi_imports_uuid ON cfdi_imports(fiscal_uuid);
+CREATE INDEX idx_cfdi_imports_rfc ON cfdi_imports(emisor_rfc, created_at);
+
 -- ---------------------------------------------------------------------
 -- Vista unificada de puntos de precio (compras + anaquel + web)
 -- cents_per_base: centavos por g / ml / pz (REAL, sin redondear).

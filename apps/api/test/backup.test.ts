@@ -9,6 +9,7 @@ import {
   edit,
   MEMBER_ID,
   product,
+  purchase,
   store,
   syncHarness,
   variant,
@@ -70,7 +71,8 @@ beforeEach(async () => {
   const v = variant(p.row.id);
   const rule = alertRule(v.row.id);
   const other = alertRule(v.row.id);
-  expect((await h.push([shop, p, v, rule], 'member')).status).toBe(200);
+  const bought = purchase(shop.row.id as string, { source: 'cfdi' });
+  expect((await h.push([shop, p, v, rule, bought], 'member')).status).toBe(200);
   expect((await h.push([other], 'admin')).status).toBe(200);
   // A tombstone travels too.
   expect((await h.push([edit(other, { deleted_at: Date.now() })], 'admin')).status).toBe(200);
@@ -84,6 +86,14 @@ beforeEach(async () => {
        VALUES (?1, '[]', 'k', ?2, 'openrouter', 'm', 'failed', 9)`,
     ).bind(uuidv7(), MEMBER_ID),
     env.DB.prepare(`INSERT INTO token_cache (key, value, expires_at) VALUES ('google', 'secret', 1)`),
+    // An imported invoice is kept (T-307); a Home Assistant token is not (T-308).
+    env.DB.prepare(
+      `INSERT INTO cfdi_imports (id, fiscal_uuid, purchase_id, store_id, emisor_rfc, created_by, created_at)
+       VALUES (?1, 'UUID-FISCAL', ?2, ?3, 'CME910715UB9', ?4, 11)`,
+    ).bind(uuidv7(), bought.row.id, shop.row.id, MEMBER_ID),
+    env.DB.prepare(
+      `INSERT INTO ha_tokens (id, name, token_sha256, created_by, created_at) VALUES (?1, 'Casa', 'h', ?2, 1)`,
+    ).bind(uuidv7(), ADMIN_ID),
     env.DB.prepare(
       `INSERT INTO devices (id, user_id, platform, fcm_token, created_at) VALUES (?1, ?2, 'android', 'fcm', 1)`,
     ).bind(uuidv7(), MEMBER_ID),
@@ -115,12 +125,12 @@ describe('POST /agent/v1/backup/pull (07 §5.4)', () => {
       'uid-member',
     ]);
     expect(body.replace).toEqual(['user_identities']);
-    for (const t of ['token_cache', 'devices', 'image_jobs', 'off_cache', 'sync_meta']) {
+    for (const t of ['token_cache', 'devices', 'image_jobs', 'off_cache', 'sync_meta', 'ha_tokens']) {
       expect(body.changes).not.toHaveProperty(t);
       expect(body.cursors).not.toHaveProperty(t);
     }
     expect(Object.keys(body.cursors).sort()).toEqual(
-      [...tablesInOrder(), 'ai_usage', 'receipt_extractions'].sort(),
+      [...tablesInOrder(), 'ai_usage', 'receipt_extractions', 'cfdi_imports'].sort(),
     );
     expect(body.has_more).toBe(false);
     expect(body.schema_version).toBeGreaterThan(0);
@@ -133,7 +143,13 @@ describe('POST /agent/v1/backup/pull (07 §5.4)', () => {
   it('pages until every row of D1 is in the mirror (RF-BAK-01)', async () => {
     const { rows, pages } = await all(1);
     expect(pages).toBeGreaterThan(2);
-    for (const table of [...tablesInOrder(), 'ai_usage', 'receipt_extractions', 'user_identities']) {
+    for (const table of [
+      ...tablesInOrder(),
+      'ai_usage',
+      'receipt_extractions',
+      'cfdi_imports',
+      'user_identities',
+    ]) {
       const count = Number(await env.DB.prepare(`SELECT count(*) AS n FROM ${table}`).first('n'));
       expect([table, rows[table]?.length ?? 0]).toEqual([table, count]);
     }

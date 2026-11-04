@@ -20,6 +20,7 @@
   "dependencies": {
     "@maunedas/shared": "workspace:*",
     "drizzle-orm": "catalog:",
+    "fast-xml-parser": "catalog:",
     "hono": "catalog:",
     "jose": "catalog:",
     "zod": "catalog:"

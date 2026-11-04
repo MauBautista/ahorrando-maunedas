@@ -30,6 +30,8 @@ export const ERROR_MESSAGES = {
   PAYLOAD_TOO_LARGE: 'El archivo o la solicitud es demasiado grande.',
   UNSUPPORTED_MEDIA_TYPE: 'Ese tipo de archivo no está permitido.',
   UNSUPPORTED_URL: 'Esa tienda todavía no se puede seguir.',
+  UNSUPPORTED_CFDI: 'Ese archivo no es una factura de compra que se pueda importar.',
+  CFDI_ALREADY_IMPORTED: 'Esa factura ya se importó.',
   EXTRACTION_FAILED: 'No se pudo leer el ticket.',
   UPGRADE_REQUIRED: 'Actualiza la app para seguir sincronizando.',
   RATE_LIMITED: 'Llegaste al límite de solicitudes por hoy. Intenta más tarde.',

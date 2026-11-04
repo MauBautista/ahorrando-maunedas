@@ -5,6 +5,7 @@ import { Link, useSearchParams } from 'react-router';
 import { useApi } from '../../lib/context';
 import { dateKey, dayTitle } from '../../lib/dates';
 import { useLookups } from '../../lib/lookups';
+import { CfdiImportDialog } from './CfdiImportDialog';
 import { PERIODS, periodRange } from './periods';
 import { PurchaseItem } from './PurchaseItem';
 
@@ -23,6 +24,7 @@ export function PurchasesPage() {
   const { data: lookups } = useLookups();
   // The periods are counted from when the page opened, so the query does not change under the list.
   const [opened] = useState(() => Date.now());
+  const [importing, setImporting] = useState(false);
   const range = periodRange(period, opened, fromDay, toDay);
   const badRange = range.from !== undefined && range.to !== undefined && range.from > range.to;
 
@@ -64,10 +66,16 @@ export function PurchasesPage() {
     <section className="flex flex-col gap-4">
       <div className="flex items-center justify-between gap-4">
         <h1 className="text-title">Compras</h1>
-        <Link to="/compras/nueva" className="btn-primary inline-flex items-center">
-          Nueva compra
-        </Link>
+        <div className="flex flex-wrap gap-2">
+          <button type="button" className="btn-outline" onClick={() => setImporting(true)}>
+            Importar factura
+          </button>
+          <Link to="/compras/nueva" className="btn-primary inline-flex items-center">
+            Nueva compra
+          </Link>
+        </div>
       </div>
+      {importing && <CfdiImportDialog onClose={() => setImporting(false)} />}
       <div className="flex flex-col gap-3 md:flex-row md:flex-wrap">
         <select
           aria-label="Tienda"

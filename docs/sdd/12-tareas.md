@@ -682,7 +682,7 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
 - **Hecho cuando:** un archivo de ejemplo con varias compras queda en borradores vinculables, y volver a importarlo no duplica.
 - **Necesita a Mauricio (después):** un archivo real para validar el mapeo; el importador es genérico.
 
-### [ ] T-307 · Importación CFDI/XML
+### [x] T-307 · Importación CFDI/XML
 - **Docs:** `ARQUITECTURA.md` §15 · **Depende de:** T-037, T-161
 - **Hacer:**
   - **Worker:** importador de CFDI 4.0. Del emisor sale la tienda; de los conceptos, las líneas con cantidad, valor unitario, importe y descuento.
@@ -693,6 +693,10 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
   - un CFDI repetido (mismo UUID fiscal) no se duplica;
   - un XML que no es CFDI se rechaza con su motivo.
 - **Necesita a Mauricio (después):** un CFDI real de una compra para validar.
+- **Hecho (2026-11-04, T104):**
+  - **Endpoints:** `POST /v1/purchases/cfdi/preview` y `POST /v1/purchases/cfdi` (03 §14), con `cfdi_imports` (migración 0004, en el respaldo).
+  - **Web:** "Importar factura" en W-03.
+  - **Pruebas:** con un CFDI 4.0 sintético (tasa 0, descuento con IVA, retención, rechazos, sugerencia de tienda por RFC, alias, duplicados); 10 de la API, 3 de la web y la del respaldo; 12 mutaciones, todas detectadas.
 
 ### [x] T-308 · API de lectura para Home Assistant
 - **Docs:** `ARQUITECTURA.md` §15 · **Depende de:** T-023
