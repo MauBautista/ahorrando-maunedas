@@ -46,7 +46,7 @@ internal class TestEnv(server: MockWebServer? = null) {
             val tokens = IdTokenProvider { "token" }
             val http = createOkHttpClient(AuthInterceptor(tokens, ClientInfo(1, "test")), TokenAuthenticator(tokens))
             val api = createMaunedasApi(ApiConfig(it.url("/").toString()), http, MaunedasJson)
-            SyncEngine(db, api, MaunedasJson, clock, applier, conflicts, deviceId)
+            SyncEngine(db, api, MaunedasJson, clock, applier, conflicts, deviceId, HomeAdoption(db, writer))
         }
     val uploads: UploadEngine? =
         server?.let {

@@ -186,6 +186,36 @@ class SyncEngineTest {
         }
 
     @Test
+    fun aPulledHomeResultIsAdoptedAndGoesUpInTheSameSync() =
+        runTest {
+            env.db.images().upsertAll(
+                listOf(
+                    com.maubautista.maunedas.core.database.entity.ImageEntity(
+                        id = "img1", ownerType = "product", ownerId = "p1", role = "catalog", source = "user",
+                        originalKey = "images/img1/original.jpg", createdAt = 1, updatedAt = 1, version = 3,
+                    ),
+                ),
+            )
+            fun rendition(
+                id: String,
+                kind: String,
+                tier: String,
+            ) = """{"id":"$id","image_id":"img1","kind":"$kind","tier":"$tier","r2_key":"images/img1/$id.webp","width":null,"height":null,"bytes":10,
+                "created_at":5,"updated_at":5,"deleted_at":null,"updated_by":null,"version":9}"""
+            pulls +=
+                json(
+                    200,
+                    """{"changes":{"image_renditions":[${rendition("rp", "processed", "home")},${rendition("rt", "thumb", "home")},${rendition("rd", "processed", "device")}]},
+                        "cursors":{"image_renditions":[9,"rt"]},"has_more":false,"server_time":1,"schema_version":1}""",
+                )
+            engine.sync()
+            val image = env.db.images().byId("img1")!!
+            assertEquals(listOf("rp", "rt"), listOf(image.selectedProcessedId, image.selectedThumbId))
+            assertEquals(listOf(listOf("img1")), pushes)
+            assertEquals(0, env.db.outbox().count())
+        }
+
+    @Test
     fun anOldAppGetsUpgradeRequired() =
         runTest {
             pulls += json(426, """{"error":{"code":"UPGRADE_REQUIRED","message":"Actualiza la app."}}""")

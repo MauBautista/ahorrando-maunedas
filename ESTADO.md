@@ -56,6 +56,7 @@
 - **T-302 (2026-11-04):** en el editor de fotos de la web, "Mejorar con IA" muestra el costo estimado y el gasto del mes, pide confirmación y enseña el resultado para usarlo o descartarlo. Está probado con un proveedor simulado; para usarlo de verdad falta que Mauricio elija el modelo y autorice una llamada real.
 - **T-306 (2026-11-04):** en la web, Compras → "Importar archivo" convierte un CSV o un Excel (.xlsx) en compras en borrador. Se elige qué columna es cada dato y la tienda de cada nombre; la vista previa muestra las compras y las filas que se omiten. Importar el mismo archivo otra vez no repite nada. Falta validarlo con un archivo real.
 - **T-301, web (2026-11-04):** en la ficha de un producto, "Editar foto" abre un editor. Tiene recorte, giro, fondo de color, brillo y contraste, y un pincel para borrar o restaurar el fondo, con deshacer. "Guardar" deja el original intacto. "Restablecer" vuelve al resultado automático. Falta probarlo en la web y hacer la parte de Android, que espera a T-118.
+- **T-300, Android (2026-11-04):** la ficha de un producto en la app tiene "Mejorar en casa". Al sincronizar, el teléfono adopta solo el resultado del servidor casero, salvo en fotos editadas a mano. Falta probarlo en el teléfono.
 - **T-300, web (2026-11-04):** en la ficha de un producto, "Mejorar en casa" pide al servidor casero quitarle el fondo a la foto. Cuando llega el resultado, la ficha lo adopta sola, salvo que la foto se haya editado a mano. Falta el mismo botón en Android.
 - **T-300, contenedor de imágenes (2026-11-04):** el servidor casero ya quita el fondo de las fotos que se le piden. Lo hace en su propio contenedor (`maunedas-images`), sin tocar el del agente ni Home Assistant. Probado con la foto de unas toallas: quedó limpia y en tres versiones. Falta el botón en la app y la web.
 - **T-300, parte del Worker (2026-11-04):** el servidor ya recibe pedidos de "Mejorar en casa" para una foto de producto y se los entrega al servidor casero uno a la vez, con tres intentos. Guarda lo que este devuelva como versiones nuevas de la foto. Faltan el contenedor que quita el fondo en casa y el botón en la app y la web.
@@ -208,7 +209,7 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 | 1 | ~~API de lectura para Home Assistant con token propio~~ (hecha) | T-308 | Configurarla en Home Assistant, si la quiere |
 | 2 | ~~Importación de CFDI/XML a compras en borrador~~ (hecha) | T-307 | Un CFDI real para validar |
 | 3 | ~~Factibilidad de rembg en el A8-7410 con fotos públicas~~ (hecha: viable) | T-010 (parte) | Las 10 fotos reales y la calificación (D5) |
-| 4 | Mejora en casa: pedido, proceso en el agente, renditions `home` y adopción | T-300 | Cerrar D5; si rembg no arranca, T2 se descarta |
+| 4 | ~~Mejora en casa: pedido, proceso en el agente, renditions `home` y adopción~~ (hecha; Android en PR esperando el teléfono) | T-300 | Probarla en el teléfono; cerrar D5 |
 | 5 | Editor de fotos: web (hecha) y después Android (tras T-118) | T-301 | Prueba en la web; la de Android, en el teléfono |
 | 6 | ~~Importación CSV/Excel genérica~~ (hecha) | T-306 | Un archivo real para validar |
 | 7 | ~~Edición generativa con IA con el proveedor simulado~~ (hecha en el Worker y la web; Android con T-301b) | T-302 | Elegir el modelo y autorizar llamadas reales |
@@ -582,6 +583,7 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-04** — T-300a: pedido de mejora y trabajos de imagen del agente en el Worker (07 §5.3).
 - **2026-11-04** — T-300b: contenedor de imágenes `maunedas-images` con `u2netp`; primera foto real procesada en dev.
 - **2026-11-04** — T-300c-1: "Mejorar en casa" y adopción del resultado en la web; `ImageRef` dice qué adoptar.
+- **2026-11-04** — T-300c-2: "Mejorar en casa" y adopción en Android; queda en su PR hasta la prueba en el teléfono.
 - **2026-11-04** — T106: la máscara de la mejora en casa cubre la foto completa, para el editor.
 - **2026-11-04** — T-301a: editor de fotos en la web con `GET /v1/images/:id/edit` y reglas compartidas (T107); Android después de T-118.
 - **2026-11-04** — T-306: importación de compras desde CSV o Excel en la web con `POST /v1/purchases/import` y `purchase_imports` (T108); falta un archivo real.

@@ -7,6 +7,7 @@ import com.maubautista.maunedas.core.database.AppDatabase
 import com.maubautista.maunedas.core.database.entity.BarcodeEntity
 import com.maubautista.maunedas.core.database.entity.CategoryEntity
 import com.maubautista.maunedas.core.database.entity.ImageEntity
+import com.maubautista.maunedas.core.database.entity.ImageRenditionEntity
 import com.maubautista.maunedas.core.database.entity.PriceObservationEntity
 import com.maubautista.maunedas.core.database.entity.ProductEntity
 import com.maubautista.maunedas.core.database.entity.ProductTagEntity
@@ -18,7 +19,8 @@ import com.maubautista.maunedas.core.database.entity.VariantEntity
 import com.maubautista.maunedas.core.model.Clock
 import com.maubautista.maunedas.core.model.DisplayUnit
 import com.maubautista.maunedas.core.network.ApiConfig
-import java.time.Instant
+import com.maubautista.maunedas.core.sync.LocalWriter
+import com.maubautista.maunedas.core.sync.SyncScheduler
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -28,6 +30,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import org.robolectric.RobolectricTestRunner
+import java.time.Instant
 
 /**
  * The comparator data of `apps/api/test/prices.test.ts` and the latest prices of `catalog.test.ts`, in Room:
@@ -39,7 +42,7 @@ class ProductPageRepositoryTest {
     private val day = 86_400_000L
     private val db =
         Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext<Context>(), AppDatabase::class.java).allowMainThreadQueries().build()
-    private val pages = ProductPageRepository(db, Clock { now }, ProductPhotos(ApplicationProvider.getApplicationContext(), db, ApiConfig("https://api.test")))
+    private val pages = ProductPageRepository(db, Clock { now }, ProductPhotos(ApplicationProvider.getApplicationContext(), db, ApiConfig("https://api.test")), PhotoEnhancer(db, LocalWriter(db, Clock { now }, { "u" }, { }), SyncScheduler(ApplicationProvider.getApplicationContext(), db), Clock { now }))
 
     @After
     fun close() = db.close()
@@ -170,6 +173,24 @@ class ProductPageRepositoryTest {
             db.images().upsertAll(listOf(ImageEntity(id = "img", ownerType = "product", ownerId = "leche", role = "catalog", source = "user", originalKey = "images/img/original.jpg", createdAt = 1, updatedAt = 1)))
             db.products().upsertAll(listOf(db.products().byId("leche")!!.copy(primaryImageId = "img")))
             assertEquals("https://api.test/v1/images/img/blobs/original.jpg", pages.page("leche").first()!!.photo)
+        }
+
+    @Test
+    fun thePageSaysWhatEnhancingThePhotoCanDoAndShowsTheAdoptedResult() =
+        runTest {
+            assertEquals(listOf(null, EnhanceState.NONE), pages.page("leche").first()!!.let { listOf(it.photoImageId, it.enhance) })
+            db.images().upsertAll(listOf(ImageEntity(id = "img", ownerType = "product", ownerId = "leche", role = "catalog", source = "user", originalKey = "images/img/original.jpg", createdAt = 1, updatedAt = 1)))
+            db.products().upsertAll(listOf(db.products().byId("leche")!!.copy(primaryImageId = "img")))
+            assertEquals(listOf("img", EnhanceState.AVAILABLE), pages.page("leche").first()!!.let { listOf(it.photoImageId, it.enhance) })
+            db.images().upsertAll(listOf(db.images().byId("img")!!.copy(enhanceRequestedAt = now)))
+            assertEquals(EnhanceState.PENDING, pages.page("leche").first()!!.enhance)
+            // The home result arrives and is adopted: the page shows it.
+            db.imageRenditions().upsertAll(
+                listOf(ImageRenditionEntity(id = "r1", imageId = "img", kind = "processed", tier = "home", r2Key = "images/img/r1.webp", createdAt = now, updatedAt = now)),
+            )
+            db.images().upsertAll(listOf(db.images().byId("img")!!.copy(selectedProcessedId = "r1")))
+            val page = pages.page("leche").first()!!
+            assertEquals(listOf<Any?>("https://api.test/v1/images/img/blobs/r1.webp", EnhanceState.AVAILABLE), listOf(page.photo, page.enhance))
         }
 
     @Test

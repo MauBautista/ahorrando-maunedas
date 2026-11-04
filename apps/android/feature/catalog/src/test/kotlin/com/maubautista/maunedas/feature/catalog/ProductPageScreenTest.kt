@@ -9,14 +9,15 @@ import androidx.compose.ui.semantics.SemanticsActions
 import androidx.compose.ui.semantics.SemanticsProperties
 import androidx.compose.ui.semantics.getOrNull
 import androidx.compose.ui.test.SemanticsMatcher
+import androidx.compose.ui.test.hasText
 import androidx.compose.ui.test.junit4.createComposeRule
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.performClick
 import androidx.compose.ui.test.performScrollToNode
-import androidx.compose.ui.test.hasText
 import androidx.compose.ui.text.TextLayoutResult
 import androidx.compose.ui.unit.Density
 import androidx.compose.ui.unit.dp
+import com.maubautista.maunedas.core.data.EnhanceState
 import com.maubautista.maunedas.core.data.MergeCandidate
 import com.maubautista.maunedas.core.data.PageComparison
 import com.maubautista.maunedas.core.data.PagePrice
@@ -81,14 +82,37 @@ class ProductPageScreenTest {
         isAdmin: Boolean = false,
         actions: ProductPageActions = ProductPageActions(),
         fontScale: Float = 1f,
+        shown: ProductPage = page,
     ) = compose.setContent {
         val base = LocalDensity.current
         CompositionLocalProvider(LocalDensity provides Density(base.density, fontScale)) {
-            MaunedasTheme { Surface(Modifier.width(360.dp)) { ProductPageScreen(page, isAdmin, now, actions) } }
+            MaunedasTheme { Surface(Modifier.width(360.dp)) { ProductPageScreen(shown, isAdmin, now, actions) } }
         }
     }
 
     private fun scrollTo(text: String) = compose.onNode(SemanticsMatcher.keyIsDefined(SemanticsActions.ScrollToIndex)).performScrollToNode(hasText(text, substring = true))
+
+    @Test
+    fun aPhotoCanBeEnhancedAtHome() {
+        var asked = 0
+        show(actions = ProductPageActions(onEnhance = { asked++ }), shown = page.copy(enhance = EnhanceState.AVAILABLE))
+        compose.onNodeWithText("Mejorar en casa").performClick()
+        assertEquals(1, asked)
+    }
+
+    @Test
+    fun anEnhancementAskedSaysSo() {
+        show(shown = page.copy(enhance = EnhanceState.PENDING))
+        compose.onNodeWithText("Mejora pedida: el servidor casero quitará el fondo en unos minutos.").assertExists()
+        compose.onNodeWithText("Mejorar en casa").assertDoesNotExist()
+    }
+
+    @Test
+    fun withoutAPhotoToSendThereIsNoButton() {
+        show()
+        compose.onNodeWithText("Mejorar en casa").assertDoesNotExist()
+        compose.onNodeWithText("Mejora pedida", substring = true).assertDoesNotExist()
+    }
 
     @Test
     fun presentationsShowContentCodesAndTheLatestPricePerStoreAndSource() {

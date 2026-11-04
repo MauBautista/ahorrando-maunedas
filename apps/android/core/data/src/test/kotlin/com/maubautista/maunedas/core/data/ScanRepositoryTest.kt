@@ -23,6 +23,7 @@ import com.maubautista.maunedas.core.network.MaunedasJson
 import com.maubautista.maunedas.core.network.TokenAuthenticator
 import com.maubautista.maunedas.core.network.createMaunedasApi
 import com.maubautista.maunedas.core.network.createOkHttpClient
+import com.maubautista.maunedas.core.sync.LocalWriter
 import com.maubautista.maunedas.core.sync.SyncScheduler
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -50,7 +51,7 @@ class ScanRepositoryTest {
         val tokens = IdTokenProvider { "token" }
         val client = ClientInfo(1, "test")
         val api = createMaunedasApi(ApiConfig(server.url("/").toString()), createOkHttpClient(AuthInterceptor(tokens, client), TokenAuthenticator(tokens)), MaunedasJson)
-        scan = ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, Clock { 10_000 }, ProductPhotos(context, db, ApiConfig("https://api.test"))))
+        scan = ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, Clock { 10_000 }, ProductPhotos(context, db, ApiConfig("https://api.test")), PhotoEnhancer(db, LocalWriter(db, Clock { 10_000 }, { "u" }, { }), SyncScheduler(context, db), Clock { 10_000 })))
     }
 
     @After

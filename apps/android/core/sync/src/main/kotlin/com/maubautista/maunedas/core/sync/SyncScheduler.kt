@@ -93,6 +93,21 @@ class SyncScheduler
             )
         }
 
+        /** "Mejorar en casa" (10 §6.1): one request per image, with network and backoff while its original uploads. */
+        fun enhance(imageId: String) {
+            work.enqueueUniqueWork(
+                EnhanceWorker.tagOf(imageId),
+                ExistingWorkPolicy.KEEP,
+                OneTimeWorkRequestBuilder<EnhanceWorker>()
+                    .setInputData(workDataOf(EnhanceWorker.IMAGE_ID to imageId))
+                    .addTag(EnhanceWorker.TAG)
+                    .addTag(EnhanceWorker.tagOf(imageId))
+                    .setConstraints(connected)
+                    .setBackoffCriteria(BackoffPolicy.EXPONENTIAL, 30, TimeUnit.SECONDS)
+                    .build(),
+            )
+        }
+
         /** A new FCM token (08 §6): sent by a worker, once, with network and backoff; the newest one wins. */
         fun registerToken(token: String) {
             work.enqueueUniqueWork(
