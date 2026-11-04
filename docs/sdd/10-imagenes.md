@@ -215,7 +215,7 @@ Si el modelo de segmentación aún no se descargó o falla, se guarda solo el or
     - **Cuándo trae algo:** solo cuando ya están las dos, alguna difiere de la seleccionada y la foto no tiene `edit_params.manual`.
     - **Escritura:** la ficha la adopta una vez por resultado, con un push parcial de `images`. Así también la adopta si nadie abre la app.
     - **Pedido:** "Mejorar en casa" llama al Worker y pone `enhance_requested_at` por sync. `ImageRef.enhance_pending` dice si sigue esperando.
-    - **Fondo:** la foto se muestra sobre blanco (10 §1).
+    - **Fondo:** la foto se muestra sobre el color de `ImageRef.background`, blanco por omisión (10 §1, T-301). Android la muestra sobre blanco hasta T-301b.
 
 ### 6.2 Editor (RF-IMG-05)
 
