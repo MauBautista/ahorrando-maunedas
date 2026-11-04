@@ -53,6 +53,7 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-302 (2026-11-04):** en el editor de fotos de la web, "Mejorar con IA" muestra el costo estimado y el gasto del mes, pide confirmación y enseña el resultado para usarlo o descartarlo. Está probado con un proveedor simulado; para usarlo de verdad falta que Mauricio elija el modelo y autorice una llamada real.
 - **T-306 (2026-11-04):** en la web, Compras → "Importar archivo" convierte un CSV o un Excel (.xlsx) en compras en borrador. Se elige qué columna es cada dato y la tienda de cada nombre; la vista previa muestra las compras y las filas que se omiten. Importar el mismo archivo otra vez no repite nada. Falta validarlo con un archivo real.
 - **T-301, web (2026-11-04):** en la ficha de un producto, "Editar foto" abre un editor. Tiene recorte, giro, fondo de color, brillo y contraste, y un pincel para borrar o restaurar el fondo, con deshacer. "Guardar" deja el original intacto. "Restablecer" vuelve al resultado automático. Falta probarlo en la web y hacer la parte de Android, que espera a T-118.
 - **T-300, web (2026-11-04):** en la ficha de un producto, "Mejorar en casa" pide al servidor casero quitarle el fondo a la foto. Cuando llega el resultado, la ficha lo adopta sola, salvo que la foto se haya editado a mano. Falta el mismo botón en Android.
@@ -210,7 +211,7 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 | 4 | Mejora en casa: pedido, proceso en el agente, renditions `home` y adopción | T-300 | Cerrar D5; si rembg no arranca, T2 se descarta |
 | 5 | Editor de fotos: web (hecha) y después Android (tras T-118) | T-301 | Prueba en la web; la de Android, en el teléfono |
 | 6 | ~~Importación CSV/Excel genérica~~ (hecha) | T-306 | Un archivo real para validar |
-| 7 | Edición generativa con IA con el proveedor simulado | T-302 | Elegir el modelo y autorizar llamadas reales |
+| 7 | ~~Edición generativa con IA con el proveedor simulado~~ (hecha en el Worker y la web; Android con T-301b) | T-302 | Elegir el modelo y autorizar llamadas reales |
 | 8 | PWA offline | T-310 | Prueba en el iPhone |
 
 **Pendientes de Mauricio fuera de la agenda:**
@@ -351,6 +352,7 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 | T106 | **La máscara cubre la foto completa (para el editor, T-301).**<br>• `mask` es el alfa del modelo sobre la foto enderezada y reducida a ≤ 1024 px, no sobre el recorte cuadrado de `processed`.<br>• Aplica al agente y al teléfono. | El editor (10 §6.2) parte del original. Una máscara con la geometría del recorte, sin guardar su transformación, no se puede alinear, y el WebP con pérdida no conserva el color bajo lo transparente, así que "restaurar" no tendría píxeles. |
 | T107 | **Editor de fotos (T-301).**<br>• `GET /v1/images/:id/edit` da al editor el original, la máscara de partida y el resultado automático para "Restablecer".<br>• `crop` está en fracciones de la foto ya girada.<br>• **Hallazgo:** brillo y contraste se aplican al producto antes del fondo, no después.<br>• "Restablecer" deja `edit_params` en `null`.<br>• `ImageRef.background` lleva el color del fondo.<br>• Las reglas, en `packages/shared/src/images/edit.ts`; Android las replicará con un fixture común. | La web no guarda copia local: necesita del Worker la máscara y el resultado automático. Aplicar los ajustes después del fondo cambiaría el blanco elegido. Con el recorte en la foto girada, la pantalla y el archivo usan las mismas coordenadas. |
 | T108 | **Importación de archivos (T-306).**<br>• La web lee el CSV o el `.xlsx` (primera hoja, con `DecompressionStream` y `DOMParser`, sin bibliotecas) y manda compras ya armadas a `POST /v1/purchases/import`.<br>• Fechas con el día primero y a mediodía de la Ciudad de México si no traen hora.<br>• Dinero leído del texto.<br>• Compras por tienda y folio, o por tienda y día.<br>• `purchase_imports` (servidor, solo se agrega, en el respaldo) guarda la huella SHA-256 de cada compra para no duplicarla mientras viva.<br>• `mexicoCityMs` pasa a `packages/shared/src/util/time.ts`. | El archivo no necesita salir del navegador y el mapeo es interactivo. Las bibliotecas de Excel pesan o traen dependencias recientes, y el navegador ya descomprime. Con la huella del contenido, reimportar el mismo archivo, o parte de él tras un error, no repite nada, igual que el UUID fiscal en T104. |
+| T109 | **Edición con IA (T-302).**<br>• `editImage` pide a OpenRouter salida de imagen (`modalities`) con la URL firmada del original.<br>• El resultado se guarda como `processed` con `tier='ai'`, solo en PNG o WebP; otro formato es una salida no válida que se cobra.<br>• `GET /v1/ai/image-edit` cotiza (costo estimado, gasto del mes y si se puede) con la misma regla de presupuesto.<br>• La respuesta trae la URL firmada del resultado.<br>• Al adoptarlo, el cliente hace la miniatura `manual` y fija `manual: true`.<br>• Sin modelo elegido, la web no muestra el botón. | Las claves de R2 de una rendition solo admiten PNG o WebP (10 §1), y el Worker no puede transcodificar. La cotización deja ver el costo antes de gastar, como pide RF-IMG-06. La URL permite mostrar el resultado antes de decidir. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -371,6 +373,7 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 | Productos duplicados creados offline por varios usuarios | Códigos únicos, `BARCODE_TAKEN`, herramienta de fusión para admin |
 | Relojes de teléfono desfasados (LWW) | Clamp de `updated_at` a `now + 5 min` en el servidor |
 | ML Kit Subject Segmentation está en beta | Es solo el nivel T1; T2 en casa cubre el mismo caso |
+| La edición con IA recibe la imagen en base64 dentro del JSON: parsearla y decodificarla en el Worker gasta CPU del plan Free (10 ms) | Decodificación nativa con `Buffer` y solo el encabezado por expresión regular (T109); se mide con la primera llamada real en dev |
 | Licencia de imágenes de Open Food Facts | Guardar licencia, atribución y URL de origen por imagen |
 | Límite de 10 ms de CPU del plan Free: push y pull pasan de 10 ms en p95 (spike D) aunque hoy no se cortan | Pull de 100 filas; vigilar 1102/`exceededCpu` en Workers Logs; T-040 preselecciona candidatos por SQL; plan Paid como salida (T40) |
 | Olvido de contraseña sin correo real | Restablecimiento por el admin desde la web |
@@ -582,3 +585,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-04** — T106: la máscara de la mejora en casa cubre la foto completa, para el editor.
 - **2026-11-04** — T-301a: editor de fotos en la web con `GET /v1/images/:id/edit` y reglas compartidas (T107); Android después de T-118.
 - **2026-11-04** — T-306: importación de compras desde CSV o Excel en la web con `POST /v1/purchases/import` y `purchase_imports` (T108); falta un archivo real.
+- **2026-11-04** — T-302: edición con IA en el Worker y la web con el proveedor simulado (T109); falta elegir el modelo.

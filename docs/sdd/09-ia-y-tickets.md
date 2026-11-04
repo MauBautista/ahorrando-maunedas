@@ -89,6 +89,10 @@ Implementación (T-039, decisión T68): `apps/api/src/ai/` (`types.ts`, `provide
   - Sin respuesta, `503 E-AI_UNAVAILABLE`.
   - Un 4xx del proveedor es `502 E-UPSTREAM_ERROR` y no se reintenta.
 - **Pedido a OpenRouter:** lleva `usage: { include: true }` para que responda el costo real.
+- **`editImage` (T-302):**
+  - Pide `modalities: ['image', 'text']` con el texto y la URL firmada del original, y espera hasta 120 s.
+  - La imagen llega como data URL en base64 en `message.images`. Solo el encabezado se compara con una expresión regular, y el resto se decodifica con `Buffer` (nativo) para gastar poca CPU.
+  - Sin imagen, o vacía, es `InvalidAiOutput`.
 
 ## 2. Presupuesto
 

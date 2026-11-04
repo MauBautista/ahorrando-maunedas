@@ -410,7 +410,8 @@ Contratos y flujo completos en `10-imagenes.md`.
 | `POST /v1/images/:imageId/import` | `{ source_url }` de un host permitido de Open Food Facts → guarda como original. `201` |
 | `POST /v1/images/:imageId/enhance` | (E3) Encola `remove_bg` para el agente. `202 { job_id }`; el mismo si ya espera uno. Solo fotos de catálogo con el original en R2 (`404` · `409 E-IMAGE_NOT_UPLOADED`). 10 §6.1 |
 | `GET /v1/images/:imageId/edit` | (E3) Punto de partida del editor (10 §6.2): `{ image_id, updated_at, original_url, edit_params, mask: { url, width, height } \| null, automatic: { processed_id, thumb_id } \| null }`, con URLs firmadas. Solo fotos de catálogo con el original en R2 (`404` · `409 E-IMAGE_NOT_UPLOADED`) |
-| `POST /v1/images/:imageId/ai-edit` | (E3) `{ prompt, confirm: true }`. Consume presupuesto |
+| `GET /v1/ai/image-edit` | (E3) Cotización de la edición con IA: `{ available, reason: 'NOT_CONFIGURED' \| 'BUDGET' \| null, estimate_usd, spent_usd, budget_usd }` (10 §6.3) |
+| `POST /v1/images/:imageId/ai-edit` | (E3) `{ prompt?, confirm: true }`. Consume presupuesto. `201 { rendition_id, url, cost_usd }`: una `processed` con `tier='ai'`. `503 E-AI_UNAVAILABLE` sin modelo, `402 E-AI_BUDGET_EXCEEDED`, `502` si la imagen no sirve; `404` · `409 E-IMAGE_NOT_UPLOADED` como el editor (10 §6.3) |
 
 ## 10. Tickets
 

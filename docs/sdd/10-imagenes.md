@@ -260,6 +260,17 @@ Canal de render: original → rotación y recorte → máscara (alfa) → ajuste
 - Antes, la UI muestra el costo estimado (`AI_IMAGE_EDIT_EST_COST_USD`) y el gasto del mes.
 - Worker: presupuesto → proveedor con URL firmada del original → guarda el resultado como rendition `processed` `tier='ai'` → registra `ai_usage` → `201 { rendition_id, cost_usd }`.
 - El cliente genera la miniatura (`tier='manual'`) al adoptarla.
+- **Implementación (T-302, decisión T109):**
+  - **Respuesta:** `201 { rendition_id, url, cost_usd }`; `url` es la URL firmada del resultado, para mostrarlo antes de adoptarlo.
+  - **Formato:** el resultado se guarda tal como llega, en PNG o WebP (10 §1), con `width` y `height` nulos. Si viene en otro formato, vacío o de más de 15 MB, es una salida no válida: se cobra, se reintenta una vez y después es `502`. El modelo elegido debe responder PNG o WebP.
+  - **Cotización:** `GET /v1/ai/image-edit` da `{ available, reason, estimate_usd, spent_usd, budget_usd }`. `reason` es `NOT_CONFIGURED` (no hay modelo elegido) o `BUDGET` (la edición pasaría el tope, con la misma regla de `assertBudget`).
+  - **Adoptar ("Usar esta foto"):**
+    - el cliente hace la miniatura de 256 px sobre el fondo y la sube como rendition `manual`;
+    - la foto selecciona la `processed` de la IA con esa miniatura;
+    - `edit_params` queda en `{ background?, manual: true }`, así las mejoras en casa no la reemplazan.
+    - "Restablecer" (§6.2) vuelve al resultado automático.
+  - **Web:** "Mejorar con IA" en el editor (06 §7.2), con el costo y el gasto del mes antes de "Confirmar y gastar". No aparece mientras no hay modelo elegido.
+  - **Android:** con T-301b.
 
 ## 7. Pruebas
 

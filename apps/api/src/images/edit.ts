@@ -1,6 +1,6 @@
 import type { EditSourceResponse } from '@maunedas/shared/api/images';
 import type { AppEnv } from '../env';
-import { ApiError } from '../errors';
+import { catalogPhoto } from './original';
 import { signedBlobUrl } from './refs';
 
 /** Renditions made without anyone's hand (ARQUITECTURA §9.1): the phone's cut-out and the home server's. */
@@ -25,21 +25,7 @@ export async function editSource(
   imageId: string,
   now: number,
 ): Promise<EditSourceResponse> {
-  const image = await env.DB.prepare(
-    `SELECT original_key, edit_params, updated_at, json_extract(edit_params, '$.manual') AS manual
-     FROM images WHERE id = ?1 AND role = 'catalog' AND deleted_at IS NULL`,
-  )
-    .bind(imageId)
-    .first<{
-      original_key: string | null;
-      edit_params: string | null;
-      updated_at: number;
-      manual: unknown;
-    }>();
-  if (!image) throw new ApiError(404, 'NOT_FOUND');
-  if (!image.original_key || !(await env.IMAGES.head(image.original_key))) {
-    throw new ApiError(409, 'IMAGE_NOT_UPLOADED');
-  }
+  const image = await catalogPhoto(env, imageId);
   const { results } = await env.DB.prepare(
     `SELECT id, kind, tier, r2_key, width, height FROM image_renditions
      WHERE image_id = ?1 AND deleted_at IS NULL ORDER BY created_at, id`,

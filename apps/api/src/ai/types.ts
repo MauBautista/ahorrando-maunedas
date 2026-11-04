@@ -15,6 +15,8 @@ export interface AiProvider {
     systemPrompt: string,
     schema: object,
   ): Promise<{ data: unknown; usage: AiUsage }>;
+  /** E3 (10 §6.3): the photo at [imageUrl] edited as [prompt] says; a provider without it cannot edit. */
+  editImage?(imageUrl: string, prompt: string): Promise<{ image: Uint8Array; mime: string; usage: AiUsage }>;
 }
 
 /** The provider is down or busy (5xx, 429) or did not answer in time: worth one more try, nothing to bill. */

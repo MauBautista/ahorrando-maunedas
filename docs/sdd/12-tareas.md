@@ -670,6 +670,20 @@ Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauric
 - **Necesita a Mauricio:**
   - elegir el modelo de edición de imagen de OpenRouter (y su costo por imagen, `AI_IMAGE_EDIT_EST_COST_USD`);
   - autorizar las llamadas reales de prueba, que cuestan dinero.
+- **Avance (2026-11-04, T109):**
+  - **Hecho con el proveedor simulado:**
+    - `editImage` en OpenRouter;
+    - `GET /v1/ai/image-edit` y `POST /v1/images/:id/ai-edit` (03 §9);
+    - "Mejorar con IA" en el editor web con la adopción y su miniatura;
+    - 11 pruebas nuevas (7 de la API con OpenRouter simulado, 4 de la web) y 15 mutaciones, todas detectadas.
+  - **Falta:**
+    - **Android:** con T-301b.
+    - **Mauricio:**
+      - elegir el modelo, que debe responder PNG o WebP por la salida de imagen de OpenRouter;
+      - poner `AI_IMAGE_EDIT_MODEL` y `AI_IMAGE_EDIT_EST_COST_USD` en `wrangler.jsonc`;
+      - autorizar una llamada real en dev.
+
+      Con ella se mide la CPU de decodificar la imagen en el plan Free.
 
 ### [ ] T-303 · OCR local experimental
 - **Docs:** 09 §3, `ARQUITECTURA.md` §8 · **Depende de:** T-012, T-040
