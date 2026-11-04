@@ -237,7 +237,12 @@ describe('POST /v1/images/:imageId/ai-edit (10 §6.3, T-302)', () => {
 
 describe('OpenRouter image output (09 §1, T-302)', () => {
   it('takes only an image data URL, and bills what was not one', async () => {
-    const provider = new OpenRouterProvider(withModel, 'test/image-model', fakeFetch);
+    // The fake key of vitest.config.ts; CI's Worker types do not carry secrets.
+    const provider = new OpenRouterProvider(
+      { OPENROUTER_API_KEY: 'test-openrouter-key', PUBLIC_BASE_URL: env.PUBLIC_BASE_URL },
+      'test/image-model',
+      fakeFetch,
+    );
     for (const url of [
       'data:text/plain;base64,aG9sYQ==',
       'https://otro.sitio/a,b.png',
