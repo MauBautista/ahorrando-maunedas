@@ -619,18 +619,97 @@ Orden sugerido para el MVP: Etapa 0 completa → backend base (T-020 a T-032) �
 
 ---
 
-## Etapa 3 (se detallará al iniciarla)
+## Etapa 3 · Ampliaciones
 
-| ID | Tarea | Docs |
-|---|---|---|
-| T-300 | Mejora de fotos en casa (rembg) y adopción automática | 07 §11, 10 §6.1 |
-| T-301 | Editor de fotos Android y web | 10 §6.2 |
-| T-302 | Edición generativa con IA | 10 §6.3 |
-| T-303 | OCR local experimental | 09 §3 |
-| T-304 | Correos: compartir a la app y lectura de Gmail desde el agente | `ARQUITECTURA.md` §15 |
-| T-305 | Adapter Mercado Libre (API oficial) y más tiendas | 07 §9 |
-| T-306 | Importación CSV/Excel | — |
-| T-307 | Importación CFDI/XML | — |
-| T-308 | API de lectura para Home Assistant | — |
-| T-309 | Métricas del agente en InfluxDB/Grafana | — |
-| T-310 | PWA offline | — |
+Detalle del 2026-11-04 (decisión T102). Cada tarea dice qué necesita de Mauricio; lo demás lo avanza el desarrollo sin esperarlo.
+
+### [ ] T-300 · Mejora de fotos en casa (rembg) y adopción automática
+- **Docs:** 07 §11, 10 §6.1 · **Depende de:** T-010 (D5), T-118, T-201
+- **Hacer:**
+  - **Worker:** `POST /v1/images/:id/enhance` crea el `image_jobs` (`remove_bg`).
+  - **Agente:** procesa con el modelo de D5, uno a la vez, y sube máscara, `processed` y `thumb`.
+  - **Worker:** crea las renditions `tier='home'`.
+  - **Clientes:** adoptan la más nueva si `edit_params.manual` no es verdadero.
+- **Hecho cuando:** "Mejorar en casa" en una foto produce renditions `home` que la app y la web adoptan. Con el agente apagado, el pedido espera sin error.
+- **Sin Mauricio:** la parte de factibilidad del spike A (si `onnxruntime` arranca en el A8-7410 sin AVX2, segundos y memoria por modelo) con fotos públicas del catálogo abierto. Si no arranca, T2 se descarta (11 §7).
+- **Necesita a Mauricio:** las 10 fotos reales del spike A y calificar la calidad para cerrar D5.
+
+### [ ] T-301 · Editor de fotos (RF-IMG-05)
+- **Docs:** 10 §6.2 · **Depende de:** T-118
+- **Hacer:**
+  - **Funciones:** recorte, rotación, fondo, brillo y contraste, y pincel de máscara con deshacer.
+  - **Guardar:** crea renditions `tier='manual'` y fija `edit_params.manual`.
+  - **"Restablecer":** vuelve a la última automática.
+  - **Orden:** primero la web, después Android.
+- **Hecho cuando:** una foto editada y guardada se ve igual en la app y la web, el original sigue intacto y "Restablecer" deshace la edición.
+- **Necesita a Mauricio:** la prueba en el teléfono y en la web.
+
+### [ ] T-302 · Edición generativa con IA (RF-IMG-06)
+- **Docs:** 10 §6.3, 09 §2 · **Depende de:** T-301
+- **Hacer:**
+  - **Endpoint:** `POST /v1/images/:id/ai-edit` con presupuesto, URL firmada y `ai_usage`.
+  - **Interfaz:** el costo estimado y el gasto del mes antes de confirmar.
+  - **Miniatura:** el cliente crea la `manual` al adoptar.
+- **Sin Mauricio:** todo con el proveedor simulado en pruebas.
+- **Necesita a Mauricio:**
+  - elegir el modelo de edición de imagen de OpenRouter (y su costo por imagen, `AI_IMAGE_EDIT_EST_COST_USD`);
+  - autorizar las llamadas reales de prueba, que cuestan dinero.
+
+### [ ] T-303 · OCR local experimental
+- **Docs:** 09 §3, `ARQUITECTURA.md` §8 · **Depende de:** T-012, T-040
+- **Hacer:** comparar un OCR local con la extracción por IA en los tickets del spike C. Si alcanza, se conecta como `source='receipt_ocr'` sin cambiar el flujo.
+- **Necesita a Mauricio:** las fotos de tickets del spike C. Bloqueada hasta entonces.
+
+### [ ] T-304 · Correos
+- **Docs:** `ARQUITECTURA.md` §15 · **Depende de:** T-040
+- **Hacer:**
+  - (a) compartir un correo o su captura a la app, por el flujo de tickets;
+  - (b) el agente lee la etiqueta "Maunedas" de Gmail con OAuth de solo lectura.
+- **Necesita a Mauricio:**
+  - para (a), la extracción de tickets (spike C);
+  - para (b), crear el cliente OAuth en Google Cloud y autorizar la cuenta.
+
+### [ ] T-305 · Mercado Libre y más tiendas
+- **Docs:** 07 §9 · **Depende de:** T-203
+- **Hacer:** adapter de Mercado Libre con su API oficial; otras tiendas solo si no bloquean (regla 10).
+- **Necesita a Mauricio:**
+  - las credenciales de una app de Mercado Libre, si su API las exige (se confirma con una sola petición);
+  - qué otras tiendas seguir.
+
+### [ ] T-306 · Importación CSV/Excel
+- **Docs:** `ARQUITECTURA.md` §15 · **Depende de:** T-161
+- **Hacer:** importador en la web con mapeo de columnas (fecha, tienda, descripción, cantidad, precio o importe). Crea compras en borrador con `source='import'`, que se revisan y vinculan como cualquier otra.
+- **Hecho cuando:** un archivo de ejemplo con varias compras queda en borradores vinculables, y volver a importarlo no duplica.
+- **Necesita a Mauricio (después):** un archivo real para validar el mapeo; el importador es genérico.
+
+### [ ] T-307 · Importación CFDI/XML
+- **Docs:** `ARQUITECTURA.md` §15 · **Depende de:** T-037, T-161
+- **Hacer:**
+  - **Worker:** importador de CFDI 4.0. Del emisor sale la tienda; de los conceptos, las líneas con cantidad, valor unitario, importe y descuento.
+  - **Compra:** queda en borrador con `source='cfdi'`, y los alias de la tienda vinculan solas las líneas conocidas.
+  - **Web:** subir el XML.
+- **Hecho cuando:**
+  - un CFDI de ejemplo crea la compra con sus líneas y total;
+  - un CFDI repetido (mismo UUID fiscal) no se duplica;
+  - un XML que no es CFDI se rechaza con su motivo.
+- **Necesita a Mauricio (después):** un CFDI real de una compra para validar.
+
+### [ ] T-308 · API de lectura para Home Assistant
+- **Docs:** `ARQUITECTURA.md` §15 · **Depende de:** T-023
+- **Hacer:**
+  - **Endpoints de solo lectura** con un token propio, revocable y guardado como hash: precio actual, mínimo histórico y disponibilidad por variante.
+  - **Tokens:** el admin los crea y los revoca en la web.
+- **Hecho cuando:** con el token se leen los tres datos de una variante, sin él o revocado es `401`, y el token no permite escribir.
+- **Necesita a Mauricio (después):** configurarlo en Home Assistant si lo quiere usar.
+
+### [ ] T-309 · Métricas del agente en InfluxDB/Grafana
+- **Docs:** 07 §5.1 · **Depende de:** T-200
+- **Necesita a Mauricio:** decidir si corren InfluxDB y Grafana en el servidor casero (RAM compartida con Home Assistant) o si se usan unos existentes. La decisión T4 dejó InfluxDB fuera del núcleo. Bloqueada hasta decidir.
+
+### [ ] T-310 · PWA offline
+- **Docs:** 06 · **Depende de:** T-160
+- **Hacer:** la web instalable y con lectura sin red (catálogo, fichas, historial), y una captura en cola que sube al volver la red.
+- **Necesita a Mauricio:** la prueba en el iPhone (Safari).
+
+### [ ] T-390 · Cierre de la Etapa 3
+- **Docs:** `PLAN.md`

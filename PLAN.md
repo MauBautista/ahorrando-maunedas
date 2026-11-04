@@ -66,3 +66,4 @@ Objetivo: monitorear precios web desde casa (CP 72750) y avisar por push.
 - [ ] API para Home Assistant — T-308
 - [ ] Métricas del agente en InfluxDB/Grafana — T-309
 - [ ] PWA offline — T-310
+- [ ] Cierre — T-390

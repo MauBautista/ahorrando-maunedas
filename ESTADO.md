@@ -190,6 +190,33 @@
 - Mauricio: Firebase prod (T-004, puede esperar al primer despliegue a producción); 5 fotos de tickets para el spike C y 10 fotos de productos para el spike A.
 - Spike C (T-012): rutas temporales y script listos en la rama local `spike/c-receipts`; `maunedas-dev` volvió a `main` y se borró `SPIKE_TOKEN`. Se vuelve a desplegar cuando estén las fotos.
 
+## Metas del loop
+
+Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una tarea por PR. La que necesita prueba en el teléfono queda en su PR con CI verde, sin fusionar, y se sigue con la siguiente.
+
+| Orden | Meta | Tarea | Queda para Mauricio |
+|---|---|---|---|
+| 1 | API de lectura para Home Assistant con token propio | T-308 | Configurarla en Home Assistant, si la quiere |
+| 2 | Importación de CFDI/XML a compras en borrador | T-307 | Un CFDI real para validar |
+| 3 | Factibilidad de rembg en el A8-7410 con fotos públicas | T-010 (parte) | Las 10 fotos reales y la calificación (D5) |
+| 4 | Mejora en casa: pedido, proceso en el agente, renditions `home` y adopción | T-300 | Cerrar D5; si rembg no arranca, T2 se descarta |
+| 5 | Editor de fotos: web y después Android | T-301 | Prueba en el teléfono y en la web |
+| 6 | Importación CSV/Excel genérica | T-306 | Un archivo real para validar |
+| 7 | Edición generativa con IA con el proveedor simulado | T-302 | Elegir el modelo y autorizar llamadas reales |
+| 8 | PWA offline | T-310 | Prueba en el iPhone |
+
+**Pendientes de Mauricio fuera de la agenda:**
+- **Pruebas en el teléfono:** T-118 (PR #93, decisión T101 en ese PR).
+- **Club de Sam's:** el de Forjadores (T-207).
+- **Token de R2:** de solo lectura, para las fotos (T-230).
+- **Etapa 2:** las dos semanas con 30 listings.
+- **Etapa 1:** las comprobaciones de 11 §5, Firebase prod (T-004) y el iPhone (T-160).
+- **Fotos para los spikes:** de productos (A) y de tickets (C).
+- **Tareas bloqueadas:**
+  - T-303 y T-304, por el spike C y Gmail;
+  - T-305, por las credenciales de Mercado Libre, si se exigen, y qué tiendas seguir;
+  - T-309, por la decisión sobre InfluxDB y Grafana.
+
 ## Siguiente
 1. **Agente en el servidor (ya corre contra dev):**
    - agregar un enlace real y ver su primera revisión;
@@ -308,6 +335,7 @@
 | T98 | **Escalones web y estado del agente en Android.**<br>• Escalones por listing hasta su `last_checked_at`, debajo de los puntos.<br>• El agente cuenta como sin conexión en el teléfono tras 30 min sin reporte, no 3 como en el Worker.<br>• El detalle va en Ajustes solo para el admin (RF-ADM-03); el aviso de pausa en S-20 es para todos. | Un precio web se sabe vigente entre revisiones, uno de compra no. El estado solo baja cada 10 min y la sync corre cada 15: con 3 min el teléfono diría "sin conexión" casi siempre. A todos les sirve saber por qué un precio no se actualiza. |
 | T99 | **Restauración desde el respaldo del servidor casero.**<br>• La herramienta del agente toma solo las filas de la copia; el esquema sale de las migraciones de D1.<br>• `sync_meta.version` queda en el máximo de las filas (07 §5.4).<br>• Tras restaurar, los teléfonos cierran sesión y entran de nuevo, y el espejo se rehace desde cero. | El volcado de SQLite no entra en D1 tal cual (`BEGIN`/`COMMIT`, filas en orden alfabético de tabla). Un teléfono o el espejo que sincronizaron después de la copia tienen cursores por delante de la base restaurada y se saltarían los cambios nuevos; cerrar sesión borra Room y baja todo de nuevo. |
 | T100 | **Intervalo por listing (RF-TRK-02, T-224).**<br>• Selector en S-20 y W-20: "De la tienda (8 h)", 2 h, 4 h, 12 h y 24 h.<br>• El mínimo en la app es 2 h, aunque el servidor acepte desde 60 min.<br>• Al cambiar el intervalo, el agente reprograma la siguiente revisión desde la última; un listing en espera por errores la conserva. | Opciones elegidas por Mauricio (2026-11-02). Con 2 h como mínimo no se carga a las tiendas (regla 10). Sin reprogramar, bajar de 8 h a 4 h esperaría a la siguiente revisión, hasta 8 h, y no se cumpliría "≤ 2 min". |
+| T102 | **Etapa 3 detallada y agenda del loop.**<br>• T-300 a T-310 con lo que cada una necesita de Mauricio.<br>• Primero lo que no lo necesita: T-308, T-307, la factibilidad de rembg, T-300, T-301, T-306, T-302 con proveedor simulado y T-310.<br>• Las pruebas en el teléfono quedan en PR sin fusionar. | Mauricio pidió avanzar todas las fases futuras que no dependan de él y dejar las pruebas como pendientes. El orden pone primero lo pequeño y autónomo y deja al final lo que cuesta dinero o necesita el iPhone. (T101 está en el PR #93.) |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -517,3 +545,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-02** — T-224 (avance): intervalo por listing en Android y web; el agente reprograma al cambiarlo (T100). Falta la prueba en el teléfono.
 - **2026-11-02** — T-224 terminada: probada desde el teléfono, el agente tomó las 4 h en 63 s; 6 de 8 comprobaciones del cierre de la Etapa 2.
 - **2026-11-02** — T-205 terminada: fixture real de Amazon con precio de lista, recortado de la muestra que guardó el agente.
+- **2026-11-04** — Etapa 3 detallada en `12-tareas` y agenda del loop en ESTADO (T102); T-118 queda en el PR #93 esperando la prueba en el teléfono.
