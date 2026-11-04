@@ -136,6 +136,7 @@ export const purchase: PurchaseDetailResponse = {
       updated_at: 1,
       enhance_pending: false,
       adopt: null,
+      background: '#FFFFFF',
     },
   ],
 };

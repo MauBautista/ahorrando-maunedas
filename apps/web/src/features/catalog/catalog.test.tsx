@@ -282,6 +282,7 @@ describe('W-08 "Mejorar en casa" (T-300)', () => {
     updated_at: 5_000,
     enhance_pending: false,
     adopt: null,
+    background: '#FFFFFF',
     ...o,
   });
   const withPhoto = (image: ImageRef) => ({ ...detail, product: { ...detail.product, image } });

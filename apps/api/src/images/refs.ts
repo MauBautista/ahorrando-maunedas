@@ -1,4 +1,5 @@
 import type { ImageRef } from '@maunedas/shared/api/catalog';
+import { backgroundOf, parseEditParams } from '@maunedas/shared/images/edit';
 import type { Env } from '../env';
 import { signPath } from './signing';
 
@@ -8,6 +9,15 @@ const IMAGE_REF_TTL_MS = 24 * 3_600_000;
 function blobPath(r2Key: string): string {
   const [, imageId, name] = r2Key.split('/');
   return `/v1/images/${imageId}/blobs/${name}`;
+}
+
+/** A signed absolute URL to the blob of an R2 key, valid ~24 h (10 §3). */
+export async function signedBlobUrl(
+  env: Pick<Env, 'IMAGE_URL_SECRET' | 'PUBLIC_BASE_URL'>,
+  r2Key: string,
+  now: number,
+): Promise<string> {
+  return `${env.PUBLIC_BASE_URL}${await signPath(env.IMAGE_URL_SECRET, blobPath(r2Key), IMAGE_REF_TTL_MS, now)}`;
 }
 
 /**
@@ -27,7 +37,7 @@ export async function imageRefs(
   const [images, renditions] = await env.DB.batch<Record<string, unknown>>([
     env.DB.prepare(
       `SELECT id, original_key, selected_processed_id, selected_thumb_id, license, attribution, updated_at,
-              enhance_requested_at, json_extract(edit_params, '$.manual') AS manual
+              enhance_requested_at, edit_params, json_extract(edit_params, '$.manual') AS manual
        FROM images WHERE deleted_at IS NULL AND id IN (SELECT value FROM json_each(?1))`,
     ).bind(json),
     env.DB.prepare(
@@ -37,10 +47,7 @@ export async function imageRefs(
     ).bind(json),
   ]);
   const keyOf = new Map(renditions!.results.map((r) => [String(r.id), String(r.r2_key)]));
-  const url = async (r2Key: string | null | undefined) =>
-    r2Key
-      ? `${env.PUBLIC_BASE_URL}${await signPath(env.IMAGE_URL_SECRET, blobPath(r2Key), IMAGE_REF_TTL_MS, now)}`
-      : null;
+  const url = async (r2Key: string | null | undefined) => (r2Key ? signedBlobUrl(env, r2Key, now) : null);
 
   // The newest `home` processed and thumb of each image, and when the newest home result arrived (10 §6.1).
   const home = new Map<string, { processed?: string; thumb?: string; at: number }>();
@@ -72,6 +79,7 @@ export async function imageRefs(
       updated_at: Number(img.updated_at),
       enhance_pending: requested !== null && (found?.at ?? 0) < requested,
       adopt: adoptable ? { processed_id: found!.processed!, thumb_id: found!.thumb! } : null,
+      background: backgroundOf(parseEditParams(img.edit_params as string | null)),
     });
   }
   return refs;

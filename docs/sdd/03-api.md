@@ -202,6 +202,7 @@ interface ImageRef {
   updated_at: Millis;              // de la fila images, para escribirla por sync (T-300)
   enhance_pending: boolean;        // se pidió "Mejorar en casa" y no ha llegado un resultado home desde entonces
   adopt: { processed_id: Id; thumb_id: Id } | null;   // las renditions home más nuevas por adoptar (10 §6.1)
+  background: string;              // color de edit_params.background, "#FFFFFF" por omisión (10 §1, T-301)
 }
 
 interface BestPrice {
@@ -408,6 +409,7 @@ Contratos y flujo completos en `10-imagenes.md`.
 | `GET /v1/images/:imageId/blobs/:name` | Descarga con Bearer **o** con `?exp=&sig=` (URL firmada). `Cache-Control: private, max-age=31536000, immutable` |
 | `POST /v1/images/:imageId/import` | `{ source_url }` de un host permitido de Open Food Facts → guarda como original. `201` |
 | `POST /v1/images/:imageId/enhance` | (E3) Encola `remove_bg` para el agente. `202 { job_id }`; el mismo si ya espera uno. Solo fotos de catálogo con el original en R2 (`404` · `409 E-IMAGE_NOT_UPLOADED`). 10 §6.1 |
+| `GET /v1/images/:imageId/edit` | (E3) Punto de partida del editor (10 §6.2): `{ image_id, updated_at, original_url, edit_params, mask: { url, width, height } \| null, automatic: { processed_id, thumb_id } \| null }`, con URLs firmadas. Solo fotos de catálogo con el original en R2 (`404` · `409 E-IMAGE_NOT_UPLOADED`) |
 | `POST /v1/images/:imageId/ai-edit` | (E3) `{ prompt, confirm: true }`. Consume presupuesto |
 
 ## 10. Tickets

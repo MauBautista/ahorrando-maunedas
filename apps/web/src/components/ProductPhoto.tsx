@@ -38,8 +38,9 @@ export function ProductPhoto({
       alt=""
       loading="lazy"
       onError={() => setFailed(url)}
-      // Over white: a photo without background is shown on the background of 10 §1.
-      className={`rounded-lg bg-white object-cover ${className}`}
+      // A photo without background is shown on its edit's color, white by default (10 §1).
+      style={{ backgroundColor: image?.background ?? '#FFFFFF' }}
+      className={`rounded-lg object-cover ${className}`}
     />
   );
 }

@@ -53,6 +53,7 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **T-301, web (2026-11-04):** en la ficha de un producto, "Editar foto" abre un editor. Tiene recorte, giro, fondo de color, brillo y contraste, y un pincel para borrar o restaurar el fondo, con deshacer. "Guardar" deja el original intacto. "Restablecer" vuelve al resultado automático. Falta probarlo en la web y hacer la parte de Android, que espera a T-118.
 - **T-300, web (2026-11-04):** en la ficha de un producto, "Mejorar en casa" pide al servidor casero quitarle el fondo a la foto. Cuando llega el resultado, la ficha lo adopta sola, salvo que la foto se haya editado a mano. Falta el mismo botón en Android.
 - **T-300, contenedor de imágenes (2026-11-04):** el servidor casero ya quita el fondo de las fotos que se le piden. Lo hace en su propio contenedor (`maunedas-images`), sin tocar el del agente ni Home Assistant. Probado con la foto de unas toallas: quedó limpia y en tres versiones. Falta el botón en la app y la web.
 - **T-300, parte del Worker (2026-11-04):** el servidor ya recibe pedidos de "Mejorar en casa" para una foto de producto y se los entrega al servidor casero uno a la vez, con tres intentos. Guarda lo que este devuelva como versiones nuevas de la foto. Faltan el contenedor que quita el fondo en casa y el botón en la app y la web.
@@ -206,13 +207,14 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 | 2 | ~~Importación de CFDI/XML a compras en borrador~~ (hecha) | T-307 | Un CFDI real para validar |
 | 3 | ~~Factibilidad de rembg en el A8-7410 con fotos públicas~~ (hecha: viable) | T-010 (parte) | Las 10 fotos reales y la calificación (D5) |
 | 4 | Mejora en casa: pedido, proceso en el agente, renditions `home` y adopción | T-300 | Cerrar D5; si rembg no arranca, T2 se descarta |
-| 5 | Editor de fotos: web y después Android | T-301 | Prueba en el teléfono y en la web |
+| 5 | Editor de fotos: web (hecha) y después Android (tras T-118) | T-301 | Prueba en la web; la de Android, en el teléfono |
 | 6 | Importación CSV/Excel genérica | T-306 | Un archivo real para validar |
 | 7 | Edición generativa con IA con el proveedor simulado | T-302 | Elegir el modelo y autorizar llamadas reales |
 | 8 | PWA offline | T-310 | Prueba en el iPhone |
 
 **Pendientes de Mauricio fuera de la agenda:**
-- **Pruebas en el teléfono:** T-118 (PR #93, decisión T101 en ese PR).
+- **Pruebas en el teléfono:** T-118 (PR #93, decisión T101 en ese PR) y "Mejorar en casa" en Android (PR #101).
+- **Prueba en la web:** el editor de fotos (T-301a).
 - **Club de Sam's:** el de Forjadores (T-207).
 - **Token de R2:** de solo lectura, para las fotos (T-230).
 - **Etapa 2:** las dos semanas con 30 listings.
@@ -346,6 +348,7 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 | T104 | **Importación de CFDI (T-307).**<br>• El Worker lee el XML con `fast-xml-parser` 5.11.2, sin DOCTYPE ni entidades, y no lo guarda.<br>• Líneas con impuestos incluidos; el descuento lleva la tasa de su línea y el dinero se cuenta con `BigInt`.<br>• `Fecha` como hora de la Ciudad de México.<br>• Tienda sugerida por RFC solo si siempre fue la misma; si no, por el nombre del emisor.<br>• `cfdi_imports` (servidor, solo se agrega, en el respaldo) evita duplicados mientras la compra siga viva. | La app guarda lo pagado, y en el CFDI los precios van sin impuestos. Nueva Wal-Mart de México factura tres cadenas con un RFC. Sin XML guardado no hay datos fiscales de más en la base. Un respaldo sin `cfdi_imports` permitiría duplicar facturas tras restaurar. |
 | T105 | **rembg fuera del proceso del agente (spike A, para T-300).**<br>• La mejora en casa corre en un contenedor aparte del proyecto de compose `maunedas`, con su propio límite de memoria (≈ 1.5 GB) y un trabajo a la vez.<br>• Modelo provisional `u2netp` por `REMBG_MODEL`, hasta cerrar D5. | Cada modelo usa de 0.8 a 1.2 GB aunque la foto sea chica. El agente tiene `mem_limit: 1200m` y Chromium como último recurso, y la RAM se comparte con Home Assistant: un contenedor aparte se limita y se reinicia sin tocar el scraping. |
 | T106 | **La máscara cubre la foto completa (para el editor, T-301).**<br>• `mask` es el alfa del modelo sobre la foto enderezada y reducida a ≤ 1024 px, no sobre el recorte cuadrado de `processed`.<br>• Aplica al agente y al teléfono. | El editor (10 §6.2) parte del original. Una máscara con la geometría del recorte, sin guardar su transformación, no se puede alinear, y el WebP con pérdida no conserva el color bajo lo transparente, así que "restaurar" no tendría píxeles. |
+| T107 | **Editor de fotos (T-301).**<br>• `GET /v1/images/:id/edit` da al editor el original, la máscara de partida y el resultado automático para "Restablecer".<br>• `crop` está en fracciones de la foto ya girada.<br>• **Hallazgo:** brillo y contraste se aplican al producto antes del fondo, no después.<br>• "Restablecer" deja `edit_params` en `null`.<br>• `ImageRef.background` lleva el color del fondo.<br>• Las reglas, en `packages/shared/src/images/edit.ts`; Android las replicará con un fixture común. | La web no guarda copia local: necesita del Worker la máscara y el resultado automático. Aplicar los ajustes después del fondo cambiaría el blanco elegido. Con el recorte en la foto girada, la pantalla y el archivo usan las mismas coordenadas. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
@@ -575,3 +578,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-04** — T-300b: contenedor de imágenes `maunedas-images` con `u2netp`; primera foto real procesada en dev.
 - **2026-11-04** — T-300c-1: "Mejorar en casa" y adopción del resultado en la web; `ImageRef` dice qué adoptar.
 - **2026-11-04** — T106: la máscara de la mejora en casa cubre la foto completa, para el editor.
+- **2026-11-04** — T-301a: editor de fotos en la web con `GET /v1/images/:id/edit` y reglas compartidas (T107); Android después de T-118.

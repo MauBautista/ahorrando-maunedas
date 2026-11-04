@@ -53,6 +53,7 @@ apps/web/
 | `/catalogo` | W-07 Catálogo | S-07 | todos |
 | `/productos/nuevo` · `/productos/:id/editar` | W-09 Editor de producto y variantes | S-09, S-10 | todos |
 | `/productos/:id` | W-08 Ficha de producto | S-08 | todos |
+| `/productos/:id/foto` | Editor de la foto del producto (T-301) | — | todos |
 | `/anaquel/nuevo` | W-10 Precio de anaquel | S-13 | todos |
 | `/cuenta` | W-14 Cuenta (nombre, cambiar contraseña, cerrar sesión) | S-15 | todos |
 | `/admin/usuarios` | W-11 Usuarios | — | admin |
@@ -204,6 +205,12 @@ export async function downscaleToJpeg(file: File, maxSide = 1600, quality = 0.8)
   - Pestañas en la URL (`?vista=presentaciones|comparar|historial`).
   - **Comparar** es una tabla con desplazamiento horizontal, porque en la web cabe. Marca "Más barato" y deja aparte "Otras medidas (no se comparan)".
   - **"Mejorar en casa" (T-300, 10 §6.1):** bajo la foto. Pide al servidor casero quitarle el fondo; mientras espera dice "Mejora pedida…", y una foto que aún no termina de subir lo explica. El resultado se adopta solo al abrir la ficha.
+  - **"Editar foto" (T-301, 10 §6.2):** bajo la foto, si tiene original. Abre el editor:
+    - **Herramientas:** "Recortar" (se arrastra sobre la foto; "Ajustar al producto" y "Foto completa"), "Borrar fondo" y "Restaurar" con tamaño de pincel y "Deshacer".
+    - **Ajustes:** girar a la izquierda o a la derecha, fondo (blanco, gris claro, negro u otro color), brillo y contraste.
+    - **Acciones:** "Guardar", "Restablecer" (solo si la foto se editó a mano) y "Cancelar".
+    - **Al guardar o restablecer:** vuelve a la ficha.
+  - **Fondo:** la foto se muestra sobre el color de `ImageRef.background`.
   - **Historial** usa los filtros de Android (T58), y Recharts con una serie de puntos por fuente, sin líneas. La gráfica lleva una descripción para lectores de pantalla y debajo va la lista de precios, del más nuevo al más viejo. Recharts se carga solo al abrir esa pestaña (440 KB).
 - **Antigüedad** ("hoy", "ayer", "hace N días…"): días de calendario en la Ciudad de México, como `Dates.ago`, contados desde que llegaron los datos (`dataUpdatedAt`).
 - **Fotos** en el orden de 10 §1, con URLs firmadas; sin foto o si falla, la inicial.
