@@ -24,3 +24,23 @@ services:
     logging:
       driver: json-file
       options: { max-size: "10m", max-file: "3" }
+
+  # La mejora de fotos en casa (T-300, decisión T105): aparte del agente, con su propio límite de memoria.
+  maunedas-images:
+    build:
+      context: ..
+      dockerfile: agent/Dockerfile.images
+    image: maunedas-images:latest
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      IMAGES_ENABLED: "true"
+      # Provisional hasta cerrar D5; manda sobre .env (spike A: isnet-general-use pasa de 1.8 GB).
+      REMBG_MODEL: u2netp
+    volumes:
+      - ${MAUNEDAS_DATA:-../../datos-agente}:/data
+    mem_limit: 1536m # spike A: u2netp 1.05 GB y u2net 1.18 GB de pico
+    cpus: 1.5
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }

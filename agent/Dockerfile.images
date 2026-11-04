@@ -1,0 +1,13 @@
+# agent/Dockerfile.images — the home enhancement's own container (T-300, decisión T105); build context: the repo root.
+# No browser here: Python slim with rembg and onnxruntime, the versions spike A measured on the A8-7410.
+FROM python:3.12-slim-bookworm
+COPY --from=ghcr.io/astral-sh/uv:0.13.1 /uv /usr/local/bin/uv
+ENV UV_PYTHON_DOWNLOADS=never UV_LINK_MODE=copy UV_COMPILE_BYTECODE=1
+WORKDIR /app
+COPY agent/pyproject.toml agent/uv.lock ./
+RUN uv sync --frozen --no-dev --extra images
+COPY agent/maunedas_agent ./maunedas_agent
+# The venv's python directly (`uv run` would install the dev group); the model is kept in /data across rebuilds.
+ENV PYTHONUNBUFFERED=1 PATH="/app/.venv/bin:$PATH" U2NET_HOME=/data/u2net
+HEALTHCHECK --interval=60s --timeout=10s --start-period=60s CMD ["python", "-m", "maunedas_agent.images.health"]
+CMD ["python", "-m", "maunedas_agent.images"]
