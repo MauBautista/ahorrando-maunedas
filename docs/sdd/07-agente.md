@@ -92,7 +92,7 @@ R2_ACCESS_KEY_ID=<token de solo lectura>
 R2_SECRET_ACCESS_KEY=<…>
 
 IMAGES_ENABLED=false              # E3
-REMBG_MODEL=isnet-general-use     # decisión D5 (spike A)
+REMBG_MODEL=u2netp                # provisional; D5 cierra con las fotos de Mauricio (spike A: isnet-general-use pasa de 1.8 GB)
 ```
 
 ## 4. SQLite local (`/data/agent.sqlite`)

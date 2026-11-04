@@ -53,6 +53,7 @@
   - descuentos del ticket y total del ticket, con aviso si no cuadra;
   - se guarda como borrador al salir y se confirma o elimina; las compras confirmadas ya alimentan la ficha, el comparador y el historial.
 - **T-126 (2026-10-23):** Ajustes de Android: cuenta con cambio de contraseña, estado de sincronización (última vez, qué falta por subir, cambios que el servidor rechazó y por qué), liberar espacio de fotos, versión y cerrar sesión. Si un código de barras ya era de otra presentación, la app pregunta si usar esa o mantener la tuya separada.
+- **Spike A, factibilidad (2026-11-04):** quitar el fondo en el servidor casero sí es posible: el modelo corre en su procesador, y los más ligeros tardan de 3 a 9 segundos por foto. Falta que Mauricio califique la calidad con sus fotos para elegir el modelo.
 - **T-307 (2026-11-04):** en la web, Compras → "Importar factura" convierte el XML de una factura electrónica (CFDI) en una compra en borrador. Las líneas quedan con lo pagado, impuestos incluidos. La tienda se sugiere sola cuando se conoce al emisor, las líneas conocidas se vinculan solas y una misma factura no se importa dos veces. Falta probarla con una factura real.
 - **T-308 (2026-11-04):** Home Assistant ya puede leer de Maunedas el precio actual, el mínimo histórico y la existencia de cualquier presentación, con un token de solo lectura. El admin crea y revoca los tokens en la web, en Administración → Home Assistant, donde también sale la configuración lista para copiar.
 - **T-205 (2026-11-02):** el adaptador de Amazon ya se prueba con una página real con precio de lista: la de microdacyn ($759.06 con lista de $858.81) que el agente guardó solo. Faltan las de Sam's y Costco, que llegarán solas cuando se siga algún enlace de esas tiendas con oferta.
@@ -200,7 +201,7 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 |---|---|---|---|
 | 1 | ~~API de lectura para Home Assistant con token propio~~ (hecha) | T-308 | Configurarla en Home Assistant, si la quiere |
 | 2 | ~~Importación de CFDI/XML a compras en borrador~~ (hecha) | T-307 | Un CFDI real para validar |
-| 3 | Factibilidad de rembg en el A8-7410 con fotos públicas | T-010 (parte) | Las 10 fotos reales y la calificación (D5) |
+| 3 | ~~Factibilidad de rembg en el A8-7410 con fotos públicas~~ (hecha: viable) | T-010 (parte) | Las 10 fotos reales y la calificación (D5) |
 | 4 | Mejora en casa: pedido, proceso en el agente, renditions `home` y adopción | T-300 | Cerrar D5; si rembg no arranca, T2 se descarta |
 | 5 | Editor de fotos: web y después Android | T-301 | Prueba en el teléfono y en la web |
 | 6 | Importación CSV/Excel genérica | T-306 | Un archivo real para validar |
@@ -340,13 +341,14 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 | T102 | **Etapa 3 detallada y agenda del loop.**<br>• T-300 a T-310 con lo que cada una necesita de Mauricio.<br>• Primero lo que no lo necesita: T-308, T-307, la factibilidad de rembg, T-300, T-301, T-306, T-302 con proveedor simulado y T-310.<br>• Las pruebas en el teléfono quedan en PR sin fusionar. | Mauricio pidió avanzar todas las fases futuras que no dependan de él y dejar las pruebas como pendientes. El orden pone primero lo pequeño y autónomo y deja al final lo que cuesta dinero o necesita el iPhone. (T101 está en el PR #93.) |
 | T103 | **API para Home Assistant (T-308).**<br>• Tokens propios `mha_…`, guardados solo como SHA-256 en `ha_tokens` (tabla de servidor, sin sync ni respaldo), revocables y con último uso anotado a lo más cada hora.<br>• `/ha/v1/*` solo lee; el token no abre `/v1`.<br>• Precio actual con la regla de mejor precio sobre los últimos 90 días; mínimo de todo el historial.<br>• La configuración usa el bloque `rest` y el token va en `secrets.yaml`. | Como el token del agente, un token filtrado no da acceso a nada más que leer precios, y se revoca sin tocar sesiones. Anotar el uso cada hora evita una escritura por lectura (Home Assistant pregunta cada hora). Si el respaldo no guarda los tokens, una restauración no revive accesos viejos. |
 | T104 | **Importación de CFDI (T-307).**<br>• El Worker lee el XML con `fast-xml-parser` 5.11.2, sin DOCTYPE ni entidades, y no lo guarda.<br>• Líneas con impuestos incluidos; el descuento lleva la tasa de su línea y el dinero se cuenta con `BigInt`.<br>• `Fecha` como hora de la Ciudad de México.<br>• Tienda sugerida por RFC solo si siempre fue la misma; si no, por el nombre del emisor.<br>• `cfdi_imports` (servidor, solo se agrega, en el respaldo) evita duplicados mientras la compra siga viva. | La app guarda lo pagado, y en el CFDI los precios van sin impuestos. Nueva Wal-Mart de México factura tres cadenas con un RFC. Sin XML guardado no hay datos fiscales de más en la base. Un respaldo sin `cfdi_imports` permitiría duplicar facturas tras restaurar. |
+| T105 | **rembg fuera del proceso del agente (spike A, para T-300).**<br>• La mejora en casa corre en un contenedor aparte del proyecto de compose `maunedas`, con su propio límite de memoria (≈ 1.5 GB) y un trabajo a la vez.<br>• Modelo provisional `u2netp` por `REMBG_MODEL`, hasta cerrar D5. | Cada modelo usa de 0.8 a 1.2 GB aunque la foto sea chica. El agente tiene `mem_limit: 1200m` y Chromium como último recurso, y la RAM se comparte con Home Assistant: un contenedor aparte se limita y se reinicia sin tocar el scraping. |
 
 ## Decisiones abiertas (cerrar en Etapa 0)
 
 | # | Tema | Propuesta | Depende de |
 |---|---|---|---|
 | D2 | Extracción de tickets | Modelo de visión vía OpenRouter desde el Worker **desde la etapa 1**; OCR local queda como experimento en la etapa 3 | Spike C (exactitud y costo real) |
-| D5 | Modelo de rembg | El más ligero que dé calidad aceptable en el A8-7410 | Spike A |
+| D5 | Modelo de rembg | El más ligero que dé calidad aceptable en el A8-7410. Factibilidad hecha (2026-11-04): corre sin AVX2; candidatos `u2netp`, `u2net` y `silueta`; provisional `u2netp` | Spike A: las 10 fotos reales de Mauricio y su calificación |
 
 ## Riesgos
 
@@ -426,6 +428,18 @@ Agenda del trabajo que no depende de Mauricio (2026-11-04, decisión T102). Una 
 - **Sin probar:** las fotos.
 
 ## Resultados de spikes
+
+### Spike A · rembg en el servidor (T-010, factibilidad) — 2026-11-04
+
+- **Resultado:** `onnxruntime` 1.31.0 corre en el A8-7410 sin AVX2, así que la mejora en casa (T2) es viable.
+- **Medición (5 fotos públicas, contenedor de 2 GB y 2 núcleos):**
+  - `u2netp`: 3.1 s por foto y 1.05 GB;
+  - `silueta`: 9.1 s y 0.85 GB;
+  - `u2net`: 7.7 s y 1.18 GB;
+  - `isnet-general-use`: 20 s y **1.8 GB** (fuera).
+- **Memoria:** el pico casi no baja con fotos de 1024 px; viene del modelo, no de la foto.
+- **Calidad:** preliminar; el caso difícil es el envase blanco sobre fondo claro.
+- **Pendiente:** D5 se cierra con las 10 fotos de Mauricio. Detalle en `docs/spikes/spike-a-rembg.md`.
 
 ### Spike B · scraping (T-011) — 2026-10-19
 Una sola pasada sobre 12 URLs (3 por tienda) desde este servidor, en un contenedor efímero con 1.5 GB; 45 s entre peticiones a Amazon y 30 s al resto. Detalle: `docs/spikes/spike-b-scraping.md`.
@@ -552,3 +566,4 @@ Worker local con el código real (bootstrap, admin de usuarios) contra el proyec
 - **2026-11-04** — Etapa 3 detallada en `12-tareas` y agenda del loop en ESTADO (T102); T-118 queda en el PR #93 esperando la prueba en el teléfono.
 - **2026-11-04** — T-308: API de lectura para Home Assistant con tokens propios y su página en Administración (T103).
 - **2026-11-04** — T-307: importación de facturas CFDI a compras en borrador desde la web (T104); falta validarla con un CFDI real.
+- **2026-11-04** — Spike A (factibilidad): rembg corre en el A8-7410 sin AVX2; `isnet-general-use` fuera por memoria; rembg irá en un contenedor aparte (T105). D5 espera las fotos de Mauricio.
