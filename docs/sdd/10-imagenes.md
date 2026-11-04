@@ -198,7 +198,7 @@ Posproceso (`core:camera`, `ProductImageRenderer`):
 2. Centrar en lienzo cuadrado con 8 % de margen.
 3. `processed`: WebP con alfa, lado ≤ 1024 (API ≥ 30 `WEBP_LOSSY` calidad 85; API 26–29 `WEBP`).
 4. `thumb`: 256 px sobre el fondo de `edit_params.background` (blanco por defecto), WebP.
-5. `mask`: canal alfa como PNG en escala de grises.
+5. `mask`: canal alfa como PNG en escala de grises, **sobre la foto completa** (enderezada y reducida a ≤ 1024 px), no sobre el recorte cuadrado (decisión T106). Así el editor la pone sobre el original para borrar y restaurar (§6.2).
 6. Crear tres `image_renditions` (`tier='device'`), fijar `selected_processed_id` y `selected_thumb_id`.
 
 Si el modelo de segmentación aún no se descargó o falla, se guarda solo el original (el interruptor "Sin fondo" aparece deshabilitado con el texto "Disponible en unos minutos").
@@ -231,7 +231,8 @@ Si el modelo de segmentación aún no se descargó o falla, se guarda solo el or
 }
 ```
 
-Canal de render: original → recorte y rotación → máscara (alfa) → fondo → ajustes → `processed` y `thumb`. El pincel borra o restaura sobre la máscara (tamaño ajustable, deshacer múltiple). Guardar crea renditions `tier='manual'` (máscara, processed, thumb) y fija `manual: true`. "Restablecer" vuelve a la última rendition automática.
+Canal de render: original → recorte y rotación → máscara (alfa) → fondo → ajustes → `processed` y `thumb`.
+- **Máscara (T106):** cubre la foto completa, con la geometría del original reducido a ≤ 1024 px. Por eso el editor carga original y máscara alineados, y el pincel de "restaurar" recupera los píxeles del original. El recorte inicial sale del contorno de la máscara con el margen de 8 % de §5. El pincel borra o restaura sobre la máscara (tamaño ajustable, deshacer múltiple). Guardar crea renditions `tier='manual'` (máscara, processed, thumb) y fija `manual: true`. "Restablecer" vuelve a la última rendition automática.
 
 ### 6.3 Edición generativa (T3, RF-IMG-06)
 

@@ -62,9 +62,11 @@ def test_render_keeps_the_subject_centered_on_a_square_with_its_margin() -> None
     assert red > 245 and green < 10 and blue < 10
     thumb = opened(r.thumb.data)
     assert (thumb.format, thumb.size, thumb.getpixel((2, 2))) == ("WEBP", (256, 256), (255, 255, 255))
+    # The mask covers the whole photo (2048 × 1365 → 1024 × 683), where the cutter kept the middle half.
     mask = opened(r.mask.data)
-    assert (mask.format, mask.mode, mask.size) == ("PNG", "L", (1024, 1024))
-    assert (mask.getpixel((0, 0)), mask.getpixel((512, 512))) == (0, 255)
+    assert (mask.format, mask.mode, mask.size) == ("PNG", "L", (1024, 683))
+    assert (r.mask.width, r.mask.height) == (1024, 683)
+    assert (mask.getpixel((10, 10)), mask.getpixel((512, 341)), mask.getpixel((1000, 670))) == (0, 255, 0)
 
 
 def test_render_a_small_subject_keeps_its_size_and_the_photo_upright() -> None:
@@ -123,7 +125,7 @@ async def test_a_job_is_cut_uploaded_and_completed(api: AgentApi, tmp_path: Path
         for c in puts.calls
     ]
     assert sent == [
-        ("mask", "image/png", {"width": "464", "height": "464"}),
+        ("mask", "image/png", {"width": "800", "height": "600"}),
         ("processed", "image/webp", {"width": "464", "height": "464"}),
         ("thumb", "image/webp", {"width": "256", "height": "256"}),
     ]
