@@ -243,6 +243,10 @@ Pestañas:
   - **Gráfica (Vico):** una serie por fuente con su color y solo puntos (una línea entre dos precios sugeriría precios que nadie vio); x es el día en la Ciudad de México y y el precio por unidad.
   - **Serie web en escalones (T-222, decisión T98):** los precios web llevan, debajo de sus puntos, una línea escalonada por listing. Cada precio se mantiene hasta el siguiente, y el último hasta la última revisión del listing (`listing_state.last_checked_at`, el `web_confirmed_until` de 03 §7). Se calcula en Room, respeta los filtros de fuente y tienda, y un listing con un solo precio y sin revisión posterior queda solo como punto.
   - **Lista y accesibilidad:** debajo va la lista de precios, del más nuevo al más viejo, con "Con promoción". La gráfica lleva una descripción para lectores de pantalla (cuántos precios, de cuándo a cuándo, el más bajo y el más alto).
+- **"Mejorar en casa" (T-300, 10 §6.1):** bajo la foto.
+  - **Cuándo aparece:** para una foto de producto con original (`PhotoEnhancer.state`). Pide al servidor casero quitarle el fondo.
+  - **Mientras espera:** dice "Mejora pedida…" hasta que llega un resultado `home` posterior al pedido.
+  - **Al llegar el resultado:** se adopta solo al sincronizar, y la ficha, que observa la imagen, muestra la nueva foto.
 
 ### S-09 Editor de producto
 Nombre, marca, categoría (árbol), etiquetas (chips con alta rápida), unidad de despliegue (sugerida por la medida de la primera variante), notas.

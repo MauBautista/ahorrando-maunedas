@@ -128,4 +128,7 @@
     <string name="history_promo">Con promoción</string>
     <string name="history_chart">Gráfica de %1$d precios por %2$s, del %3$s al %4$s. El más bajo: %5$s; el más alto: %6$s.</string>
     <string name="history_point">%1$s · %2$s</string>
+    <!-- T-300 (10 §6.1) -->
+    <string name="page_enhance">Mejorar en casa</string>
+    <string name="page_enhance_pending">Mejora pedida: el servidor casero quitará el fondo en unos minutos.</string>
 </resources>

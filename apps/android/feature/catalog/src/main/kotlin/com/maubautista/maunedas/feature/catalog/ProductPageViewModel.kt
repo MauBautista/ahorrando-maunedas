@@ -11,6 +11,7 @@ import com.maubautista.maunedas.core.data.HistoryFilter
 import com.maubautista.maunedas.core.data.MergeCandidate
 import com.maubautista.maunedas.core.data.MergeResult
 import com.maubautista.maunedas.core.data.PageVariant
+import com.maubautista.maunedas.core.data.PhotoEnhancer
 import com.maubautista.maunedas.core.data.ProductPage
 import com.maubautista.maunedas.core.data.ProductPageRepository
 import com.maubautista.maunedas.core.data.VariantHistory
@@ -63,8 +64,15 @@ class ProductPageViewModel
         private val editor: CatalogEditor,
         session: SessionStore,
         private val clock: Clock,
+        private val enhancer: PhotoEnhancer,
     ) : ViewModel() {
         private val productId: String = checkNotNull(savedState["productId"])
+
+        /** "Mejorar en casa" (10 §6.1, T-300) for the product's photo. */
+        fun enhance() {
+            val imageId = state.value.page?.photoImageId ?: return
+            viewModelScope.launch { enhancer.request(imageId) }
+        }
 
         val state: StateFlow<PageState> = pages.page(productId).map { PageState(true, it) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PageState())
         val isAdmin: StateFlow<Boolean> = session.user.map { it?.isAdmin == true }.stateIn(viewModelScope, SharingStarted.Eagerly, false)

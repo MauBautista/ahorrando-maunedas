@@ -14,7 +14,9 @@ import com.maubautista.maunedas.core.network.dto.PullRequest
 import com.maubautista.maunedas.core.network.dto.PushRequest
 import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.jsonObject
+import kotlinx.serialization.json.jsonPrimitive
 import javax.inject.Inject
 
 /**
@@ -31,10 +33,12 @@ class SyncEngine
         private val applier: PullApplier,
         private val conflicts: ConflictHandler,
         private val deviceId: DeviceIdStore,
+        private val adoption: HomeAdoption,
     ) {
         suspend fun sync() {
             pushAll()
-            pullAll()
+            // An adopted home result is an edit of its own (10 §6.1): it goes up in this same sync.
+            if (pullAll() > 0) pushAll()
         }
 
         /** Everything enqueued up to now, 100 rows per request, parents first (CLAUDE.md rule 13). */
@@ -99,8 +103,12 @@ class SyncEngine
             return JsonObject(json.encodeToJsonElement(table.serializer, row).jsonObject - "version")
         }
 
-        /** Pages until no table has more rows; each page is applied with its cursors in one transaction. */
-        suspend fun pullAll() {
+        /**
+         * Pages until no table has more rows; each page is applied with its cursors in one transaction. Then the images
+         * that got home-server results adopt them; returns how many did.
+         */
+        suspend fun pullAll(): Int {
+            val homeImages = mutableSetOf<String>()
             do {
                 val cursors = db.syncCursors().all().associate { it.tableName to PullCursor(it.version, it.lastId) }
                 val page = api.pull(PullRequest(cursors = cursors, limit = PULL_LIMIT))
@@ -108,7 +116,11 @@ class SyncEngine
                     applier.apply(page.changes)
                     db.syncCursors().saveAll(page.cursors.map { (table, c) -> SyncCursorEntity(table, c.version, c.lastId) })
                 }
+                page.changes["image_renditions"].orEmpty()
+                    .filter { it["tier"]?.jsonPrimitive?.contentOrNull == "home" }
+                    .mapNotNullTo(homeImages) { it["image_id"]?.jsonPrimitive?.contentOrNull }
             } while (page.hasMore)
+            return adoption.adopt(homeImages)
         }
 
         private companion object {

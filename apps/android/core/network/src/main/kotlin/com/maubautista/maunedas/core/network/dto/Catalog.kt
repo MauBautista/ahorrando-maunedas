@@ -31,3 +31,7 @@ data class BlobResponse(val key: String, val bytes: Long)
 
 @Serializable
 data class ImportImageRequest(val sourceUrl: String)
+
+/** `POST /v1/images/:id/enhance` (10 §6.1, T-300): the queued `remove_bg` job. */
+@Serializable
+data class EnhanceResponse(val jobId: String)

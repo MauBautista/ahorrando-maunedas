@@ -14,10 +14,14 @@ import com.maubautista.maunedas.core.pricing.ParsedQuantity
 import com.maubautista.maunedas.core.pricing.PriceComparison
 import com.maubautista.maunedas.core.pricing.PricePoint
 import com.maubautista.maunedas.core.pricing.QuantityParser
-import javax.inject.Inject
-import javax.inject.Singleton
+import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.distinctUntilChanged
+import kotlinx.coroutines.flow.flatMapLatest
+import kotlinx.coroutines.flow.map
+import javax.inject.Inject
+import javax.inject.Singleton
 
 /** A price as the product page shows it; [source] is purchase, shelf or web. */
 data class PagePrice(
@@ -71,6 +75,9 @@ data class ProductPage(
     val comparison: List<PageComparison>,
     /** The big photo for Coil (10 §1), or null without one. */
     val photo: Any? = null,
+    /** `products.primary_image_id`, which "Mejorar en casa" asks for. */
+    val photoImageId: String? = null,
+    val enhance: EnhanceState = EnhanceState.NONE,
 )
 
 /** S-08 from Room: what `GET /v1/products/:id` and `/compare` (03 §7) give the web, with the same rules. */
@@ -81,8 +88,10 @@ class ProductPageRepository
         private val db: AppDatabase,
         private val clock: Clock,
         private val photos: ProductPhotos,
+        private val enhancer: PhotoEnhancer,
     ) {
         /** Null when the product does not exist or was deleted (or merged into another). */
+        @OptIn(ExperimentalCoroutinesApi::class)
         fun page(productId: String): Flow<ProductPage?> {
             val page = db.productPage()
             val parts =
@@ -93,9 +102,13 @@ class ProductPageRepository
                     page.barcodes(productId),
                     db.catalogQueries().categories(),
                 ) { product, tags, variants, codes, categories -> Parts(product, tags.map { it.name }, variants, codes.groupBy({ it.variantId }, { it.code }), categories) }
-            // The queue count also brings the photo once its upload or import is done.
-            return combine(parts, db.catalogQueries().allPricePoints(productId), db.pendingUploads().observeCount()) { p, points, _ ->
-                p.product?.let { build(p, points).copy(photo = photos.large(it.primaryImageId)) }
+            // The queue count also brings the photo once its upload or import is done; the enhancement state, once a
+            // home-server result is adopted (10 §6.1).
+            val enhance = page.product(productId).map { it?.primaryImageId }.distinctUntilChanged().flatMapLatest(enhancer::state)
+            return combine(parts, db.catalogQueries().allPricePoints(productId), db.pendingUploads().observeCount(), enhance) { p, points, _, state ->
+                p.product?.let {
+                    build(p, points).copy(photo = photos.large(it.primaryImageId), photoImageId = it.primaryImageId, enhance = state)
+                }
             }
         }
 

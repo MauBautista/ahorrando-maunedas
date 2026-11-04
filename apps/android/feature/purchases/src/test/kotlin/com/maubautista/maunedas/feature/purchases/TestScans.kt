@@ -3,6 +3,7 @@ package com.maubautista.maunedas.feature.purchases
 import android.content.Context
 import androidx.test.core.app.ApplicationProvider
 import com.maubautista.maunedas.core.data.LocalPhotos
+import com.maubautista.maunedas.core.data.PhotoEnhancer
 import com.maubautista.maunedas.core.data.ProductPageRepository
 import com.maubautista.maunedas.core.data.ProductPhotos
 import com.maubautista.maunedas.core.data.ReceiptPhotos
@@ -30,7 +31,7 @@ internal fun scanRepository(
     val context = ApplicationProvider.getApplicationContext<Context>()
     val tokens = IdTokenProvider { "token" }
     val api = createMaunedasApi(ApiConfig(baseUrl), createOkHttpClient(AuthInterceptor(tokens, ClientInfo(1, "test")), TokenAuthenticator(tokens)), MaunedasJson)
-    return ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, clock, ProductPhotos(context, db, ApiConfig(baseUrl))))
+    return ScanRepository(db, api, SyncScheduler(context, db), ProductPageRepository(db, clock, ProductPhotos(context, db, ApiConfig(baseUrl)), PhotoEnhancer(db, LocalWriter(db, clock, { "u" }, { }), SyncScheduler(context, db), clock)))
 }
 
 /** The real receipt pages over [db], with photos kept in the test's files folder. */

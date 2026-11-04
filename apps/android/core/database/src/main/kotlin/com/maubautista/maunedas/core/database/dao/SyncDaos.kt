@@ -76,6 +76,9 @@ interface ImageDao : SyncDao<ImageEntity> {
     @Query("SELECT * FROM images WHERE id = :id")
     suspend fun byId(id: String): ImageEntity?
 
+    @Query("SELECT * FROM images WHERE id = :id")
+    fun observe(id: String): Flow<ImageEntity?>
+
     @Query("SELECT * FROM images WHERE owner_type = :ownerType AND owner_id = :ownerId AND role = :role AND deleted_at IS NULL")
     suspend fun liveOf(
         ownerType: String,
@@ -113,6 +116,14 @@ interface ListingStateDao : SyncDao<ListingStateEntity> {
 interface ImageRenditionDao : SyncDao<ImageRenditionEntity> {
     @Query("SELECT * FROM image_renditions WHERE id = :id")
     suspend fun byId(id: String): ImageRenditionEntity?
+
+    /** An image's live home-server results (10 §6.1), oldest first. */
+    @Query("SELECT * FROM image_renditions WHERE image_id = :imageId AND tier = 'home' AND deleted_at IS NULL ORDER BY created_at, id")
+    suspend fun homeOf(imageId: String): List<ImageRenditionEntity>
+
+    /** When the newest home-server result of an image arrived, or null without one. */
+    @Query("SELECT max(created_at) FROM image_renditions WHERE image_id = :imageId AND tier = 'home' AND deleted_at IS NULL")
+    fun latestHomeAt(imageId: String): Flow<Long?>
 }
 
 @Dao

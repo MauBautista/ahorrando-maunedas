@@ -42,6 +42,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import androidx.hilt.lifecycle.viewmodel.compose.hiltViewModel
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import com.maubautista.maunedas.core.data.EnhanceState
 import com.maubautista.maunedas.core.data.PageComparison
 import com.maubautista.maunedas.core.data.PagePrice
 import com.maubautista.maunedas.core.data.PageVariant
@@ -69,6 +70,8 @@ data class ProductPageActions(
     val onTrackVariant: (String) -> Unit = {},
     /** "Alertas" of a variant (E2, S-22). */
     val onAlertsVariant: (String) -> Unit = {},
+    /** "Mejorar en casa" of the photo (E3, 10 §6.1). */
+    val onEnhance: () -> Unit = {},
 )
 
 @Composable
@@ -114,6 +117,7 @@ fun ProductPageRoute(
                 onMergeProduct = viewModel::startProductMerge,
                 onMergeVariant = viewModel::startVariantMerge,
                 onDelete = viewModel::askDelete,
+                onEnhance = viewModel::enhance,
                 onTrackVariant = onTrackVariant,
                 onAlertsVariant = onAlertsVariant,
             ),
@@ -155,6 +159,15 @@ fun ProductPageScreen(
                     Text(page.name, style = MaterialTheme.typography.headlineSmall, modifier = Modifier.semantics { heading() })
                 }
                 page.photo?.let { ProductPhoto(it, page.name, Modifier.fillMaxWidth().height(220.dp), contentScale = ContentScale.Fit) }
+                when (page.enhance) {
+                    EnhanceState.AVAILABLE ->
+                        OutlinedButton(onClick = actions.onEnhance, modifier = Modifier.heightIn(min = Spacing.touchTarget)) {
+                            Text(stringResource(R.string.page_enhance))
+                        }
+                    EnhanceState.PENDING ->
+                        Text(stringResource(R.string.page_enhance_pending), style = MaterialTheme.typography.bodyMedium, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                    EnhanceState.NONE -> Unit
+                }
                 listOfNotNull(page.brand, page.categoryPath).takeIf { it.isNotEmpty() }?.let {
                     Text(it.joinToString(" · "), style = MaterialTheme.typography.bodyLarge, color = MaterialTheme.colorScheme.onSurfaceVariant)
                 }

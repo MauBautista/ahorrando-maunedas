@@ -3,6 +3,7 @@ package com.maubautista.maunedas.core.network
 import com.maubautista.maunedas.core.network.dto.BarcodeLookup
 import com.maubautista.maunedas.core.network.dto.BlobResponse
 import com.maubautista.maunedas.core.network.dto.DeviceRegistration
+import com.maubautista.maunedas.core.network.dto.EnhanceResponse
 import com.maubautista.maunedas.core.network.dto.ImportImageRequest
 import com.maubautista.maunedas.core.network.dto.MeResponse
 import com.maubautista.maunedas.core.network.dto.MergeRequest
@@ -62,6 +63,12 @@ interface MaunedasApi {
         @Path("name") name: String,
         @Body body: RequestBody,
     ): BlobResponse
+
+    /** "Mejorar en casa" (10 §6.1), from `EnhanceWorker`. */
+    @POST("v1/images/{imageId}/enhance")
+    suspend fun enhance(
+        @Path("imageId") imageId: String,
+    ): EnhanceResponse
 
     @POST("v1/images/{imageId}/import")
     suspend fun importImage(
