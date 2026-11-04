@@ -3,7 +3,8 @@
 1. The subject: what the model leaves with alpha > 0, cropped to it.
 2. A square canvas with a margin of 8 % of the subject's longer side on each side.
 3. `processed`: WebP with alpha, side ≤ 1024. `thumb`: 256 px over the background (white by default), WebP.
-   `mask`: the alpha channel as a grayscale PNG.
+   `mask`: the model's alpha over the whole photo (upright, reduced to ≤ 1024), as a grayscale PNG; the editor
+   lays it on the original to erase and restore (10 §6.2, decisión T106).
 """
 
 import io
@@ -14,6 +15,7 @@ from PIL import Image, ImageOps
 
 INPUT_MAX = 2048
 PROCESSED_MAX = 1024
+MASK_MAX = 1024
 THUMB_SIDE = 256
 MARGIN = 0.08
 QUALITY = 85
@@ -68,11 +70,13 @@ def render(
     square.paste(subject, (margin + (longer - subject.width) // 2, margin + (longer - subject.height) // 2))
     if side > PROCESSED_MAX:
         square = square.resize((PROCESSED_MAX, PROCESSED_MAX), Image.Resampling.LANCZOS)
+    alpha = out.getchannel("A")
+    alpha.thumbnail((MASK_MAX, MASK_MAX), Image.Resampling.LANCZOS)
     small = square.resize((THUMB_SIDE, THUMB_SIDE), Image.Resampling.LANCZOS)
     thumb = Image.new("RGB", (THUMB_SIDE, THUMB_SIDE), background)
     thumb.paste(small, mask=small.getchannel("A"))
     return Rendered(
-        mask=_encode(square.getchannel("A"), "PNG"),
+        mask=_encode(alpha, "PNG"),
         processed=_encode(square, "WEBP", quality=QUALITY),
         thumb=_encode(thumb, "WEBP", quality=QUALITY),
     )
